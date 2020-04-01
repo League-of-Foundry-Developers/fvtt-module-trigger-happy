@@ -44,6 +44,14 @@ By using a `Token` trigger, you can have a single actor for your triggers but se
 
 By using the `ChatMessage` trigger, you can send any message to chat. When used in combination with [The Furnace](https://github.com/kakaroto/fvtt-module-furnace)'s Advanced Macro system, you can use it to trigger macros with arguments specific to your trigger. 
 
+As an example : 
+
+```
+@Token[unique token name] @ChatMessage[Stop right there!] @ChatMessage[/pan 1500 1500 0.3]
+
+@Scene[World Map] @Token[Party Marker]
+```
+
 You can create and organize actors that would be used specifically for triggers, and drop them anywhere you want on the map. Using a transparent token has the best effect, and the players don't need to have any permissions for the token (or scene or journal to display) for the trigger to work.
 The trigger only works if they click on the token, not if they move their token to that region. Don't forget that you can also use token avatars as buttons, or change their width and height to fit your need.
 
@@ -57,7 +65,7 @@ If multiple triggers are in the same line, then they will be executed in sequenc
 ## v0.2
 - Add support for `@Actor[name]` links instead of only drag&dropped `@Actor[id]` links
 - Add support for Token trigger
-- Add support for sending chat messages as trigger effects
+- Add support for sending chat messages as trigger effects (useful with advanced macros)
 - Add support for setting a token as controlled as a trigger effect
 
 # Support
