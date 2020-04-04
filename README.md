@@ -77,6 +77,8 @@ The following options are available :
 - `move`: Will cause the trigger token to activate on a token move over it
 - `stopMovement`: Will prevent any tokens from moving on top of the trigger token
 
+If a token is hidden (GM layer), then it is automatically considered a 'move' trigger, otherwise it's a 'click' trigger. You can override it with the `@Trigger[click]` or `@Trigger[move]` options, or you can specify both options to make a token trigger on both clicks and moves.
+
 Here's an example of how these things can be used together (note ) :
 
 ```
@@ -115,6 +117,7 @@ Here's an example of how these things can be used together (note ) :
 
 - Add support for triggers when moving a token over a trigger token (@tposney)
 - Fix a couple of bugs with regards to journal entries and chat messages (@tposney)
+- Add the ability to trigger tokens by clicking on them even if they are hidden from the player
 - Add support for `@Trigger[options]` links with options for move, click, stopMovement, ooc, emote, whisper, preload
 - Add support for having multiple journals and journals within subfolders
 - Fix new line detection when journal entry is written in preformatted text or div mode
