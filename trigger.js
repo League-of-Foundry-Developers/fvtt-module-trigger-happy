@@ -163,13 +163,16 @@ class TriggerHappy {
     _onMouseDown(event) {
         const position = this._getMousePosition(event);
         const clickTokens = this._getTokensAt(canvas.tokens.placeables, position);
+        if (clickTokens.length === 0) return;
         const downTriggers = this._getTokenTriggers(clickTokens, this.triggers, 'click');
+        if (downTriggers.length === 0) return;
         canvas.stage.once('mouseup', (ev) => this._onMouseUp(ev, clickTokens, downTriggers));
     }
 
     _onMouseUp(event, tokens, downTriggers) {
         const position = this._getMousePosition(event);
         const upTokens = this._getTokensAt(tokens, position);
+        if (upTokens.length === 0) return;
         const triggers = this._getTokenTriggers(upTokens, this.triggers, 'click');
         this._executeTriggers(triggers);
     }
@@ -178,6 +181,7 @@ class TriggerHappy {
         if (!controlled) return;
         const tokens = [token];
         const triggers = this._getTokenTriggers(tokens, this.triggers, 'click');
+        if (triggers.length === 0) return;
         token.once('click', (ev) => this._onMouseUp(ev, tokens, triggers));
     }
 
@@ -192,7 +196,9 @@ class TriggerHappy {
         };
         const movementTokens = canvas.tokens.placeables.filter(tok => tok.data._id !== token._id);
         const tokens = this._getTokensAt(movementTokens, position);
+        if (tokens.length === 0) return true;
         const triggers = this._getTokenTriggers(tokens, this.triggers, 'move');
+        if (triggers.length === 0) return true;
         Hooks.once('updateToken', () => this._executeTriggers(triggers));
         return true;
     }
