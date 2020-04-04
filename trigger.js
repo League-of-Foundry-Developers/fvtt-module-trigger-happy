@@ -46,17 +46,22 @@ class TriggerHappy {
     _parseJournal(journal) {
         const triggerLines = journal.data.content.replace(/(<p>|<div>|<br *\/?>)/gm, '\n').split("\n");
         for (const line of triggerLines) {
-            const entityLinks = CONST.ENTITY_LINK_TYPES.concat(["ChatMessage", "Token"])
+            const entityLinks = CONST.ENTITY_LINK_TYPES.concat(["ChatMessage", "Token", "Trigger"])
             const entityMatchRgx = `@(${entityLinks.join("|")})\\[([^\\]]+)\\](?:{([^}]+)})?`;
             const rgx = new RegExp(entityMatchRgx, 'g');
             let trigger = null;
+            let options = [];
             const effects = []
             for (let match of line.matchAll(rgx)) {
-                const [string, entity, id] = match;
+                const [string, entity, id, label] = match;
+                if (entity === "Trigger") {
+                    options = id.split(" ");
+                    continue;
+                }
                 if (!trigger && entity !== "Actor" && entity !== "Token" && entity !== "Scene") break;
                 let effect = null;
                 if (entity === "ChatMessage") {
-                    effect = new ChatMessage({ content: id });
+                    effect = new ChatMessage({ content: id, speaker: {alias: label} });
                 } else if (entity === "Token") {
                     effect = new Token({ name: id });
                 } else {
@@ -75,7 +80,7 @@ class TriggerHappy {
                 effects.push(effect)
             }
             if (trigger)
-                this.triggers.push({ trigger, effects })
+                this.triggers.push({ trigger, effects, options })
         }
     }
 
