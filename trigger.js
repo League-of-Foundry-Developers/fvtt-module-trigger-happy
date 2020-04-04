@@ -89,13 +89,25 @@ class TriggerHappy {
         for (const trigger of triggers) {
             for (let effect of trigger.effects) {
                 if (effect.entity === "Scene") {
-                    await effect.view();
+                    if (trigger.options.includes("preload"))
+                        await game.scenes.preload(effect.id);
+                    else
+                        await effect.view();
                 } else if (effect.entity === "Macro") {
                     await effect.execute();
                 } else if (effect.entity === "RollTable") {
                     await effect.draw();
                 } else if (effect.entity === "ChatMessage") {
-                    await ChatMessage.create(duplicate(effect.data));
+                    const chatData = duplicate(effect.data)
+                    if (trigger.options.includes("ooc"))
+                        chatData.type = CONST.CHAT_MESSAGE_TYPES.OOC;
+                    else if (trigger.options.includes("emote"))
+                        chatData.type = CONST.CHAT_MESSAGE_TYPES.EMOTE;
+                    else if (trigger.options.includes("whisper")) {
+                        chatData.type = CONST.CHAT_MESSAGE_TYPES.WHISPER;
+                        chatData.whisper = ChatMessage.getWhisperRecipients("GM");
+                    }
+                    await ChatMessage.create(chatData);
                 } else if (effect.constructor.name === "Token") {
                     const token = canvas.tokens.placeables.find(t => t.name === effect.name)
                     if (token)
@@ -110,10 +122,17 @@ class TriggerHappy {
      * Checks if a token is causing a trigger to be activated
      * @param {Token} token       The token to test
      * @param {Object} trigger    The trigger to test against
+     * @param {String} type       Type of trigger, can be 'click' or 'move'
      */
-    _isTokenTrigger(token, trigger) {
-        return (trigger.trigger.entity === "Actor" && trigger.trigger.id === token.data.actorId) ||
-            (trigger.trigger.constructor.name === "Token" && trigger.trigger.data.name === token.data.name);
+    _isTokenTrigger(token, trigger, type) {
+        const isTrigger = ((trigger.trigger.entity === "Actor" && trigger.trigger.id === token.data.actorId) ||
+            (trigger.trigger.constructor.name === "Token" && trigger.trigger.data.name === token.data.name));
+        if (!isTrigger) return false;
+        if (type === "click")
+            return trigger.options.includes('click') || (!trigger.options.includes('move') && !token.data.hidden);
+        if (type === "move")
+            return trigger.options.includes('move') || (!trigger.options.includes('click') && token.data.hidden);
+        return true;
     }
     _isSceneTrigger(scene, trigger) {
         return trigger.trigger.entity === "Scene" && trigger.trigger.id === scene.id;
@@ -124,8 +143,8 @@ class TriggerHappy {
                 && (target.data.y <= position.y) && (target.data.y + (target.data.height * canvas.scene.data.grid) >= position.y);
         });
     }
-    _getTokenTriggers(tokens, triggers) {
-        return triggers.filter(trigger => tokens.some(token => this._isTokenTrigger(token, trigger)));
+    _getTokenTriggers(tokens, triggers, type) {
+        return triggers.filter(trigger => tokens.some(token => this._isTokenTrigger(token, trigger, type)));
     }
 
     _onCanvasReady(canvas) {
@@ -143,22 +162,22 @@ class TriggerHappy {
     }
     _onMouseDown(event) {
         const position = this._getMousePosition(event);
-        const clickTokens = this._getTokensAt(canvas.tokens.placeables.filter(token => !token.data.hidden), position);
-        const downTriggers = this._getTokenTriggers(clickTokens, this.triggers);
+        const clickTokens = this._getTokensAt(canvas.tokens.placeables, position);
+        const downTriggers = this._getTokenTriggers(clickTokens, this.triggers, 'click');
         canvas.stage.once('mouseup', (ev) => this._onMouseUp(ev, clickTokens, downTriggers));
     }
 
     _onMouseUp(event, tokens, downTriggers) {
         const position = this._getMousePosition(event);
         const upTokens = this._getTokensAt(tokens, position);
-        const triggers = this._getTokenTriggers(upTokens, this.triggers);
+        const triggers = this._getTokenTriggers(upTokens, this.triggers, 'click');
         this._executeTriggers(triggers);
     }
 
     _onControlToken(token, controlled) {
-        if (!controlled || token.data.hidden) return;
+        if (!controlled) return;
         const tokens = [token];
-        const triggers = this._getTokenTriggers(tokens, this.triggers);
+        const triggers = this._getTokenTriggers(tokens, this.triggers, 'click');
         token.once('click', (ev) => this._onMouseUp(ev, tokens, triggers));
     }
 
@@ -171,9 +190,9 @@ class TriggerHappy {
             x: (update.x || token.x) + token.width * scene.data.grid / 2,
             y: (update.y || token.y) + token.height * scene.data.grid / 2
         };
-        const movementTokens = canvas.tokens.placeables.filter(tok => tok.data._id !== token._id && tok.data.hidden);
+        const movementTokens = canvas.tokens.placeables.filter(tok => tok.data._id !== token._id);
         const tokens = this._getTokensAt(movementTokens, position);
-        const triggers = this._getTokenTriggers(tokens, this.triggers);
+        const triggers = this._getTokenTriggers(tokens, this.triggers, 'move');
         Hooks.once('updateToken', () => this._executeTriggers(triggers));
         return true;
     }
