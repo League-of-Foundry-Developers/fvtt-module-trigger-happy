@@ -13,8 +13,8 @@ class TriggerHappy {
         Hooks.on("canvasReady", this._onCanvasReady.bind(this));
         Hooks.on('hoverToken', this._onHoverToken.bind(this));
         Hooks.on('updateJournalEntry', this._onUpdateJournal.bind(this));
-        Hooks.on('deleteJournalEntry', this._onUpdateJournal.bind(this));
-        Hooks.on("preUpdateToken", this._onEndUpdate.bind(this));
+        Hooks.on('deleteJournalEntry', this._onDeleteJournal.bind(this));
+        Hooks.on("preUpdateToken", this._onPreUpdateToken.bind(this));
 
         this.triggers = [];
         this._journalId = null;
@@ -30,9 +30,8 @@ class TriggerHappy {
     _parseJournal() {
         this.triggers = []
         const journal = this.journal;
-        console.log("parse jounral journal is ", this.journal)
+        this._journalId = journal && journal.id;
         if (!journal) return;
-        this._journalId = journal.id;
         const triggerLines = journal.data.content.split("</p>");
         for (const line of triggerLines) {
             const entityLinks = CONST.ENTITY_LINK_TYPES.concat(["ChatMessage", "Token"])
@@ -45,9 +44,9 @@ class TriggerHappy {
                 if (!trigger && entity !== "Actor" && entity !== "Token" && entity !== "Scene") break;
                 let effect = null;
                 if (entity === "ChatMessage") {
-                    effect = new ChatMessage({content: id});
+                    effect = new ChatMessage({ content: id });
                 } else if (entity === "Token") {
-                    effect = new Token({name: id});
+                    effect = new Token({ name: id });
                 } else {
                     const config = CONFIG[entity];
                     if (!config) continue;
@@ -90,47 +89,61 @@ class TriggerHappy {
             }
         }
     }
+    /**
+     * Checks if a token is causing a trigger to be activated
+     * @param {Token} token       The token to test
+     * @param {Object} trigger    The trigger to test against
+     */
+    _isTokenTrigger(token, trigger) {
+        return (trigger.trigger.entity === "Actor" && trigger.trigger.id === token.data.actorId) ||
+            (trigger.trigger.constructor.name === "Token" && trigger.trigger.data.name === token.data.name);
+    }
+    _isSceneTrigger(scene, trigger) {
+        return trigger.trigger.entity === "Scene" && trigger.trigger.id === canvas.scene.id;
+    }
 
     _onHoverToken(token, hovered) {
         token.off('click');
         if (!hovered) return;
         token.on('click', ev => {
-            const triggers = this.triggers.filter(trigger => {
-                return (trigger.trigger.entity === "Actor" && trigger.trigger.id === token.data.actorId) ||
-                    (trigger.trigger.constructor.name === "Token" && trigger.trigger.data.name === token.name)
-            });
+            const triggers = this.triggers.filter(trigger => this._isTokenTrigger(token, trigger));
             this._executeTriggers(triggers);
         });
     }
 
     _onCanvasReady(canvas) {
-        const triggers = this.triggers.filter(trigger => trigger.trigger.entity === "Scene" && trigger.trigger.id === canvas.scene.id);
+        const triggers = this.triggers.filter(trigger => this._isSceneTrigger(canvas.scene, trigger));
         this._executeTriggers(triggers);
     }
 
     _onUpdateJournal(journal, update) {
-        if (update._id === this._journalId || journal.name === this.journalName)
+        if (update._id === this._journalId || update.name === this.journalName)
+            this._parseJournal();
+    }
+    _onDeleteJournal(journal, id) {
+        if (id === this._journalId)
             this._parseJournal();
     }
 
-    _onEndUpdate(scene, userId, update) {
-        if (update["x"] === undefined && update["y"] === undefined) return true;
-        let sceneTokens = scene.data.tokens;
-        let token = sceneTokens.find(t=>t._id === update._id);
+    _onPreUpdateToken(scene, userId, update) {
+        if (update.x === undefined && update.y === undefined) return true;
+        const token = scene.data.tokens.find(t => t._id === update._id);
         if (token.hidden) return true; // hidden tokens don't trigger the trigger
-        let tokenNames = sceneTokens.map(t=>t.name); 
+        const centerX = (update.x || token.x) + token.width * scene.data.grid / 2;
+        const centerY = (update.y || token.y) + token.height * scene.data.grid / 2;
         const triggers = this.triggers.filter(trigger => {
-            if (trigger.trigger.constructor.name !== "Token" || !tokenNames.includes(trigger.trigger.data.name) || trigger.trigger.data.name === token.name)
-                return false;
-            // let target = canvas.tokens.get(trigger.trigger.data._id);
-            let target = sceneTokens.find(token => token.name === trigger.trigger.data.name);
-            let tokenx = (update["x"] || token.x) + token.width * scene.data.grid / 2;
-            let tokeny = (update["y"] || token.y) + token.height * scene.data.grid / 2;
-            return (target.x <= tokenx ) && (target.x + (target.width * scene.data.grid) >= tokenx)
-                && (target.y <= tokeny ) && (target.y + (target.height * scene.data.grid) >= tokeny);
-
+            // Find all tokens in the scene that act as a movement trigger
+            const triggerTokens = canvas.tokens.placeables.filter(tok => {
+                return tok.data._id !== token._id && tok.data.hidden && this._isTokenTrigger(tok, trigger)
+            });
+            // Check if the moved token fits inside at least one of ththe trigger tokens
+            return triggerTokens.some(target => {
+                return (target.data.x <= centerX) && (target.data.x + (target.data.width * scene.data.grid) >= centerX)
+                    && (target.data.y <= centerY) && (target.data.y + (target.data.height * scene.data.grid) >= centerY);
+            });
         });
-        return this._executeTriggers(triggers);
+        Hooks.once('updateToken', () => this._executeTriggers(triggers));
+        return true;
     }
 }
 
