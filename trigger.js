@@ -199,6 +199,10 @@ class TriggerHappy {
         if (tokens.length === 0) return true;
         const triggers = this._getTokenTriggers(tokens, this.triggers, 'move');
         if (triggers.length === 0) return true;
+        if (triggers.some(trigger => trigger.options.includes("stopMovement"))) {
+            this._executeTriggers(triggers);
+            return false;
+        }
         Hooks.once('updateToken', () => this._executeTriggers(triggers));
         return true;
     }
