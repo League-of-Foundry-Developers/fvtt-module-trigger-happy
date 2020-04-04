@@ -7,31 +7,43 @@ class TriggerHappy {
             config: true,
             default: "Trigger Happy",
             type: String,
-            onChange: this._parseJournal.bind(this)
+            onChange: this._parseJournals.bind(this)
         });
-        Hooks.on("ready", this._parseJournal.bind(this));
+        Hooks.on("ready", this._parseJournals.bind(this));
         Hooks.on("canvasReady", this._onCanvasReady.bind(this));
         Hooks.on('controlToken', this._onControlToken.bind(this));
-        Hooks.on('updateJournalEntry', this._onUpdateJournal.bind(this));
-        Hooks.on('deleteJournalEntry', this._onDeleteJournal.bind(this));
+        Hooks.on('createJournalEntry', this._parseJournals.bind(this));
+        Hooks.on('updateJournalEntry', this._parseJournals.bind(this));
+        Hooks.on('deleteJournalEntry', this._parseJournals.bind(this));
         Hooks.on("preUpdateToken", this._onPreUpdateToken.bind(this));
 
         this.triggers = [];
-        this._journalId = null;
     }
 
     get journalName() {
         return game.settings.get("trigger-happy", "journalName") || "Trigger Happy";
     }
-    get journal() {
-        return game.journal.entities.find(j => j.name === this.journalName);
+    get journals() {
+        const folders = game.folders.entities.filter(f => f.type === "JournalEntry" && f.name === this.journalName);
+        const journals = game.journal.entities.filter(j => j.name === this.journalName);
+        return this._getFoldersContentsRecursive(folders, journals);
     }
 
-    _parseJournal() {
+    _getFoldersContentsRecursive(folders, contents) {
+        return folders.reduce((contents, folder) => {
+            // Cannot use folder.content and folder.children because they are set on populate and only show what the user can see
+            const content = game.journal.entities.filter(j => j.data.folder === folder.id)
+            const children = game.folders.entities.filter(f => f.type === "JournalEntry" && f.data.parent === folder.id)
+            contents.push(...content)
+            return this._getFoldersContentsRecursive(children, contents);
+        }, contents);
+    }
+
+    _parseJournals() {
         this.triggers = []
-        const journal = this.journal;
-        this._journalId = journal && journal.id;
-        if (!journal) return;
+        this.journals.forEach(journal => this._parseJournal(journal));
+    }
+    _parseJournal(journal) {
         const triggerLines = journal.data.content.split("</p>");
         for (const line of triggerLines) {
             const entityLinks = CONST.ENTITY_LINK_TYPES.concat(["ChatMessage", "Token"])
@@ -143,15 +155,6 @@ class TriggerHappy {
         if (!controlled || token.data.hidden) return;
         const triggers = this.triggers.filter(trigger => this._isTokenTrigger(token, trigger));
         token.once('click', (ev) => this._onMouseUp(ev, [token], triggers));
-    }
-
-    _onUpdateJournal(journal, update) {
-        if (update._id === this._journalId || update.name === this.journalName)
-            this._parseJournal();
-    }
-    _onDeleteJournal(journal, id) {
-        if (id === this._journalId)
-            this._parseJournal();
     }
 
     _onPreUpdateToken(scene, userId, update) {
