@@ -11,7 +11,7 @@ class TriggerHappy {
         });
         Hooks.on("ready", this._parseJournal.bind(this));
         Hooks.on("canvasReady", this._onCanvasReady.bind(this));
-        Hooks.on('hoverToken', this._onHoverToken.bind(this));
+        Hooks.on('controlToken', this._onControlToken.bind(this));
         Hooks.on('updateJournalEntry', this._onUpdateJournal.bind(this));
         Hooks.on('deleteJournalEntry', this._onDeleteJournal.bind(this));
         Hooks.on("preUpdateToken", this._onPreUpdateToken.bind(this));
@@ -99,21 +99,50 @@ class TriggerHappy {
             (trigger.trigger.constructor.name === "Token" && trigger.trigger.data.name === token.data.name);
     }
     _isSceneTrigger(scene, trigger) {
-        return trigger.trigger.entity === "Scene" && trigger.trigger.id === canvas.scene.id;
+        return trigger.trigger.entity === "Scene" && trigger.trigger.id === scene.id;
     }
-
-    _onHoverToken(token, hovered) {
-        token.off('click');
-        if (!hovered) return;
-        token.on('click', ev => {
-            const triggers = this.triggers.filter(trigger => this._isTokenTrigger(token, trigger));
-            this._executeTriggers(triggers);
+    _getTokenTriggersAt(tokens, triggers, position) {
+        return triggers.filter(trigger => {
+            // Find all tokens in the array that act as a trigger
+            const triggerTokens = tokens.filter(token => this._isTokenTrigger(token, trigger));
+            // Check if the position fits inside at least one of the trigger tokens
+            return triggerTokens.some(target => {
+                return (target.data.x <= position.x) && (target.data.x + (target.data.width * canvas.scene.data.grid) >= position.x)
+                    && (target.data.y <= position.y) && (target.data.y + (target.data.height * canvas.scene.data.grid) >= position.y);
+            });
         });
     }
 
     _onCanvasReady(canvas) {
         const triggers = this.triggers.filter(trigger => this._isSceneTrigger(canvas.scene, trigger));
         this._executeTriggers(triggers);
+        canvas.stage.on('mousedown', (ev) => this._onMouseDown(ev))
+    }
+    
+    _getMousePosition(event) {
+        let transform = canvas.tokens.worldTransform;
+        return {
+            x: (event.data.global.x - transform.tx) / canvas.stage.scale.x,
+            y: (event.data.global.y - transform.ty) / canvas.stage.scale.y
+        };
+    }
+    _onMouseDown(event) {
+        const position = this._getMousePosition(event);
+        const clickTokens = canvas.tokens.placeables.filter(token => !token.data.hidden);
+        const downTriggers = this._getTokenTriggersAt(clickTokens, this.triggers, position);
+        canvas.stage.once('mouseup', (ev) => this._onMouseUp(ev, clickTokens, downTriggers));
+    }
+
+    _onMouseUp(event, tokens, downTriggers) {
+        const position = this._getMousePosition(event);
+        const triggers = this._getTokenTriggersAt(tokens, downTriggers, position);
+        this._executeTriggers(triggers);
+    }
+
+    _onControlToken(token, controlled) {
+        if (!controlled || token.data.hidden) return;
+        const triggers = this.triggers.filter(trigger => this._isTokenTrigger(token, trigger));
+        token.once('click', (ev) => this._onMouseUp(ev, [token], triggers));
     }
 
     _onUpdateJournal(journal, update) {
@@ -126,22 +155,16 @@ class TriggerHappy {
     }
 
     _onPreUpdateToken(scene, userId, update) {
+        if (!scene.isView) return true;
         if (update.x === undefined && update.y === undefined) return true;
         const token = scene.data.tokens.find(t => t._id === update._id);
         if (token.hidden) return true; // hidden tokens don't trigger the trigger
-        const centerX = (update.x || token.x) + token.width * scene.data.grid / 2;
-        const centerY = (update.y || token.y) + token.height * scene.data.grid / 2;
-        const triggers = this.triggers.filter(trigger => {
-            // Find all tokens in the scene that act as a movement trigger
-            const triggerTokens = canvas.tokens.placeables.filter(tok => {
-                return tok.data._id !== token._id && tok.data.hidden && this._isTokenTrigger(tok, trigger)
-            });
-            // Check if the moved token fits inside at least one of ththe trigger tokens
-            return triggerTokens.some(target => {
-                return (target.data.x <= centerX) && (target.data.x + (target.data.width * scene.data.grid) >= centerX)
-                    && (target.data.y <= centerY) && (target.data.y + (target.data.height * scene.data.grid) >= centerY);
-            });
-        });
+        const position = {
+            x: (update.x || token.x) + token.width * scene.data.grid / 2,
+            y: (update.y || token.y) + token.height * scene.data.grid / 2
+        };
+        const movementTokens = canvas.tokens.placeables.filter(tok => tok.data._id !== token._id && tok.data.hidden);
+        const triggers = this._getTokenTriggersAt(movementTokens, this.triggers, position);
         Hooks.once('updateToken', () => this._executeTriggers(triggers));
         return true;
     }
