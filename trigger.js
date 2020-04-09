@@ -143,7 +143,6 @@ class TriggerHappy {
     }
     _getTokensAt(tokens, position) {
         return tokens.filter(target => {
-            console.log("target ", target.name,  target.data.x, target.data.y, target.w, target.h, target.data.width, target.data.height)
             return (target.data.x <= position.x) && (target.data.x + target.w >= position.x)
                 && (target.data.y <= position.y) && (target.data.y + target.h >= position.y);
         });
