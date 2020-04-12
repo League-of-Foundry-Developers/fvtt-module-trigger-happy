@@ -228,7 +228,7 @@ class TriggerHappy {
         targets = targets.filter(target => token.x + tw !== target.center.x || token.y + th !== target.center.y)
         
         // sort list by distance from start token position
-        targets.sort((a , b) => targets.sort((a, b) => Math.hypot(token.x - b.x, token.y - b.y) - Math.hypot(token.x - a.x, token.y - a.y)))
+        targets.sort((a , b) => targets.sort((a, b) => Math.hypot(token.x - a.x, token.y - a.y) - Math.hypot(token.x - b.x, token.y - b.y)))
         
         for (let target of targets) {
             // test motion vs token diagonals
