@@ -241,7 +241,7 @@ class TriggerHappy {
         }
         return true;
     }
-    _onPreUpdateToken(scene, id, update) {
+    _onPreUpdateToken(scene, embedded, update, options, userId) {
         if (!scene.isView) return true;
         if (update.x === undefined && update.y === undefined) return true;
         const token = scene.data.tokens.find(t => t._id === update._id);
