@@ -16,8 +16,6 @@ class TriggerHappy {
         Hooks.on('updateJournalEntry', this._parseJournals.bind(this));
         Hooks.on('deleteJournalEntry', this._parseJournals.bind(this));
         Hooks.on("preUpdateToken", this._onPreUpdateToken.bind(this));
-        //Hooks.on("preUpdateToken", this._finishTokenTriggers.bind(this));
-
 
         this.triggers = [];
     }
@@ -219,12 +217,12 @@ class TriggerHappy {
         let targets = this._getTokensFromTriggers(canvas.tokens.placeables, this.triggers, 'capture');
         if (!targets) return true;
 
-        let finalX = update.x || token.x;
-        let finalY = update.y || token.y;
+        const finalX = update.x || token.x;
+        const finalY = update.y || token.y;
         // need to calculate this by hand since token is just token data
-        let tw = token.width * canvas.scene.data.grid / 2;
-        let th = token.height * canvas.scene.data.grid / 2;
-        let motion = new Ray({x: token.x + tw, y: token.y + th}, {x: finalX + tw, y: finalY + th});
+        const tw = token.width * canvas.scene.data.grid / 2;
+        const th = token.height * canvas.scene.data.grid / 2;
+        const motion = new Ray({x: token.x + tw, y: token.y + th}, {x: finalX + tw, y: finalY + th});
 
         // don't trigger on tokens that are already captured
         targets = targets.filter(target => token.x + tw !== target.center.x || token.y + th !== target.center.y)
@@ -232,7 +230,7 @@ class TriggerHappy {
         // sort list by distance from start token position
         targets.sort((a , b) => targets.sort((a, b) => Math.hypot(token.x - b.x, token.y - b.y) - Math.hypot(token.x - a.x, token.y - a.y)))
         
-        targets.forEach(target => {
+        for (let target of targets) {
             // test motion vs token diagonals
             if (motion.intersectSegment([target.x, target.y, target.x + target.w, target.y + target.h])
             || motion.intersectSegment([target.x, target.y + target.h, target.x + target.w, target.y])) {
@@ -240,7 +238,7 @@ class TriggerHappy {
                 update.y = target.center.y - th;
                 return true;
             }
-        })
+        }
         return true;
     }
     _onPreUpdateToken(scene, id, update) {
