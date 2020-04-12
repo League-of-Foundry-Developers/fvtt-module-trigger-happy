@@ -16,7 +16,7 @@ class TriggerHappy {
         Hooks.on('updateJournalEntry', this._parseJournals.bind(this));
         Hooks.on('deleteJournalEntry', this._parseJournals.bind(this));
         Hooks.on("preUpdateToken", this._onPreUpdateToken.bind(this));
-        Hooks.on("preUpdateToken", this._finishTokenTriggers.bind(this));
+        //Hooks.on("preUpdateToken", this._finishTokenTriggers.bind(this));
 
 
         this.triggers = [];
@@ -148,11 +148,13 @@ class TriggerHappy {
         });
     }
 
-    _getTriggerTokens (tokens, triggers, type) {
+    // return all tokens which have a token trigger
+    _getTokensFromTriggers (tokens, triggers, type) {
         return tokens.filter(token => triggers.some(trigger => this._isTokenTrigger(token, trigger, type)));
     }
 
-    _getTokenTriggers(tokens, triggers, type) {
+    // return all triggers which which trigger on one of the tokens
+    _getTriggersFromTokens(triggers, tokens, type) {
         return triggers.filter(trigger => tokens.some(token => this._isTokenTrigger(token, trigger, type)));
     }
 
@@ -173,7 +175,7 @@ class TriggerHappy {
         const position = this._getMousePosition(event);
         const clickTokens = this._getTokensAt(canvas.tokens.placeables, position);
         if (clickTokens.length === 0) return;
-        const downTriggers = this._getTokenTriggers(clickTokens, this.triggers, 'click');
+        const downTriggers = this._getTriggersTokens(this.triggers, clickTokens, 'click');
         if (downTriggers.length === 0) return;
         canvas.stage.once('mouseup', (ev) => this._onMouseUp(ev, clickTokens, downTriggers));
     }
@@ -182,23 +184,19 @@ class TriggerHappy {
         const position = this._getMousePosition(event);
         const upTokens = this._getTokensAt(tokens, position);
         if (upTokens.length === 0) return;
-        const triggers = this._getTokenTriggers(upTokens, this.triggers, 'click');
+        const triggers = this._getTriggersFromTokens(this.triggers, upTokens, 'click');
         this._executeTriggers(triggers);
     }
 
     _onControlToken(token, controlled) {
         if (!controlled) return;
         const tokens = [token];
-        const triggers = this._getTokenTriggers(tokens, this.triggers, 'click');
+        const triggers = this._getTriggersFromTokens(this.triggers, tokens, 'click');
         if (triggers.length === 0) return;
         token.once('click', (ev) => this._onMouseUp(ev, tokens, triggers));
     }
 
-    _finishTokenTriggers(scene, userId, update) {
-        if (!scene.isView) return true;
-        if (update.x === undefined && update.y === undefined) return true;
-        const token = scene.data.tokens.find(t => t._id === update._id);
-        if (token.hidden) return true; // don't stop ivnisible tokens?
+    _doMoveTriggers(token, scene, update) {
         const position = {
             x: (update.x || token.x) + token.width * scene.data.grid / 2,
             y: (update.y || token.y) + token.height * scene.data.grid / 2
@@ -206,7 +204,7 @@ class TriggerHappy {
         const movementTokens = canvas.tokens.placeables.filter(tok => tok.data._id !== token._id);
         const tokens = this._getTokensAt(movementTokens, position);
         if (tokens.length === 0) return true;
-        const triggers = this._getTokenTriggers(tokens, this.triggers, 'move');
+        const triggers = this._getTriggersFromTokens(this.triggers, tokens, 'move');
         if (triggers.length === 0) return true;
         if (triggers.some(trigger => trigger.options.includes("stopMovement"))) {
             this._executeTriggers(triggers);
@@ -216,43 +214,43 @@ class TriggerHappy {
         return true;
     }
   
-    _onPreUpdateToken(scene, id, update) {
-        if (!scene.isView) return true;
-        if (update.x === undefined && update.y === undefined) return true;
-        const token = scene.data.tokens.find(t => t._id === update._id);
-        if (token.hidden) return true; // don't stop ivnisible tokens?
-
+    _doCaptureTriggers(token, scene, update) {
         // Get all trigger tokens in scene
-        let targets = this._getTriggerTokens(canvas.tokens.placeables, this.triggers, 'capture');
+        let targets = this._getTokensFromTriggers(canvas.tokens.placeables, this.triggers, 'capture');
         if (!targets) return true;
 
-        let x = update.x || token.x;
-        let  y = update.y || token.y;
+        let finalX = update.x || token.x;
+        let finalY = update.y || token.y;
+        // need to calculate this by hand since token is just token data
         let tw = token.width * canvas.scene.data.grid / 2;
         let th = token.height * canvas.scene.data.grid / 2;
-        let motion = new Ray({x: token.x + tw, y: token.y + th}, {x: x + tw, y: y + th});
+        let motion = new Ray({x: token.x + tw, y: token.y + th}, {x: finalX + tw, y: finalY + th});
 
         // don't trigger on tokens that are already captured
-        targets = targets.filter(target => token.x !== target.x + target.w  / 2 - tw || token.y !== target.y + target.h / 2 - th)
+        targets = targets.filter(target => token.x + tw !== target.center.x || token.y + th !== target.center.y)
         
         // sort list by distance from start token position
-        targets.sort((a , b) => dist(token.x, token.y, b.x, b.y) - dist(token.x, token.y, a.x, a.y));
+        targets.sort((a , b) => targets.sort((a, b) => Math.hypot(token.x - b.x, token.y - b.y) - Math.hypot(token.x - a.x, token.y - a.y)))
         
         targets.forEach(target => {
             // test motion vs token diagonals
             if (motion.intersectSegment([target.x, target.y, target.x + target.w, target.y + target.h])
             || motion.intersectSegment([target.x, target.y + target.h, target.x + target.w, target.y])) {
-                update.x = target.x + target.w / 2 - tw;
-                update.y = target.y + target.h / 2 - th;
+                update.x = target.center.x - tw;
+                update.y = target.center.y - th;
                 return true;
             }
         })
         return true;
-    };
-}
-
-let dist = (x0, y0, x1, y1) => {
-    return (x0 - x1)**2 + (y0-y1)**2;
+    }
+    _onPreUpdateToken(scene, id, update) {
+        if (!scene.isView) return true;
+        if (update.x === undefined && update.y === undefined) return true;
+        const token = scene.data.tokens.find(t => t._id === update._id);
+        if (token.hidden) return true; // don't stop ivnisible tokens?
+        this._doCaptureTriggers(token, scene, update);
+        this._doMoveTriggers(token, scene, update);
+    }
 }
 
 Hooks.on('init', () => game.triggers = new TriggerHappy())
