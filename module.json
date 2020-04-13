@@ -2,13 +2,13 @@
   "name": "trigger-happy",
   "title": "Trigger Happy",
   "description": "Automate everything in your world by creating triggers for your players to spring traps or anything you can think of!",
-  "version": "0.3",
+  "version": "0.4",
   "author": "KaKaRoTo, tposney",
   "scripts": ["trigger.js"],
   "styles": [],
   "packs": [],
   "url": "https://github.com/kakaroto/fvtt-module-trigger-happy",
   "manifest": "https://raw.githubusercontent.com/kakaroto/fvtt-module-trigger-happy/master/module.json",
-  "download": "https://github.com/kakaroto/fvtt-module-trigger-happy/archive/v0.3.zip",
+  "download": "https://github.com/kakaroto/fvtt-module-trigger-happy/archive/v0.4.zip",
   "minimumCoreVersion": "0.5.3"
 }
