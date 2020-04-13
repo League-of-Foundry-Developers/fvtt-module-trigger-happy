@@ -173,7 +173,7 @@ class TriggerHappy {
         const position = this._getMousePosition(event);
         const clickTokens = this._getTokensAt(canvas.tokens.placeables, position);
         if (clickTokens.length === 0) return;
-        const downTriggers = this._getTriggersTokens(this.triggers, clickTokens, 'click');
+        const downTriggers = this._getTriggersFromTokens(this.triggers, clickTokens, 'click');
         if (downTriggers.length === 0) return;
         canvas.stage.once('mouseup', (ev) => this._onMouseUp(ev, clickTokens, downTriggers));
     }

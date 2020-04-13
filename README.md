@@ -107,14 +107,14 @@ Here's an example of how these trigger options can be used together :
 
 # Changelog
 
-## v0.1
-- Initial release with support for Actor and Scene triggers
+## v0.4.1
 
-## v0.2
-- Add support for `@Actor[name]` links instead of only drag&dropped `@Actor[id]` links
-- Add support for Token trigger
-- Add support for sending chat messages as trigger effects (useful with advanced macros)
-- Add support for setting a token as controlled as a trigger effect
+- Fix issue causing click triggers to fail for players not owning the trigger token
+
+## v0.4
+
+- Add support for capture triggers (@tposney)
+- Add support for API changes in FVTT 0.5.4
 
 ## v0.3
 
@@ -126,10 +126,15 @@ Here's an example of how these trigger options can be used together :
 - Fix new line detection when journal entry is written in preformatted text or div mode
 - Add support for sending chat messages using an alias
 
-## v0.4
 
-- Add support for capture triggers (@tposney)
-- Add support for API changes in FVTT 0.5.4
+## v0.2
+- Add support for `@Actor[name]` links instead of only drag&dropped `@Actor[id]` links
+- Add support for Token trigger
+- Add support for sending chat messages as trigger effects (useful with advanced macros)
+- Add support for setting a token as controlled as a trigger effect
+
+## v0.1
+- Initial release with support for Actor and Scene triggers
 
 # Support
 
