@@ -76,10 +76,13 @@ The following options are available :
 - `click`: Will cause the trigger token to activate on a click
 - `move`: Will cause the trigger token to activate on a token move over it
 - `stopMovement`: Will prevent any tokens from moving on top of the trigger token
+- `capture`: Will cause the trigger token to capture any player moment that crosses it
 
 If a token is hidden (GM layer), then it is automatically considered a 'move' trigger, otherwise it's a 'click' trigger. You can override it with the `@Trigger[click]` or `@Trigger[move]` options, or you can specify both options to make a token trigger on both clicks and moves.
 
-Here's an example of how these things can be used together (note ) :
+Contrarily to the `@Trigger[move]` triggers, which only activate when a token ends its movement on their, the `@Trigger[capture]` will trigger when a token crosses its path, which can be very useful to setting up a trap that the players cannot jump over. When a `capture` trigger is activated, the token movement will be stoped and the token will be moved to the center of the trigger. The token can only be moved out of the `capture` trigger if its starting position is the center of the trigger.
+
+Here's an example of how these trigger options can be used together :
 
 ```
 # When the player enters the scene, preload the next one
@@ -122,6 +125,11 @@ Here's an example of how these things can be used together (note ) :
 - Add support for having multiple journals and journals within subfolders
 - Fix new line detection when journal entry is written in preformatted text or div mode
 - Add support for sending chat messages using an alias
+
+## v0.4
+
+- Add support for capture triggers (@tposney)
+- Add support for API changes in FVTT 0.5.4
 
 # Support
 
