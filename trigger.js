@@ -267,7 +267,7 @@ class TriggerHappy {
                 let corners = [];
                 const gridSize = canvas.grid.size;
                 // Create a grid of the squares covered by the target token
-                [...Array(gWidth).keys()].forEach(xc => [...Array(gHeight).keys()].forEach(yc => 
+                [...Array(tgw).keys()].forEach(xc => [...Array(tgh).keys()].forEach(yc => 
                     corners.push({x: target.data.x + xc * gridSize, y: target.data.y + yc * gridSize})
                 ))
 
