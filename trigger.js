@@ -139,11 +139,19 @@ class TriggerHappy {
     _isSceneTrigger(scene, trigger) {
         return trigger.trigger.entity === "Scene" && trigger.trigger.id === scene.id;
     }
+
+    _tokenContains(token, position) {
+        if (Number.between(position.x, token.data.x, token.data.x + token.w)
+        && Number.between(position.y, token.data.y, token.data.y + token.h)) {
+        console.log(position.x, token.data.x, token.data.x + token.w, Number.between(position.x, token.data.x, token.data.x + token.w));
+        console.log(position.y, token.data.y, token.data.y + token.h, Number.between(position.y, token.data.y, token.data.y + token.h))
+        }
+        return  Number.between(position.x, token.data.x, token.data.x + token.w)
+        && Number.between(position.y, token.data.y, token.data.y + token.h)
+    }
+
     _getTokensAt(tokens, position) {
-        return tokens.filter(target => {
-            return (target.data.x <= position.x) && (target.data.x + target.w >= position.x)
-                && (target.data.y <= position.y) && (target.data.y + target.h >= position.y);
-        });
+        return tokens.filter(token => this._tokenContains(token, position));
     }
 
     // return all tokens which have a token trigger
@@ -203,6 +211,7 @@ class TriggerHappy {
         const tokens = this._getTokensAt(movementTokens, position);
         if (tokens.length === 0) return true;
         const triggers = this._getTriggersFromTokens(this.triggers, tokens, 'move');
+        
         if (triggers.length === 0) return true;
         if (triggers.some(trigger => trigger.options.includes("stopMovement"))) {
             this._executeTriggers(triggers);
@@ -215,39 +224,76 @@ class TriggerHappy {
     _doCaptureTriggers(token, scene, update) {
         // Get all trigger tokens in scene
         let targets = this._getTokensFromTriggers(canvas.tokens.placeables, this.triggers, 'capture');
-        if (!targets) return true;
+        if (!targets) return;
 
         const finalX = update.x || token.x;
         const finalY = update.y || token.y;
         // need to calculate this by hand since token is just token data
-        const tw = token.width * canvas.scene.data.grid / 2;
-        const th = token.height * canvas.scene.data.grid / 2;
-        const motion = new Ray({x: token.x + tw, y: token.y + th}, {x: finalX + tw, y: finalY + th});
+        const tkw = token.width * canvas.scene.data.grid / 2;
+        const tkh = token.height * canvas.scene.data.grid / 2;
+
+        const motion = new Ray({x: token.x + tkw, y: token.y  + tkh}, {x: finalX + tkw, y: finalY  + tkh});
 
         // don't trigger on tokens that are already captured
-        targets = targets.filter(target => token.x + tw !== target.center.x || token.y + th !== target.center.y)
-        
+        targets = targets.filter(target =>  !this._tokenContains(target, {x: token.x + tkw, y: token.y  + tkh}));
+
         // sort list by distance from start token position
         targets.sort((a , b) => targets.sort((a, b) => Math.hypot(token.x - a.x, token.y - a.y) - Math.hypot(token.x - b.x, token.y - b.y)))
         
         for (let target of targets) {
-            // test motion vs token diagonals
-            if (motion.intersectSegment([target.x, target.y, target.x + target.w, target.y + target.h])
-            || motion.intersectSegment([target.x, target.y + target.h, target.x + target.w, target.y])) {
-                update.x = target.center.x - tw;
-                update.y = target.center.y - th;
-                return true;
+            const tx = target.x;
+            const ty = target.y;
+            const tw = target.w;
+            const th = target.h;
+            const tgw = target.data.width; // target token width in grid units
+            const tgh = target.data.height; // target token height in grid units
+                // test motion vs token diagonals
+            if (tgw > 1 && tgh > 1 && tgw * tgh > 4) {
+                // big token so do boundary lines
+                var intersects = ( motion.intersectSegment([tx,      ty,      tx + tw, ty     ])
+                                || motion.intersectSegment([tx + tw, ty + th, tx + tw, ty     ])
+                                || motion.intersectSegment([tx + tw, ty + th, tx,      ty + th])
+                                || motion.intersectSegment([tx,      ty,      tx,      ty + th]))
+            } else  // just check the diagonals
+                var intersects = (motion.intersectSegment([tx,       ty,      tx + tw, ty + th])
+                               || motion.intersectSegment([tx,       ty + th, tx + tw, ty     ]));
+            if (intersects) {
+                if (tgw === 1 && tgh === 1) { // simple case size 1 target, return straight away.
+                    update.x = target.center.x - tkw;
+                    update.y = target.center.y - tkh;
+                    return true;
+                }
+                
+                let corners = [];
+                const gridSize = canvas.grid.size;
+                // Create a grid of the squares covered by the target token
+                [...Array(gWidth).keys()].forEach(xc => [...Array(gHeight).keys()].forEach(yc => 
+                    corners.push({x: target.data.x + xc * gridSize, y: target.data.y + yc * gridSize})
+                ))
+
+                // Find the closest square to the token start position that intersets the motion
+                const closest = corners.sort((a, b) => 
+                    Math.hypot(token.x + tkw - (a.x + gridSize / 2), token.y  + tkh - (a.y + gridSize / 2)) - Math.hypot(token.x + tkw - (b.x + gridSize / 2), token.y  + tkh - (b.y + gridSize / 2)));
+                for (let corner of closest) {
+                    if (motion.intersectSegment([corner.x, corner.y, corner.x + gridSize, corner.y + gridSize])
+                     || motion.intersectSegment([corner.x, corner.y + gridSize, corner.x + gridSize, corner.y])) {
+                        update.x = corner.x;
+                        update.y = corner.y;;
+                        return true;
+                    }
+                };
+                console.warn("Ttrigger Happy | Help me the universe is non-euclidean");
             }
         }
         return true;
     }
-    _onPreUpdateToken(scene, embedded, update, options, userId) {
+    _onPreUpdateToken(scene, id, update) {
         if (!scene.isView) return true;
         if (update.x === undefined && update.y === undefined) return true;
         const token = scene.data.tokens.find(t => t._id === update._id);
         if (token.hidden) return true; // don't stop ivnisible tokens?
         this._doCaptureTriggers(token, scene, update);
-        this._doMoveTriggers(token, scene, update);
+        return this._doMoveTriggers(token, scene, update);
     }
 }
 
