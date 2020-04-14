@@ -246,8 +246,9 @@ class TriggerHappy {
         if (update.x === undefined && update.y === undefined) return true;
         const token = scene.data.tokens.find(t => t._id === update._id);
         if (token.hidden) return true; // don't stop ivnisible tokens?
-        this._doCaptureTriggers(token, scene, update);
-        this._doMoveTriggers(token, scene, update);
+        const stop = this._doCaptureTriggers(token, scene, update);
+        if (stop === false) return false;
+        return this._doMoveTriggers(token, scene, update);
     }
 }
 
