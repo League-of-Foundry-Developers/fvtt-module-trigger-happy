@@ -154,7 +154,7 @@ class TriggerHappy {
         return tokens.filter(token => triggers.some(trigger => this._isTokenTrigger(token, trigger, type)));
     }
 
-    // return all triggers which which trigger on one of the tokens
+    // return all triggers for the set of tokens
     _getTriggersFromTokens(triggers, tokens, type) {
         return triggers.filter(trigger => tokens.some(token => this._isTokenTrigger(token, trigger, type)));
     }
@@ -229,10 +229,10 @@ class TriggerHappy {
 
         const motion = new Ray({x: token.x + tokenWidth, y: token.y  + tokenHeight}, {x: finalX + tokenWidth, y: finalY  + tokenHeight});
 
-        // don't trigger on tokens that are already captured
+        // don't consider targets if the token's start position is inside the target
         targets = targets.filter(target =>  !this._tokenContains(target, {x: token.x + tokenWidth, y: token.y  + tokenHeight}));
 
-        // sort list by distance from start token position
+        // sort targets by distance from the token's start position
         targets.sort((a , b) => targets.sort((a, b) => Math.hypot(token.x - a.x, token.y - a.y) - Math.hypot(token.x - b.x, token.y - b.y)))
         
         for (let target of targets) {
