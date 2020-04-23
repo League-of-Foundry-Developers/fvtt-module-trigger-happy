@@ -260,7 +260,8 @@ class TriggerHappy {
         }
         return true;
     }
-    _onPreUpdateToken(scene, id, update) {
+    // Arguments match the new prototype of FVTT 0.5.4
+    _onPreUpdateToken(scene, embedded, update, options, userId) {
         if (!scene.isView) return true;
         if (update.x === undefined && update.y === undefined) return true;
         const token = scene.data.tokens.find(t => t._id === update._id);
