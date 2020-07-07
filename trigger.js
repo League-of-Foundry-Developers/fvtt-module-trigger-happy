@@ -26,7 +26,8 @@ class TriggerHappy {
     get journals() {
         const folders = game.folders.entities.filter(f => f.type === "JournalEntry" && f.name === this.journalName);
         const journals = game.journal.entities.filter(j => j.name === this.journalName);
-        return this._getFoldersContentsRecursive(folders, journals);
+        // Make sure there are no duplicates (journal name is within a folder with the trigger name)
+        return Array.from(new Set(this._getFoldersContentsRecursive(folders, journals)));
     }
 
     _getFoldersContentsRecursive(folders, contents) {
