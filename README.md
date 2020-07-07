@@ -10,6 +10,16 @@ You can install this module by using the following manifest URL : `https://raw.g
 
 As GM go to the `Manage Modules` options menu in your World Settings tab then enable the `Trigger Happy` module.
 
+# Video and Step by Step instructions
+
+before we get into the details of how to use Trigger Happy, I think these links might be easier for people to get started quickly with using this module. Don't forget to come back and read the full README file to understand the full extent of how you can use Trigger Happy.
+
+Here is a "Introduction to Trigger Happy" video tutorial by ['D&D Population Me'](https://patreon.com/dndpopulationme) : [https://www.youtube.com/watch?v=okTWYO4oEMA](https://www.youtube.com/watch?v=okTWYO4oEMA)
+
+['D&D Population Me'](https://patreon.com/dndpopulationme) has also made two useful step by step guides for the most common use cases for using Trigger Happy :
+- Token teleportation tutorial : [https://forums.forge-vtt.com/t/trigger-happy-teleportation-tutorial/2117/6](https://forums.forge-vtt.com/t/trigger-happy-teleportation-tutorial/2117/6)
+- Scene Trap tutorial : [https://forums.forge-vtt.com/t/trigger-happy-traps/3448/4](https://forums.forge-vtt.com/t/trigger-happy-traps/3448/4)
+
 # How to use
 
 To create triggers for a scene, it's very easy, create a journal entry with the title "Trigger Happy" (configurable in module settings) in which you will drag & drop actors, journals, macros, and anything else you want to trigger.
@@ -72,6 +82,7 @@ The following options are available :
 - `ooc`: Will send any chat messages in that trigger as an out of character message
 - `emote`: Will send any chat messages in that trigger as an emote
 - `whisper`: Will send any chat messages in that trigger as a whisper to the GM
+- `selfWhisper`: Will send any chat messages in that trigger as a whisper to the player who activates the trigger
 - `preload`: Will cause any scene on the trigger line to be preloaded instead of switching the view to it
 - `click`: Will cause the trigger token to activate on a click
 - `move`: Will cause the trigger token to activate on a token move over it
