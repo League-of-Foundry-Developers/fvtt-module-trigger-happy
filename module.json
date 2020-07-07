@@ -6,7 +6,22 @@
   "author": "KaKaRoTo, tposney",
   "scripts": ["trigger.js"],
   "styles": [],
-  "packs": [],
+  "packs": [
+      {
+          "name": "actors",
+          "label": "Trigger Actors",
+          "path": "packs/actors.db",
+          "entity": "Actor",
+          "package": "trigger-happy"
+      },
+      {
+          "name": "journals",
+          "label": "Trigger Happy Examples",
+          "path": "packs/journal.db",
+          "entity": "JournalEntry",
+          "package": "trigger-happy"
+      }
+  ],
   "url": "https://github.com/kakaroto/fvtt-module-trigger-happy",
   "manifest": "https://raw.githubusercontent.com/kakaroto/fvtt-module-trigger-happy/master/module.json",
   "download": "https://github.com/kakaroto/fvtt-module-trigger-happy/archive/v0.4.2.zip",

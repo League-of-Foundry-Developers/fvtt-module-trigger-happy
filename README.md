@@ -20,6 +20,8 @@ Here is a "Introduction to Trigger Happy" video tutorial by ['D&D Population Me'
 - Token teleportation tutorial : [https://forums.forge-vtt.com/t/trigger-happy-teleportation-tutorial/2117/6](https://forums.forge-vtt.com/t/trigger-happy-teleportation-tutorial/2117/6)
 - Scene Trap tutorial : [https://forums.forge-vtt.com/t/trigger-happy-traps/3448/4](https://forums.forge-vtt.com/t/trigger-happy-traps/3448/4)
 
+Trigger Happy also comes with journal entries in its compendiums that gives useful examples of trigger scenarios you can use.
+
 # How to use
 
 To create triggers for a scene, it's very easy, create a journal entry with the title "Trigger Happy" (configurable in module settings) in which you will drag & drop actors, journals, macros, and anything else you want to trigger.
