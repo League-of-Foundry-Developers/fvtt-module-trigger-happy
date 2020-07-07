@@ -100,13 +100,16 @@ class TriggerHappy {
                     await effect.draw();
                 } else if (effect.entity === "ChatMessage") {
                     const chatData = duplicate(effect.data)
-                    if (trigger.options.includes("ooc"))
+                    if (trigger.options.includes("ooc")) {
                         chatData.type = CONST.CHAT_MESSAGE_TYPES.OOC;
-                    else if (trigger.options.includes("emote"))
+                    } else if (trigger.options.includes("emote")) {
                         chatData.type = CONST.CHAT_MESSAGE_TYPES.EMOTE;
-                    else if (trigger.options.includes("whisper")) {
+                    } else if (trigger.options.includes("whisper")) {
                         chatData.type = CONST.CHAT_MESSAGE_TYPES.WHISPER;
                         chatData.whisper = ChatMessage.getWhisperRecipients("GM");
+                    } else if (trigger.options.includes("selfWhisper")) {
+                        chatData.type = CONST.CHAT_MESSAGE_TYPES.WHISPER;
+                        chatData.whisper = [game.user.id];
                     }
                     await ChatMessage.create(chatData);
                 } else if (effect.constructor.name === "Token") {
