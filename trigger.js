@@ -9,6 +9,14 @@ class TriggerHappy {
             type: String,
             onChange: this._parseJournals.bind(this)
         });
+        game.settings.register("trigger-happy", "enableTriggers", {
+            name: "Enable triggers when running as GM",
+            scope: "client",
+            config: false,
+            default: true,
+            type: Boolean,
+            onChange: this._parseJournals.bind(this)
+        });
         Hooks.on("ready", this._parseJournals.bind(this));
         Hooks.on("canvasReady", this._onCanvasReady.bind(this));
         Hooks.on('controlToken', this._onControlToken.bind(this));
@@ -42,6 +50,8 @@ class TriggerHappy {
 
     _parseJournals() {
         this.triggers = []
+        if (game.user.isGM && !game.settings.get("trigger-happy", "enableTriggers"))
+            return;
         this.journals.forEach(journal => this._parseJournal(journal));
     }
     _parseJournal(journal) {
@@ -269,11 +279,27 @@ class TriggerHappy {
         if (!scene.isView) return true;
         if (update.x === undefined && update.y === undefined) return true;
         const token = scene.data.tokens.find(t => t._id === update._id);
-        if (token.hidden) return true; // don't stop ivnisible tokens?
         const stop = this._doCaptureTriggers(token, scene, update);
         if (stop === false) return false;
         return this._doMoveTriggers(token, scene, update);
     }
+
+    static getSceneControlButtons(buttons) {
+        let tokenButton = buttons.find(b => b.name == "token")
+
+        if (tokenButton) {
+            tokenButton.tools.push({
+                name: "triggers",
+                title: "Enable Trigger Happy triggers",
+                icon: "fas fa-grin-squint-tears",
+                toggle: true,
+                active: game.settings.get("trigger-happy", "enableTriggers"),
+                visible: game.user.isGM,
+                onClick: (value) => game.settings.set("trigger-happy", "enableTriggers", value)
+            });
+        }
+    }
 }
 
 Hooks.on('init', () => game.triggers = new TriggerHappy())
+Hooks.on('getSceneControlButtons', TriggerHappy.getSceneControlButtons)
