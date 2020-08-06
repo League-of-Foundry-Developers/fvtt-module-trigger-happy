@@ -56,10 +56,11 @@ You can also use two non-official 'links' by using the same format :
 - `@Token[token name]` : If used as a trigger, this will cause the triggers to activate on any token with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to select the first token matching that name.
 - `@ChatMessage[message contents]` : As an effect, this will send the specified message contents as a chat message
 - `@Trigger[option1 option2 option3]` : This applies modifiers on the trigger line, keep reading for more information about available options.
+- `@Drawing[label]` : This will trigger the effects when the player clicks/moves a token within the area of a drawing which has its text set to the `label` specified. Works best with rectangles.
 
 By using a `Token` trigger, you can have a single actor for your triggers (a door, a button or a transparent image) but setting a different and unique name for your tokens would allow you to use them as different triggers, without duplicating actors all over your actors directory.
 
-By using the `ChatMessage` trigger, you can send any message to chat. When used in combination with [The Furnace](https://github.com/kakaroto/fvtt-module-furnace)'s Advanced Macro system, you can use it to trigger macros with arguments specific to your trigger. 
+By using the `ChatMessage` effect, you can send any message to chat. When used in combination with [The Furnace](https://github.com/kakaroto/fvtt-module-furnace)'s Advanced Macro system, you can use it to trigger macros with arguments specific to your trigger. 
 
 You can also use the format `@ChatMessage[message contents]{speaker name alias}`
 
@@ -119,6 +120,10 @@ Here's an example of how these trigger options can be used together :
 
 
 # Changelog
+
+## v0.7
+
+- Add support for labelled drawings as triggers
 
 ## v0.4.1
 
