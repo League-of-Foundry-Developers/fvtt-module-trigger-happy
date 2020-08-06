@@ -281,8 +281,8 @@ class TriggerHappy {
         targets.sort((a , b) => targets.sort((a, b) => Math.hypot(token.x - a.x, token.y - a.y) - Math.hypot(token.x - b.x, token.y - b.y)))
         
         for (let target of targets) {
-            const tx = target.x;
-            const ty = target.y;
+            const tx = target.data.x;
+            const ty = target.data.y;
             const tw = target.w || target.data.width;
             const th = target.h || target.data.height;
             // test motion vs token diagonals
