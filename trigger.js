@@ -57,7 +57,7 @@ class TriggerHappy {
     _parseJournal(journal) {
         const triggerLines = journal.data.content.replace(/(<p>|<div>|<br *\/?>)/gm, '\n').split("\n");
         for (const line of triggerLines) {
-            const entityLinks = CONST.ENTITY_LINK_TYPES.concat(["ChatMessage", "Token", "Trigger"])
+            const entityLinks = CONST.ENTITY_LINK_TYPES.concat(["ChatMessage", "Token", "Trigger", "Drawing"])
             const entityMatchRgx = `@(${entityLinks.join("|")})\\[([^\\]]+)\\](?:{([^}]+)})?`;
             const rgx = new RegExp(entityMatchRgx, 'g');
             let trigger = null;
@@ -69,12 +69,14 @@ class TriggerHappy {
                     options = id.split(" ");
                     continue;
                 }
-                if (!trigger && entity !== "Actor" && entity !== "Token" && entity !== "Scene") break;
+                if (!trigger && !["Actor", "Token", "Scene", "Drawing"].includes(entity)) break;
                 let effect = null;
                 if (entity === "ChatMessage") {
                     effect = new ChatMessage({ content: id, speaker: {alias: label} });
                 } else if (entity === "Token") {
                     effect = new Token({ name: id });
+                } else if (!trigger && entity === "Drawing") {
+                    effect = new Drawing({ type: "r", text: id });
                 } else {
                     const config = CONFIG[entity];
                     if (!config) continue;
@@ -150,22 +152,39 @@ class TriggerHappy {
             return trigger.options.includes("capture");
         return true;
     }
+    _isDrawingTrigger(drawing, trigger, type) {
+        const isTrigger = (trigger.trigger.constructor.name === "Drawing" && trigger.trigger.data.text === drawing.data.text);
+        if (!isTrigger) return false;
+        if (type === "click")
+            return trigger.options.includes('click') || (!trigger.options.includes('move') && !drawing.data.hidden);
+        if (type === "move")
+            return trigger.options.includes('move') || (!trigger.options.includes('click') && drawing.data.hidden);
+        if (type === "capture")
+            return trigger.options.includes("capture");
+        return true;
+    }
     _isSceneTrigger(scene, trigger) {
         return trigger.trigger.entity === "Scene" && trigger.trigger.id === scene.id;
     }
 
-    _tokenContains(token, position) {
-        return  Number.between(position.x, token.data.x, token.data.x + token.w)
-                && Number.between(position.y, token.data.y, token.data.y + token.h)
+    _placeableContains(placeable, position) {
+        // Tokens have getter (since width/height is in grid increments) but drawings use data.width/height directly
+        const w = placeable.w || placeable.data.width;
+        const h = placeable.h || placeable.data.height;
+        return  Number.between(position.x, placeable.data.x, placeable.data.x + w)
+                && Number.between(position.y, placeable.data.y, placeable.data.y + h)
     }
 
-    _getTokensAt(tokens, position) {
-        return tokens.filter(token => this._tokenContains(token, position));
+    _getPlaceablesAt(placeables, position) {
+        return placeables.filter(placeable => this._placeableContains(placeable, position));
     }
 
     // return all tokens which have a token trigger
-    _getTokensFromTriggers (tokens, triggers, type) {
+    _getTokensFromTriggers(tokens, triggers, type) {
         return tokens.filter(token => triggers.some(trigger => this._isTokenTrigger(token, trigger, type)));
+    }
+    _getDrawingsFromTriggers(drawings, triggers, type) {
+        return drawings.filter(drawing => triggers.some(trigger => this._isDrawingTrigger(drawing, trigger, type)));
     }
 
     // return all triggers for the set of tokens
@@ -173,6 +192,11 @@ class TriggerHappy {
         return triggers.filter(trigger => tokens.some(token => this._isTokenTrigger(token, trigger, type)));
     }
 
+    _getTriggersFromDrawings(triggers, drawings, type) {
+        // Don't trigger on drawings while on the drawing layer.
+        if (canvas.activeLayer === canvas.drawings) return [];
+        return triggers.filter(trigger => drawings.some(drawing => this._isDrawingTrigger(drawing, trigger, type)));
+    }
     _onCanvasReady(canvas) {
         const triggers = this.triggers.filter(trigger => this._isSceneTrigger(canvas.scene, trigger));
         this._executeTriggers(triggers);
@@ -188,18 +212,22 @@ class TriggerHappy {
     }
     _onMouseDown(event) {
         const position = this._getMousePosition(event);
-        const clickTokens = this._getTokensAt(canvas.tokens.placeables, position);
-        if (clickTokens.length === 0) return;
+        const clickTokens = this._getPlaceablesAt(canvas.tokens.placeables, position);
+        const clickDrawings = this._getPlaceablesAt(canvas.drawings.placeables, position);
+        if (clickTokens.length === 0 && clickDrawings.length == 0) return;
         const downTriggers = this._getTriggersFromTokens(this.triggers, clickTokens, 'click');
+        downTriggers.push(...this._getTriggersFromDrawings(this.triggers, clickDrawings, 'click'));
         if (downTriggers.length === 0) return;
-        canvas.stage.once('mouseup', (ev) => this._onMouseUp(ev, clickTokens, downTriggers));
+        canvas.stage.once('mouseup', (ev) => this._onMouseUp(ev, clickTokens, clickDrawings, downTriggers));
     }
 
-    _onMouseUp(event, tokens, downTriggers) {
+    _onMouseUp(event, tokens, drawings, downTriggers) {
         const position = this._getMousePosition(event);
-        const upTokens = this._getTokensAt(tokens, position);
-        if (upTokens.length === 0) return;
+        const upTokens = this._getPlaceablesAt(tokens, position);
+        const upDrawings = this._getPlaceablesAt(drawings, position);
+        if (upTokens.length === 0 && upDrawings.length === 0) return;
         const triggers = this._getTriggersFromTokens(this.triggers, upTokens, 'click');
+        triggers.push(...this._getTriggersFromDrawings(this.triggers, upDrawings, 'click'));
         this._executeTriggers(triggers);
     }
 
@@ -208,7 +236,7 @@ class TriggerHappy {
         const tokens = [token];
         const triggers = this._getTriggersFromTokens(this.triggers, tokens, 'click');
         if (triggers.length === 0) return;
-        token.once('click', (ev) => this._onMouseUp(ev, tokens, triggers));
+        token.once('click', (ev) => this._onMouseUp(ev, tokens, [], triggers));
     }
 
     _doMoveTriggers(token, scene, update) {
@@ -217,9 +245,11 @@ class TriggerHappy {
             y: (update.y || token.y) + token.height * scene.data.grid / 2
         };
         const movementTokens = canvas.tokens.placeables.filter(tok => tok.data._id !== token._id);
-        const tokens = this._getTokensAt(movementTokens, position);
-        if (tokens.length === 0) return true;
+        const tokens = this._getPlaceablesAt(movementTokens, position);
+        const drawings = this._getPlaceablesAt(canvas.drawings.placeables, position);
+        if (tokens.length === 0 && drawings.length === 0) return true;
         const triggers = this._getTriggersFromTokens(this.triggers, tokens, 'move');
+        triggers.push(...this._getTriggersFromDrawings(this.triggers, drawings, 'move'));
         
         if (triggers.length === 0) return true;
         if (triggers.some(trigger => trigger.options.includes("stopMovement"))) {
@@ -233,7 +263,8 @@ class TriggerHappy {
     _doCaptureTriggers(token, scene, update) {
         // Get all trigger tokens in scene
         let targets = this._getTokensFromTriggers(canvas.tokens.placeables, this.triggers, 'capture');
-        if (!targets) return;
+        targets.push(...this._getDrawingsFromTriggers(canvas.drawings.placeables, this.triggers, 'capture'));
+        if (targets.length === 0) return;
 
         const finalX = update.x || token.x;
         const finalY = update.y || token.y;
@@ -244,7 +275,7 @@ class TriggerHappy {
         const motion = new Ray({x: token.x + tokenWidth, y: token.y  + tokenHeight}, {x: finalX + tokenWidth, y: finalY  + tokenHeight});
 
         // don't consider targets if the token's start position is inside the target
-        targets = targets.filter(target =>  !this._tokenContains(target, {x: token.x + tokenWidth, y: token.y  + tokenHeight}));
+        targets = targets.filter(target =>  !this._placeableContains(target, {x: token.x + tokenWidth, y: token.y  + tokenHeight}));
 
         // sort targets by distance from the token's start position
         targets.sort((a , b) => targets.sort((a, b) => Math.hypot(token.x - a.x, token.y - a.y) - Math.hypot(token.x - b.x, token.y - b.y)))
@@ -252,10 +283,10 @@ class TriggerHappy {
         for (let target of targets) {
             const tx = target.x;
             const ty = target.y;
-            const tw = target.w;
-            const th = target.h;
+            const tw = target.w || target.data.width;
+            const th = target.h || target.data.height;
             // test motion vs token diagonals
-            if (target.data.width > 1 && target.data.height > 1 && target.data.width * target.data.height > 4) {
+            if (tw > canvas.grid.w && th > canvas.grid.w && tw * th > 4 * canvas.grid.w) {
                 // big token so do boundary lines
                 var intersects = ( motion.intersectSegment([tx,      ty,      tx + tw, ty     ])
                                 || motion.intersectSegment([tx + tw, ty,      tx + tw, ty + th])
@@ -300,6 +331,7 @@ class TriggerHappy {
         }
     }
 }
+
 
 Hooks.on('init', () => game.triggers = new TriggerHappy())
 Hooks.on('getSceneControlButtons', TriggerHappy.getSceneControlButtons)
