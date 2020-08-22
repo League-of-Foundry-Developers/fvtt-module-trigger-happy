@@ -52,11 +52,12 @@ As an example, you can put this into your entry :
 
 The above example used the `@Actor[name]` format for simplicity, but when drag&dropping actors, they would appear in the journal entry as `@Actor[id]{name}`.
 
-You can also use two non-official 'links' by using the same format : 
+You can also use some non-official 'links' by using the same format : 
 - `@Token[token name]` : If used as a trigger, this will cause the triggers to activate on any token with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to select the first token matching that name.
 - `@ChatMessage[message contents]` : As an effect, this will send the specified message contents as a chat message
 - `@Trigger[option1 option2 option3]` : This applies modifiers on the trigger line, keep reading for more information about available options.
 - `@Drawing[label]` : This will trigger the effects when the player clicks/moves a token within the area of a drawing which has its text set to the `label` specified. Works best with rectangles.
+- `@Door[coordinates]` : This will trigger the effects when a player opens or closes a door (based on options). The coordinates can be copy/pasted from the wall configuration sheet (excluding the `[` and `]`).
 
 By using a `Token` trigger, you can have a single actor for your triggers (a door, a button or a transparent image) but setting a different and unique name for your tokens would allow you to use them as different triggers, without duplicating actors all over your actors directory.
 
@@ -91,6 +92,8 @@ The following options are available :
 - `move`: Will cause the trigger token to activate on a token move over it
 - `stopMovement`: Will prevent any tokens from moving on top of the trigger token
 - `capture`: Will cause the trigger token to capture any player moment that crosses it
+- `doorClose`: Will cause a `@Door` trigger to trigger when the door is closed instead of the default when it opens.
+- `doorOpen`: Will cause a `@Door` trigger to trigger when the door is open. This is the default, but it can be used along with `doorClose` option to have it trigger on both open and close
 
 If a token is hidden (GM layer), then it is automatically considered a 'move' trigger, otherwise it's a 'click' trigger. You can override it with the `@Trigger[click]` or `@Trigger[move]` options, or you can specify both options to make a token trigger on both clicks and moves.
 
