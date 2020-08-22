@@ -24,6 +24,7 @@ class TriggerHappy {
         Hooks.on('updateJournalEntry', this._parseJournals.bind(this));
         Hooks.on('deleteJournalEntry', this._parseJournals.bind(this));
         Hooks.on("preUpdateToken", this._onPreUpdateToken.bind(this));
+        Hooks.on("preUpdateWall", this._onPreUpdateWall.bind(this));
 
         this.triggers = [];
     }
@@ -57,7 +58,7 @@ class TriggerHappy {
     _parseJournal(journal) {
         const triggerLines = journal.data.content.replace(/(<p>|<div>|<br *\/?>)/gm, '\n').split("\n");
         for (const line of triggerLines) {
-            const entityLinks = CONST.ENTITY_LINK_TYPES.concat(["ChatMessage", "Token", "Trigger", "Drawing"])
+            const entityLinks = CONST.ENTITY_LINK_TYPES.concat(["ChatMessage", "Token", "Trigger", "Drawing", "Door"])
             const entityMatchRgx = `@(${entityLinks.join("|")})\\[([^\\]]+)\\](?:{([^}]+)})?`;
             const rgx = new RegExp(entityMatchRgx, 'g');
             let trigger = null;
@@ -69,7 +70,7 @@ class TriggerHappy {
                     options = id.split(" ");
                     continue;
                 }
-                if (!trigger && !["Actor", "Token", "Scene", "Drawing"].includes(entity)) break;
+                if (!trigger && !["Actor", "Token", "Scene", "Drawing", "Door"].includes(entity)) break;
                 let effect = null;
                 if (entity === "ChatMessage") {
                     effect = new ChatMessage({ content: id, speaker: {alias: label} });
@@ -77,6 +78,9 @@ class TriggerHappy {
                     effect = new Token({ name: id });
                 } else if (!trigger && entity === "Drawing") {
                     effect = new Drawing({ type: "r", text: id });
+                } else if (!trigger && entity === "Door") {
+                    const coords = id.split(",").map(c => Number(c))
+                    effect = new Wall({ door: 1, c: coords });
                 } else {
                     const config = CONFIG[entity];
                     if (!config) continue;
@@ -313,6 +317,18 @@ class TriggerHappy {
         const stop = this._doCaptureTriggers(token, scene, update);
         if (stop === false) return false;
         return this._doMoveTriggers(token, scene, update);
+    }
+    _onPreUpdateWall(scene, embedded, update, options, userId) {
+        // Only trigger on door state changes
+        if (embedded.door !== 1 || update.ds === undefined) return;
+        const triggers = this.triggers.filter(trigger => {
+            if (trigger.trigger.constructor.name !== "Wall") return false;
+            if (embedded.c.toString() !== trigger.trigger.coords.toString()) return false;
+            const onClose = trigger.options.includes("doorClose");
+            const onOpen = !trigger.options.includes("doorClose") || trigger.options.includes("doorOpen");
+            return (update.ds === 1 && onOpen) || (update.ds === 0 && onClose);
+        });
+        this._executeTriggers(triggers);
     }
 
     static getSceneControlButtons(buttons) {
