@@ -56,7 +56,7 @@ class TriggerHappy {
         this.journals.forEach(journal => this._parseJournal(journal));
     }
     _parseJournal(journal) {
-        const triggerLines = journal.data.content.replace(/(<p>|<div>|<br *\/?>)/gm, '\n').split("\n");
+        const triggerLines = journal.data.content.replace(/(<p>|<div>|<br *\/?>)/gm, '\n').replace(/&nbsp;/gm, ' ').split("\n");
         for (const line of triggerLines) {
             const entityLinks = CONST.ENTITY_LINK_TYPES.concat(["ChatMessage", "Token", "Trigger", "Drawing", "Door"])
             const entityMatchRgx = `@(${entityLinks.join("|")})\\[([^\\]]+)\\](?:{([^}]+)})?`;
