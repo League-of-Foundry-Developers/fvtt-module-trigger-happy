@@ -320,7 +320,7 @@ class TriggerHappy {
     }
     _onPreUpdateWall(scene, embedded, update, options, userId) {
         // Only trigger on door state changes
-        if (embedded.door !== 1 || update.ds === undefined) return;
+        if (embedded.door === 0 || update.ds === undefined) return;
         const triggers = this.triggers.filter(trigger => {
             if (trigger.trigger.constructor.name !== "Wall") return false;
             if (embedded.c.toString() !== trigger.trigger.coords.toString()) return false;
