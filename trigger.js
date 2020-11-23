@@ -111,7 +111,9 @@ class TriggerHappy {
                     else
                         await effect.view();
                 } else if (effect.entity === "Macro") {
+                    effect.setFlag("trigger-happy", "trigger", {entity: trigger.entity, id: trigger.id}); 
                     await effect.execute();
+                    effect.unsetFlag("trigger-happy", "trigger")
                 } else if (effect.entity === "RollTable") {
                     await effect.draw();
                 } else if (effect.entity === "ChatMessage") {
