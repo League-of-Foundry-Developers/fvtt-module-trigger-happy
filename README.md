@@ -6,7 +6,7 @@ This was created as a way of creating the interactive FVTT Tutorial on [The Forg
 
 # Installation
 
-You can install this module by using the following manifest URL : `https://raw.githubusercontent.com/kakaroto/fvtt-module-trigger-happy/master/module.json`
+You can install this module by using the following manifest URL : `https://raw.githubusercontent.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/master/module.json`
 
 As GM go to the `Manage Modules` options menu in your World Settings tab then enable the `Trigger Happy` module.
 
@@ -156,10 +156,6 @@ Here's an example of how these trigger options can be used together :
 
 ## v0.1
 - Initial release with support for Actor and Scene triggers
-
-# Support
-
-If you like this module and would like to help support its development, you can subscribe to my [Patreon](https://www.patreon.com/kakaroto) or if you prefer, you can also send me some rations via [Ko-Fi](https://ko-fi.com/kakaroto)
 
 # License
 This Foundry VTT module, writen by KaKaRoTo, is licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/).
