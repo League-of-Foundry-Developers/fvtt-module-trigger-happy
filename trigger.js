@@ -82,12 +82,13 @@ class TriggerHappy {
                     const compendiumID = compendiumPieces.join(".")
                     const pack = game.packs.get(compendiumID)
                     if(!pack){
-                      continue;
+                        continue;
                     }
                     const type = pack.metadata.entity
-                    if(type === "JournalEntry"){
-                        effect = await pack.getEntity(entryid)
+                    if(type === "Playlist" || type == "Scene"){ //far as I know, these two are the only Entities that can't be easily supported...
+                        continue;
                     }
+                    effect = await pack.getEntity(entryid)
                 } else if (!trigger && entity === "Drawing") {
                     effect = new Drawing({ type: "r", text: id });
                 } else if (!trigger && entity === "Door") {
