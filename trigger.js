@@ -55,10 +55,10 @@ class TriggerHappy {
             return;
         this.journals.forEach(journal => this._parseJournal(journal));
     }
-    _parseJournal(journal) {
+    async _parseJournal(journal) {
         const triggerLines = journal.data.content.replace(/(<p>|<div>|<br *\/?>)/gm, '\n').replace(/&nbsp;/gm, ' ').split("\n");
         for (const line of triggerLines) {
-            const entityLinks = CONST.ENTITY_LINK_TYPES.concat(["ChatMessage", "Token", "Trigger", "Drawing", "Door"])
+            const entityLinks = CONST.ENTITY_LINK_TYPES.concat(["ChatMessage", "Token", "Trigger", "Drawing", "Door", "Compendium"])
             const entityMatchRgx = `@(${entityLinks.join("|")})\\[([^\\]]+)\\](?:{([^}]+)})?`;
             const rgx = new RegExp(entityMatchRgx, 'g');
             let trigger = null;
@@ -76,6 +76,18 @@ class TriggerHappy {
                     effect = new ChatMessage({ content: id, speaker: {alias: label} });
                 } else if (entity === "Token") {
                     effect = new Token({ name: id });
+                } else if (entity === "Compendium"){
+                    let compendiumPieces = id.split('.')
+                    const entryid = compendiumPieces.pop()
+                    const compendiumID = compendiumPieces.join(".")
+                    const pack = game.packs.get(compendiumID)
+                    if(!pack){
+                      continue;
+                    }
+                    const type = pack.metadata.entity
+                    if(type === "JournalEntry"){
+                        effect = await pack.getEntity(entryid)
+                    }
                 } else if (!trigger && entity === "Drawing") {
                     effect = new Drawing({ type: "r", text: id });
                 } else if (!trigger && entity === "Door") {
