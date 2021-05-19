@@ -123,6 +123,11 @@ Here's an example of how these trigger options can be used together :
 
 
 # Changelog
+## 0.8.5
+- Foundry vtt 0.8 compatible.
+- New config setting edge collision. If set tokens will be captured at the edge of a drawing/token rather than the center.
+- fix the silly packaging error
+
 ## 0.8.3
 - Foundry vtt 0.8 compatible.
 - New config setting edge collision. If set tokens will be captured at the edge of a drawing/token rather than the center.
