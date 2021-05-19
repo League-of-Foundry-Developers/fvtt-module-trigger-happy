@@ -118,9 +118,9 @@ class TriggerHappy {
                       await game.scenes.preload(effect.id);
                   else
                       await effect.view();
-              } else if (effect.entity === "Macro") {
+              } else if (effect instanceof  Macro) {
                   await effect.execute();
-              } else if (effect.entity === "RollTable") {
+              } else if (effect instanceof RollTable) {
                   await effect.draw();
               } else if (effect instanceof ChatMessage) {
                   const chatData = duplicate(effect.data)

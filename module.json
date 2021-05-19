@@ -2,11 +2,7 @@
   "name": "trigger-happy",
   "title": "Trigger Happy",
   "description": "Automate everything in your world by creating triggers for your players to spring traps or anything you can think of!",
-<<<<<<< HEAD
   "version": "0.8.3",
-=======
-  "version": "0.8.2",
->>>>>>> 152495646efc595bab6f982d29639b81315caec7
   "author": "KaKaRoTo, tposney",
   "scripts": ["trigger.js"],
   "styles": [],
@@ -28,13 +24,7 @@
   ],
   "url": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy",
   "manifest": "https://raw.githubusercontent.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/master/module.json",
-<<<<<<< HEAD
   "download": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/archive/v0.8.3.zip",
   "minimumCoreVersion": "0.8.3",
   "compatibleCoreVersion": "0.8.3"
-=======
-  "download": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/archive/v0.8.2.zip",
-  "minimumCoreVersion": "0.6.0",
-  "compatibleCoreVersion": "0.7.0"
->>>>>>> 152495646efc595bab6f982d29639b81315caec7
 }
