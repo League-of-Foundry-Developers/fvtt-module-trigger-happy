@@ -24,6 +24,17 @@ class TriggerHappy {
         default: false,
         type: Boolean
       });
+      game.settings.register("trigger-happy", "enableTriggerButton", {
+        name: "Add enable/disable trigger happy button",
+        scope: "world",
+        config: true,
+        default: true,
+        type: Boolean,
+        onChange: () => {
+          if (!game.settings.get("trigger-happy", "enableTriggerButton"))
+            game.settings.set("trigger-happy", "enableTriggers", true)
+        }
+      });
 
       Hooks.on("ready", this._parseJournals.bind(this));
       Hooks.on("canvasReady", this._onCanvasReady.bind(this));
@@ -113,7 +124,7 @@ class TriggerHappy {
       if (!triggers.length) return;
       for (const trigger of triggers) {
           for (let effect of trigger.effects) {
-              if (effect.entity === "Scene") {
+              if (effect.documentName === "Scene") {
                   if (trigger.options.includes("preload"))
                       await game.scenes.preload(effect.id);
                   else
@@ -155,9 +166,8 @@ class TriggerHappy {
   _isTokenTrigger(token, trigger, type) {
       const isTrigger = ((trigger.trigger instanceof Actor && trigger.trigger.id === token.data.actorId) ||
           (trigger.trigger instanceof TokenDocument && trigger.trigger.data.name === token.data.name));
-  // if (token.data.name === "new character" && trigger.trigger instanceof TokenDocument && type === "move") debugger;
       if (!isTrigger) return false;
-      if (type === "click")
+   if (type === "click")
           return trigger.options.includes('click') || (!trigger.options.includes('move') && !token.data.hidden);
       if (type === "move")
           return trigger.options.includes('move') || (!trigger.options.includes('click') && token.data.hidden);
@@ -348,7 +358,7 @@ class TriggerHappy {
   static getSceneControlButtons(buttons) {
       let tokenButton = buttons.find(b => b.name == "token")
 
-      if (tokenButton) {
+      if (tokenButton && game.settings.get("trigger-happy", "enableTriggerButton")) {
           tokenButton.tools.push({
               name: "triggers",
               title: "Enable Trigger Happy triggers",
@@ -431,5 +441,5 @@ class TriggerHappy {
 }
 
 
-Hooks.on('init', () => game.triggers = new TriggerHappy())
+Hooks.on('setup', () => game.triggers = new TriggerHappy())
 Hooks.on('getSceneControlButtons', TriggerHappy.getSceneControlButtons)

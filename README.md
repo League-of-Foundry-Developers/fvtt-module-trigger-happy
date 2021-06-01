@@ -123,6 +123,9 @@ Here's an example of how these trigger options can be used together :
 
 
 # Changelog
+## 0.8.6
+ - Added a config setting to disable/enable the trigger happy active/inactive button on the context menu.
+ 
 ## 0.8.5
 - Foundry vtt 0.8 compatible.
 - New config setting edge collision. If set tokens will be captured at the edge of a drawing/token rather than the center.
