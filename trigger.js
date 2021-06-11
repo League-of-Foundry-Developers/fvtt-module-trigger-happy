@@ -398,8 +398,8 @@ class TriggerHappy {
         const ty = target.y;
         const tw = target.w || target.data.width;
         const th = target.h || target.data.height;
-        const tgw = target.data.width / gridSize; // target token width in grid units
-        const tgh = target.data.height / gridSize; // target token height in grid units
+        const tgw = Math.ceil(target.data.width / gridSize); // target token width in grid units
+        const tgh = Math.ceil(target.data.height / gridSize); // target token height in grid units
         // test motion vs token diagonals
         if (tgw > 1 && tgh > 1 && tgw * tgh > 4) {
             // big token so do boundary lines
