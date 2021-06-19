@@ -127,9 +127,11 @@ class TriggerHappy {
               if (effect.documentName === "Scene") {
                   if (trigger.options.includes("preload"))
                       await game.scenes.preload(effect.id);
-                  else
-                      await effect.view();
-              } else if (effect instanceof  Macro) {
+                  else {
+                      const scene = game.scenes.get(effect.id);
+                      await scene.view();
+                  }
+              } else if (effect instanceof Macro) {
                   await effect.execute();
               } else if (effect instanceof RollTable) {
                   await effect.draw();
@@ -332,7 +334,7 @@ class TriggerHappy {
   }
   // Arguments match the new prototype of FVTT 0.8.x
   _onPreUpdateToken(tokenDocument, update, options, userId) {
-      if (!tokenDocument.object.scene.isView) return true;
+      if (!tokenDocument.object?.scene?.isView) return true;
       if (update.x === undefined && update.y === undefined) return true;
       let stop;
       if (game.settings.get("trigger-happy", "edgeCollision"))
