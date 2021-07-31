@@ -352,7 +352,7 @@ class TriggerHappy {
           if (wallDocument.data.c.toString() !== trigger.trigger.data.c.toString()) return false;
           const onClose = trigger.options.includes("doorClose");
           const onOpen = !trigger.options.includes("doorClose") || trigger.options.includes("doorOpen");
-          return (update.ds === 1 && onOpen) || (update.ds === 0 && onClose);
+          return (update.ds === 1 && onOpen) || (update.ds === 0 && onClose && wallDocument.data.ds === 1);
       });
       this._executeTriggers(triggers);
   }

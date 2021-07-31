@@ -123,6 +123,9 @@ Here's an example of how these trigger options can be used together :
 
 
 # Changelog
+## 0.8.8
+- Fix so that unlocking a door does not triggere the door close trigger.
+
 ## 0.8.6
  - Added a config setting to disable/enable the trigger happy active/inactive button on the context menu.
  
