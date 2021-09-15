@@ -6,9 +6,19 @@ This was created as a way of creating the interactive FVTT Tutorial on [The Forg
 
 # Installation
 
-You can install this module by using the following manifest URL : `https://raw.githubusercontent.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/master/module.json`
+## Installation
 
-As GM go to the `Manage Modules` options menu in your World Settings tab then enable the `Trigger Happy` module.
+It's always easiest to install modules from the in game add-on browser.
+
+To install this module manually:
+1.  Inside the Foundry "Configuration and Setup" screen, click "Add-on Modules"
+2.  Click "Install Module"
+3.  In the "Manifest URL" field, paste the following url:
+
+`https://raw.githubusercontent.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/master/module.json`
+
+4.  Click 'Install' and wait for installation to complete
+5.  Don't forget to enable the module in game using the "Manage Module" button
 
 # Video and Step by Step instructions
 
@@ -121,57 +131,14 @@ Here's an example of how these trigger options can be used together :
 
 ```
 
+## [Changelog](./changelog.md)
 
-# Changelog
-## 0.8.8
-- Fix so that unlocking a door does not triggere the door close trigger.
+## Issues
 
-## 0.8.6
- - Added a config setting to disable/enable the trigger happy active/inactive button on the context menu.
- 
-## 0.8.5
-- Foundry vtt 0.8 compatible.
-- New config setting edge collision. If set tokens will be captured at the edge of a drawing/token rather than the center.
-- fix the silly packaging error
+Any issues, bugs, or feature requests are always welcome to be reported directly to the [Issue Tracker](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues ), or using the [Bug Reporter Module](https://foundryvtt.com/packages/bug-reporter/).
 
-## 0.8.3
-- Foundry vtt 0.8 compatible.
-- New config setting edge collision. If set tokens will be captured at the edge of a drawing/token rather than the center.
+## License
 
-## v0.7
-
-- Add support for labelled drawings as triggers
-
-## v0.4.1
-
-- Fix issue causing click triggers to fail for players not owning the trigger token
-
-## v0.4
-
-- Add support for capture triggers (@tposney)
-- Add support for API changes in FVTT 0.5.4
-
-## v0.3
-
-- Add support for triggers when moving a token over a trigger token (@tposney)
-- Fix a couple of bugs with regards to journal entries and chat messages (@tposney)
-- Add the ability to trigger tokens by clicking on them even if they are hidden from the player
-- Add support for `@Trigger[options]` links with options for move, click, stopMovement, ooc, emote, whisper, preload
-- Add support for having multiple journals and journals within subfolders
-- Fix new line detection when journal entry is written in preformatted text or div mode
-- Add support for sending chat messages using an alias
-
-
-## v0.2
-- Add support for `@Actor[name]` links instead of only drag&dropped `@Actor[id]` links
-- Add support for Token trigger
-- Add support for sending chat messages as trigger effects (useful with advanced macros)
-- Add support for setting a token as controlled as a trigger effect
-
-## v0.1
-- Initial release with support for Actor and Scene triggers
-
-# License
-This Foundry VTT module, writen by KaKaRoTo, is licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/).
+This Foundry VTT module, writen by KaKaRoTo, is licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/) and the [Foundry Virtual Tabletop Limited License Agreement for module development](https://foundryvtt.com/article/license/).
 
 This work is licensed under Foundry Virtual Tabletop [EULA - Limited License Agreement for module development v 0.1.6](http://foundryvtt.com/pages/license.html).
