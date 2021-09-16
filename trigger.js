@@ -99,7 +99,7 @@ export const TRIGGERS = {
   DOOR_OPEN: `doorOpen`,
 };
 
-export const ENTITY_TYPES = {
+export const TRIGGER_ENTITY_TYPES = {
   ACTOR: 'Actor',
   TOKEN: 'Token',
   SCENE: 'Scene',
@@ -107,7 +107,7 @@ export const ENTITY_TYPES = {
   DOOR: 'Door',
 };
 
-export const ENTITY_LINK_TYPES = {
+export const TRIGGER_ENTITY_LINK_TYPES = {
   CHAT_MESSAGE: 'ChatMessage',
   TOKEN: 'Token',
   TRIGGER: 'Trigger',
@@ -162,11 +162,11 @@ export class TriggerHappy {
       .split('\n');
     for (const line of triggerLines) {
       const entityLinks = CONST.ENTITY_LINK_TYPES.concat([
-        ENTITY_LINK_TYPES.CHAT_MESSAGE,
-        ENTITY_LINK_TYPES.TOKEN,
-        ENTITY_LINK_TYPES.TRIGGER,
-        ENTITY_LINK_TYPES.DRAWING,
-        ENTITY_LINK_TYPES.DOOR,
+        TRIGGER_ENTITY_LINK_TYPES.CHAT_MESSAGE,
+        TRIGGER_ENTITY_LINK_TYPES.TOKEN,
+        TRIGGER_ENTITY_LINK_TYPES.TRIGGER,
+        TRIGGER_ENTITY_LINK_TYPES.DRAWING,
+        TRIGGER_ENTITY_LINK_TYPES.DOOR,
       ]);
       const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
       const rgx = new RegExp(entityMatchRgx, 'g');
@@ -175,29 +175,29 @@ export class TriggerHappy {
       const effects = [];
       for (let match of line.matchAll(rgx)) {
         const [string, entity, id, label] = match;
-        if (entity === ENTITY_LINK_TYPES.TRIGGER) {
+        if (entity === TRIGGER_ENTITY_LINK_TYPES.TRIGGER) {
           options = id.split(' ');
           continue;
         }
         if (
           !trigger &&
           ![
-            ENTITY_TYPES.ACTOR,
-            ENTITY_TYPES.TOKEN,
-            ENTITY_TYPES.SCENE,
-            ENTITY_TYPES.DRAWING,
-            ENTITY_TYPES.DOOR,
+            TRIGGER_ENTITY_TYPES.ACTOR,
+            TRIGGER_ENTITY_TYPES.TOKEN,
+            TRIGGER_ENTITY_TYPES.SCENE,
+            TRIGGER_ENTITY_TYPES.DRAWING,
+            TRIGGER_ENTITY_TYPES.DOOR,
           ].includes(entity)
         )
           break;
         let effect = null;
-        if (entity === ENTITY_LINK_TYPES.CHAT_MESSAGE) {
+        if (entity === TRIGGER_ENTITY_LINK_TYPES.CHAT_MESSAGE) {
           effect = new ChatMessage({ content: id, speaker: { alias: label } }, {});
-        } else if (entity === ENTITY_LINK_TYPES.TOKEN) {
+        } else if (entity === TRIGGER_ENTITY_LINK_TYPES.TOKEN) {
           effect = new TokenDocument({ name: id }, {});
-        } else if (!trigger && entity === ENTITY_LINK_TYPES.DRAWING) {
+        } else if (!trigger && entity === TRIGGER_ENTITY_LINK_TYPES.DRAWING) {
           effect = new DrawingDocument({ type: 'r', text: id }, {});
-        } else if (!trigger && entity === ENTITY_LINK_TYPES.DOOR) {
+        } else if (!trigger && entity === TRIGGER_ENTITY_LINK_TYPES.DOOR) {
           const coords = id.split(',').map((c) => Number(c));
           effect = new WallDocument({ door: 1, c: coords }, {});
         } else {
