@@ -2,10 +2,10 @@
   "trigger-happy.settings.journalName.name": "Name of the Trigger Journal to use",
   "trigger-happy.settings.journalName.hint": "The name of the journal entry to use for listing triggers. There can only be one. Refer to README file in module website for how to configure triggers.",
   "trigger-happy.settings.enableTriggers.name": "Enable triggers when running as GM",
-  "trigger-happy.settings.enableTriggers.hint": "",
+  "trigger-happy.settings.enableTriggers.hint": " ",
   "trigger-happy.settings.edgeCollision.name": "Capture at edge of drawing/token",
-  "trigger-happy.settings.edgeCollision.hint": "",
+  "trigger-happy.settings.edgeCollision.hint": " ",
   "trigger-happy.settings.enableTriggerButton.name": "Add enable/disable trigger happy button",
-  "trigger-happy.settings.enableTriggerButton.hint": "",
+  "trigger-happy.settings.enableTriggerButton.hint": " ",
   "trigger-happy.labels.button.layer.enableTriggerHappy": "Enable Trigger Happy triggers"
 }
