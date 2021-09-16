@@ -201,7 +201,7 @@ export class TriggerHappy {
           }
           await ChatMessage.create(chatData);
         } else if (effect instanceof TokenDocument) {
-          const token = canvas.tokens.placeables.find((t) => t.name === effect.name);
+          const token = canvas.tokens.placeables.find((t) => t.name === effect.name || t.id === effect.id);
           if (token) await token.control();
         } else {
           await effect.sheet.render(true);
@@ -218,7 +218,10 @@ export class TriggerHappy {
   _isTokenTrigger(token, trigger, type) {
     const isTrigger =
       (trigger.trigger instanceof Actor && trigger.trigger.id === token.data.actorId) ||
-      (trigger.trigger instanceof TokenDocument && trigger.trigger.data.name === token.data.name);
+      (trigger.trigger instanceof TokenDocument &&
+        (trigger.trigger.data.name === token.data.name ||
+          trigger.trigger.data.id === token.id ||
+          trigger.trigger.data.name === token.id));
     if (!isTrigger) return false;
     if (type === 'click')
       return trigger.options.includes('click') || (!trigger.options.includes('move') && !token.data.hidden);

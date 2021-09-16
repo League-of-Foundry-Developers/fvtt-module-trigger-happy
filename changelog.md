@@ -7,6 +7,7 @@
 - Add more intuitive workflow for the hooks
 - Integration of the ecmascript module mechanism
 - Update README.md
+- Allow tokens to be found by ID (from TheGiddyLimit fork)
 
 ## 0.8.8
 - Fix so that unlocking a door does not triggere the door close trigger.
