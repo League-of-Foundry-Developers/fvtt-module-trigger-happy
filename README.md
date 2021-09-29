@@ -70,10 +70,11 @@ You can also use some non-official 'links' by using the same format :
 - `@Trigger[option1 option2 option3]` : This applies modifiers on the trigger line, keep reading for more information about available options.
 - `@Drawing[label]` : This will trigger the effects when the player clicks/moves a token within the area of a drawing which has its text set to the `label` specified. Works best with rectangles.
 - `@Door[coordinates]` : This will trigger the effects when a player opens or closes a door (based on options). The coordinates can be copy/pasted from the wall configuration sheet (excluding the `[` and `]`).
+- `@Compendium[id]{name}` only useable as an effect will display the compendium entry.
 
 By using a `Token` trigger, you can have a single actor for your triggers (a door, a button or a transparent image) but setting a different and unique name for your tokens would allow you to use them as different triggers, without duplicating actors all over your actors directory.
 
-By using the `ChatMessage` effect, you can send any message to chat. When used in combination with [The Furnace](https://github.com/kakaroto/fvtt-module-furnace)'s Advanced Macro system, you can use it to trigger macros with arguments specific to your trigger. 
+By using the `ChatMessage` effect, you can send any message to chat. When used in combination with [Advanced Macros](https://github.com/League-of-Foundry-Developers/fvtt-advanced-macros), you can use it to trigger macros with arguments specific to your trigger. Previously The Furnace was suggested, but that is now out of data and Advanced Macros provides the identical functionality.
 
 You can also use the format `@ChatMessage[message contents]{speaker name alias}`
 

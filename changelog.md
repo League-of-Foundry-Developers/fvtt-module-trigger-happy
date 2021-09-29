@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.10
+- Added `@Compendium[id]{label}` as an effect link to display compendium entries.
+- Confirmed that @Quest entries work.
+
 ## 0.8.9 [2021-09-15]
 
 - Add prettier

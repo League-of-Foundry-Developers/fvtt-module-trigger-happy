@@ -14,6 +14,18 @@ export const i18nFormat = (key, data = {}) => {
   return game.i18n.format(key, data);
 };
 
+
+class CompendiumLink {
+  packId;
+  id;
+  label;
+  constructor(packid, id, label) {
+    this.packId = packid;
+    this.id = id;
+    this.label = label;
+  }
+
+}
 /* ------------------------------------ */
 /* Initialize module					*/
 /* ------------------------------------ */
@@ -113,6 +125,7 @@ export const TRIGGER_ENTITY_LINK_TYPES = {
   TRIGGER: 'Trigger',
   DRAWING: 'Drawing',
   DOOR: 'Door',
+  COMPENDIUM: 'Compendium'
 };
 
 export class TriggerHappy {
@@ -167,6 +180,7 @@ export class TriggerHappy {
         TRIGGER_ENTITY_LINK_TYPES.TRIGGER,
         TRIGGER_ENTITY_LINK_TYPES.DRAWING,
         TRIGGER_ENTITY_LINK_TYPES.DOOR,
+        TRIGGER_ENTITY_LINK_TYPES.COMPENDIUM
       ]);
       const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
       const rgx = new RegExp(entityMatchRgx, 'g');
@@ -200,6 +214,11 @@ export class TriggerHappy {
         } else if (!trigger && entity === TRIGGER_ENTITY_LINK_TYPES.DOOR) {
           const coords = id.split(',').map((c) => Number(c));
           effect = new WallDocument({ door: 1, c: coords }, {});
+        } else if (trigger && entity === TRIGGER_ENTITY_LINK_TYPES.COMPENDIUM) {
+          // compendium links can only be effects not triggers
+          const parts = id.split(".");
+          if (parts.length !== 3) continue;
+          effect = new CompendiumLink(parts.slice(0,2).join("."), parts[2], label)
         } else {
           const config = CONFIG[entity];
           if (!config) continue;
@@ -249,7 +268,13 @@ export class TriggerHappy {
         } else if (effect instanceof TokenDocument) {
           const token = canvas.tokens.placeables.find((t) => t.name === effect.name || t.id === effect.id);
           if (token) await token.control();
-        } else {
+        } else if (effect instanceof CompendiumLink) {
+          const pack = game.packs.get(effect.packId);
+          if ( !pack.index.length ) await pack.getIndex();
+          const entity = await pack.getDocument(effect.id);
+          if (entity) entity.sheet.render(true);
+        }
+        else {
           await effect.sheet.render(true);
         }
       }
