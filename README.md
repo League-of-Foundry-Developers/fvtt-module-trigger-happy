@@ -1,3 +1,5 @@
+![Trigger Happy](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FLeague-of-Foundry-Developers%2Fleague-repo-status%2Fshields-endpoint%2Ffvtt-module-trigger-happy.json)
+
 # Trigger Happy
 
 `Trigger Happy` is an FVTT module which adds a powerful yet simple system for creating triggers and automating things within a world.
