@@ -8,8 +8,6 @@ This was created as a way of creating the interactive FVTT Tutorial on [The Forg
 
 # Installation
 
-## Installation
-
 It's always easiest to install modules from the in game add-on browser.
 
 To install this module manually:
@@ -21,8 +19,12 @@ To install this module manually:
 
 4.  Click 'Install' and wait for installation to complete
 5.  Don't forget to enable the module in game using the "Manage Module" button
+
 ### If your triggers mysteriously stop working check that you have not disabled them by mistake.
-![HUD](https://user-images.githubusercontent.com/4486143/136141666-b681c6f9-e1f6-4d76-977b-241f987d4f0c.png) The laughing/crying face needs to be enabled or you can disable the face from the config settings.
+
+![HUD](https://user-images.githubusercontent.com/4486143/136141666-b681c6f9-e1f6-4d76-977b-241f987d4f0c.png) 
+
+The laughing/crying face needs to be enabled or you can disable the face from the config settings.
 
 # Video and Step by Step instructions
 
@@ -73,6 +75,7 @@ You can also use some non-official 'links' by using the same format :
 - `@Drawing[label]` : This will trigger the effects when the player clicks/moves a token within the area of a drawing which has its text set to the `label` specified. Works best with rectangles.
 - `@Door[coordinates]` : This will trigger the effects when a player opens or closes a door (based on options). The coordinates can be copy/pasted from the wall configuration sheet (excluding the `[` and `]`).
 - `@Compendium[id]{name}` only useable as an effect will display the compendium entry.
+- `@JournalEntry[token name]` If used as a trigger, this will cause the triggers to activate on any journal with the specified name (you cannot set a token id in this case). As a trigger effect
 
 By using a `Token` trigger, you can have a single actor for your triggers (a door, a button or a transparent image) but setting a different and unique name for your tokens would allow you to use them as different triggers, without duplicating actors all over your actors directory.
 
@@ -118,21 +121,35 @@ Here's an example of how these trigger options can be used together :
 
 ```
 # When the player enters the scene, preload the next one
+
 @Scene[Dungeon level 1] @Scene[Dungeon level 2] @Trigger[preload]
 
 # When they click on the stairs, move them to the preloaded scene and select a token
+
 @Token[Lvl 1 bottom stairs] @Scene[Dungeon level 2] @Token[a specific token they can control]
 
 # Prevent the player from jumping into the bonfire like a moron
+
 @Token[Bonfire] @ChatMessage[Your friends stop you from jumping into the fire, that can be dangerous]{GM} @Trigger[move stopMovement ooc]
 
 # But let them touch it
+
 @Token[Bonfire] @Trigger[click] @ChatMessage[You burn your hand slightly]{GM}
 
 # If they click or try to move through the chasm, say something, but let them jump over it
+
 @Token[hole in bridge over the chasm] @ChatMessage[The drop looks like 1000 feet]{Chasm} @Trigger[move click stopMovement ooc]
+
 @Token[hole in bridge over the chasm] @ChatMessage[is scared] @Trigger[emote]
 
+# When they click on the journal, a chat message in rendered
+
+@JournalEntry[TEST] @Trigger[click] @ChatMessage[You burn your hand slightly]
+
+# New Forien Quest Log support with the new 0.7.7 version and rhe ID Quest mechanism
+# here the video on the exact minute: https://youtu.be/lfSYJXVQAcE?t=586
+
+@JournalEntry[TEST]@Trigger[click] @Quest[xXj5KZlMvGn3pTX8]{New Quest}
 
 ```
 
