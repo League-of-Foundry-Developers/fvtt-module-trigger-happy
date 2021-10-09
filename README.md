@@ -146,10 +146,14 @@ Here's an example of how these trigger options can be used together :
 
 @JournalEntry[TEST] @Trigger[click] @ChatMessage[You burn your hand slightly]
 
+# When they click on the journal, open another journal instead ??
+
+@JournalEntry[TEST] @Trigger[click] @JournalEntry[TEST 2]
+
 # New Forien Quest Log support with the new 0.7.7 version and rhe ID Quest mechanism
 # here the video on the exact minute: https://youtu.be/lfSYJXVQAcE?t=586
 
-@JournalEntry[TEST]@Trigger[click] @Quest[xXj5KZlMvGn3pTX8]{New Quest}
+@JournalEntry[TEST] @Trigger[click] @Quest[xXj5KZlMvGn3pTX8]{New Quest}
 
 ```
 

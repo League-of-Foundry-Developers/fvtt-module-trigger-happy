@@ -282,8 +282,9 @@ export class TriggerHappy {
           if ( !pack.index.length ) await pack.getIndex();
           const entity = await pack.getDocument(effect.id);
           if (entity) entity.sheet.render(true);
-        } else if (effect.documentName === 'Note' || effect instanceof NoteDocument) {
-          // TODO NOT SURE WHAT I MUST DO HERE
+        } else if (effect.documentName === 'Note' || effect instanceof NoteDocument
+            || effect.documentName === 'JournalEntry') {
+            effect.sheet.render(true);
         }
         else {
           await effect.sheet.render(true);

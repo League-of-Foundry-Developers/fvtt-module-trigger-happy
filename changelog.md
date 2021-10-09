@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.11
+
+- Added `@JournalEntry[id]{label}` as an effect link to interact with note on the canvas.
+
 ## 0.8.10
 - Added `@Compendium[id]{label}` as an effect link to display compendium entries.
 - Confirmed that @Quest entries work.
