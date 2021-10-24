@@ -117,44 +117,108 @@ If a token is hidden (GM layer), then it is automatically considered a 'move' tr
 
 Contrarily to the `@Trigger[move]` triggers, which only activate when a token ends its movement on their, the `@Trigger[capture]` will trigger when a token crosses its path, which can be very useful to setting up a trap that the players cannot jump over. When a `capture` trigger is activated, the token movement will be stoped and the token will be moved to the center of the trigger. The token can only be moved out of the `capture` trigger if its starting position is the center of the trigger.
 
-Here's an example of how these trigger options can be used together :
+Here's some examples of how these trigger options can be used together :
+
+#### When the player enters the scene, preload the next one
 
 ```
-# When the player enters the scene, preload the next one
-
 @Scene[Dungeon level 1] @Scene[Dungeon level 2] @Trigger[preload]
+```
 
-# When they click on the stairs, move them to the preloaded scene and select a token
+#### When they click on the stairs, move them to the preloaded scene and select a token
 
+```
 @Token[Lvl 1 bottom stairs] @Scene[Dungeon level 2] @Token[a specific token they can control]
+```
 
-# Prevent the player from jumping into the bonfire like a moron
+#### Prevent the player from jumping into the bonfire like a moron
 
+```
 @Token[Bonfire] @ChatMessage[Your friends stop you from jumping into the fire, that can be dangerous]{GM} @Trigger[move stopMovement ooc]
+```
 
-# But let them touch it
+But let them touch it
 
+```
 @Token[Bonfire] @Trigger[click] @ChatMessage[You burn your hand slightly]{GM}
+```
 
-# If they click or try to move through the chasm, say something, but let them jump over it
+#### If they click or try to move through the chasm, say something, but let them jump over it
 
+```
 @Token[hole in bridge over the chasm] @ChatMessage[The drop looks like 1000 feet]{Chasm} @Trigger[move click stopMovement ooc]
+```
 
+```
 @Token[hole in bridge over the chasm] @ChatMessage[is scared] @Trigger[emote]
+```
 
-# When they click on the journal, a chat message in rendered
+#### When token is clicked start a sound
 
+```
+@Token[Bonfire] @Trigger[click] @ChatMessage[You burn your hand slightly]{GM}
+```
+
+I have a macro that play a sound, i call it "SonaX", you can name it at your will:
+
+```
+AudioHelper.play({src: args[0], volume: 1, autoplay: true, loop: false}, true);
+```
+
+Then, in Trigger Happy you can invoque taht macro and give the url to the sound. For example:
+
+```
+@Token[trap] @Trigger[capture move] @ChatMessage[/SonaX "Audios/cadenes.mp3"]
+```
+
+or if you want some random sound from playlist
+
+```
+const playlistName = args[0];
+const soundName = args[1];
+const toggle = args[2];
+const startsWith = args[3];
+if (!game.user.isGM) return;
+
+const playlist = game.playlists.entities.find(p => startsWith ? p.name.startsWith(playlistName) : p.name === playlistName);
+if (!playlist) return ui.notifications.warn('Playlist ${playlistName} was not found.');
+
+let sound = null;
+if(soundName){
+    sound = playlist.sounds.find(s => startsWith ? s.name.startsWith(soundName) : s.name === soundName);
+}else{
+    sound = playlist.sounds.roll().results[0]
+}
+if (!sound) return ui.notifications.warn('Sound ${soundName} in playlist ${playlist.name} was not found.');
+
+playlist.updateEmbeddedEntity("PlaylistSound", {_id: sound._id, playing: toggle == null ? !sound.playing : toggle});
+```
+
+and
+
+```
+@Token[tokenname]@Trigger[move]@ChatMessage[/SonaX "Playlist Name" "Track Name"]
+```
+
+
+#### When they click on the journal, a chat message in rendered
+
+```
 @JournalEntry[TEST] @Trigger[click] @ChatMessage[You burn your hand slightly]
+```
 
-# When they click on the journal, open another journal instead ??
+#### When they click on the journal, open another journal instead ??
 
+```
 @JournalEntry[TEST] @Trigger[click] @JournalEntry[TEST 2]
+```
 
-# New Forien Quest Log support with the new 0.7.7 version and rhe ID Quest mechanism
-# here the video on the exact minute: https://youtu.be/lfSYJXVQAcE?t=586
+#### New Forien Quest Log support with the new 0.7.7 version and rhe ID Quest mechanism
 
+here the video on the exact minute: https://youtu.be/lfSYJXVQAcE?t=586
+
+```
 @JournalEntry[TEST] @Trigger[click] @Quest[xXj5KZlMvGn3pTX8]{New Quest}
-
 ```
 
 ## [Changelog](./changelog.md)
