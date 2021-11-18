@@ -21,6 +21,8 @@ To install this module manually:
 
 4.  Click 'Install' and wait for installation to complete
 5.  Don't forget to enable the module in game using the "Manage Module" button
+### If your triggers mysteriously stop working check that you have not disabled them by mistake.
+![HUD](https://user-images.githubusercontent.com/4486143/136141666-b681c6f9-e1f6-4d76-977b-241f987d4f0c.png) The laughing/crying face needs to be enabled or you can disable the face from the config settings.
 
 # Video and Step by Step instructions
 
