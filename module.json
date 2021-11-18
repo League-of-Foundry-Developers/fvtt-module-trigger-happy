@@ -39,7 +39,7 @@
     }
   ],
   "scripts": [],
-  "systems": [],
+  "system": [],
   "esmodules": ["trigger.js"],
   "styles": [],
   "packs": [
