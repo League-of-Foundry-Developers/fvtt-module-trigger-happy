@@ -42,8 +42,7 @@ Hooks.once('init', async () => {
     default: 'Trigger Happy',
     type: String,
     onChange: () => {
-      // replace with hook 'renderSettingsConfig' on TriggerHappy constructor
-      //this._parseJournals.bind(this);
+      if (game.triggers) game.triggers._parseJournals.bind(game.triggers)();
     },
   });
   game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'enableTriggers', {
@@ -54,8 +53,7 @@ Hooks.once('init', async () => {
     default: true,
     type: Boolean,
     onChange: () => {
-      // replace with hook 'renderSettingsConfig' on TriggerHappy constructor
-      // this._parseJournals.bind(this);
+      if (game.triggers) game.triggers._parseJournals.bind(game.triggers)();
     },
   });
   game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'edgeCollision', {
@@ -86,13 +84,14 @@ Hooks.once('init', async () => {
 /* ------------------------------------ */
 Hooks.once('setup', function () {
   game.triggers = new TriggerHappy();
+  Hooks.on('getSceneControlButtons', TriggerHappy.getSceneControlButtons);
+
 });
 
 /* ------------------------------------ */
 /* When ready							*/
 /* ------------------------------------ */
 Hooks.once('ready', () => {
-  Hooks.on('getSceneControlButtons', TriggerHappy.getSceneControlButtons);
 });
 
 // Add any additional hooks if necessary
@@ -510,7 +509,10 @@ export class TriggerHappy {
         toggle: true,
         active: game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTriggers'),
         visible: game.user.isGM,
-        onClick: (value) => game.settings.set(TRIGGER_HAPPY_MODULE_NAME, 'enableTriggers', value),
+        onClick: (value) => {
+          game.settings.set(TRIGGER_HAPPY_MODULE_NAME, 'enableTriggers', value);
+          if (game.triggers) game.triggers._parseJournals.bind(game.triggers)();
+        },
       });
     }
   }
