@@ -1,6 +1,16 @@
-![Trigger Happy](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FLeague-of-Foundry-Developers%2Fleague-repo-status%2Fshields-endpoint%2Ffvtt-module-trigger-happy.json)
-
 # Trigger Happy
+
+![Trigger Happy](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FLeague-of-Foundry-Developers%2Fleague-repo-status%2Fshields-endpoint%2Ffvtt-module-trigger-happy.json&style=for-the-badge)
+
+![Latest Release Download Count](https://img.shields.io/github/downloads/League-of-Foundry-Developers/fvtt-module-trigger-happy/latest/v0.8.11.zip?color=2b82fc&label=DOWNLOADS&style=for-the-badge) 
+
+[![Forge Installs](https://img.shields.io/badge/dynamic/json?label=Forge%20Installs&query=package.installs&suffix=%25&url=https%3A%2F%2Fforge-vtt.com%2Fapi%2Fbazaar%2Fpackage%2Ftrigger-happy&colorB=006400&style=for-the-badge)](https://forge-vtt.com/bazaar#package=trigger-happy) 
+
+![Foundry Core Compatible Version](https://img.shields.io/badge/dynamic/json.svg?url=https%3A%2F%2Fraw.githubusercontent.com%2FLeague-of-Foundry-Developers%2Ffvtt-module-trigger-happy%2Fmaster%2Fmodule.json&label=Foundry%20Version&query=$.compatibleCoreVersion&colorB=orange&style=for-the-badge)
+
+![Latest Version](https://img.shields.io/badge/dynamic/json.svg?url=https%3A%2F%2Fraw.githubusercontent.com%2FLeague-of-Foundry-Developers%2Ffvtt-module-trigger-happy%2Fmaster%2Fmodule.json&label=Latest%20Release&prefix=v&query=$.version&colorB=red&style=for-the-badge)
+
+[![Foundry Hub Endorsements](https://img.shields.io/endpoint?logoColor=white&url=https%3A%2F%2Fwww.foundryvtt-hub.com%2Fwp-json%2Fhubapi%2Fv1%2Fpackage%2Ftrigger-happy%2Fshield%2Fendorsements&style=for-the-badge)](https://www.foundryvtt-hub.com/package/trigger-happy/)
 
 `Trigger Happy` is an FVTT module which adds a powerful yet simple system for creating triggers and automating things within a world.
 
