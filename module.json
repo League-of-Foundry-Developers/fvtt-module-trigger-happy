@@ -3,7 +3,7 @@
   "title": "Trigger Happy",
   "description": "Automate everything in your world by creating triggers for your players to spring traps or anything you can think of!",
   "version": "0.8.11",
-  "author": "KaKaRoTo, tposney, p4535992",
+  "author": "KaKaRoTo, tposney",
   "type": "module",
   "socket": true,
   "includes": [
@@ -39,7 +39,7 @@
     }
   ],
   "scripts": [],
-  "systems": [],
+  "system": [],
   "esmodules": ["trigger.js"],
   "styles": [],
   "packs": [
