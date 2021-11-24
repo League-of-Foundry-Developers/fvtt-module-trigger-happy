@@ -206,16 +206,17 @@ export class TriggerHappy {
       ]);
 
       // We check this anyway with module tagger active or no
-      const entityMatchRgxTagger = `@(TAG)\\[([^\\]]+)\\](?:{([^}]+)})?`;
+      const entityMatchRgxTagger = `@(Tag)\\[([^\\]]+)\\]`;
       const rgxTagger = new RegExp(entityMatchRgxTagger, 'g');
       const matchAllTags = line.matchAll(rgxTagger) || [];
-      const mathTag = matchAllTags[0];
-      let filterTag = '';
+      const matchTag = matchAllTags[0];
+      let filterTags = [];
 
       let lineTmp = line;
-      if(mathTag){
+      if(matchTag){
         lineTmp = lineTmp.replace(rgxTagger, '');
-        filterTag = mathTag;
+        // Remove prefix '@Tag[' and suffix ']'
+        filterTags = matchTag.substring(5, matchTag.length-1).split(',');
       }
 
       const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
@@ -227,8 +228,8 @@ export class TriggerHappy {
         const [triggerJournal, entity, id, label] = match;
 
         const placeableObjects = this._getObjectsFromScene(game.scenes.current);
-        const placeableObject = placeableObjects.filter((obj) => obj.id === id)[0];
-        if (!placeableObject) {
+        const placeableObjectTrigger = placeableObjects.filter((obj) => obj.id === id)[0];
+        if (!placeableObjectTrigger) {
           ui.notifications?.warn(
             `${TRIGGER_HAPPY_MODULE_NAME} | No placeable object find for the id '${id}' on '${triggerJournal}' can't use trigger happy`,
           );
@@ -238,19 +239,22 @@ export class TriggerHappy {
         // Before do anything check the tagger feature module settings
         if(this.taggerModuleActive){
           // Check if the current placeable object has the specific tags from the global module settings
-          const tagsFromPlaceableObject = Tagger?.getTags(placeableObject) || [];
+          const tagsFromPlaceableObject = Tagger.getTags(placeableObjectTrigger) || [];
           const tagsFromSetting = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
           if (tagsFromSetting.length > 0) {
-            const isValid = tagsFromPlaceableObject.some((p) => tagsFromSetting.includes(p));
+            // Check if every tags on settings is included on the current placeableObject tag list
+            const isValid = tagsFromPlaceableObject.some((tagToCheck) => tagsFromSetting.includes(tagToCheck));
             if(!isValid){
               continue;
             }
           }
-          if(filterTag){
+          // Check if the current placeable object has the specific tags from the specific placeable object settings
+          if(filterTags && filterTags.length > 0){
             // Check if the current placeable object has the specific tag from the @TAG[label] annotation
-            const placeableObjectsByTag = await Tagger?.getByTags(filterTag, { caseInsensitive: true, sceneId: game.scenes.current.id }) || [];
+            const placeableObjectsByTag = Tagger.getByTag(filterTags, { caseInsensitive: true, sceneId: game.scenes.current.id }) || [];
             if (placeableObjectsByTag.length > 0) {
-              const isValid = placeableObjectsByTag.find((p) => p.id == placeableObject.id);
+              // If at least one of the tags is present on the triggered placeableObject
+              const isValid = placeableObjectsByTag.find((p) => p.id == placeableObjectTrigger.id);
               if(!isValid){
                 continue;
               }
@@ -432,6 +436,7 @@ export class TriggerHappy {
     if (type === TRIGGERS.CAPTURE) return trigger.options.includes(TRIGGERS.CAPTURE);
     return true;
   }
+
   _isSceneTrigger(scene, trigger) {
     return trigger.trigger instanceof Scene && trigger.trigger.id === scene.id;
   }
@@ -454,6 +459,7 @@ export class TriggerHappy {
   _getTokensFromTriggers(tokens, triggers, type) {
     return tokens.filter((token) => triggers.some((trigger) => this._isTokenTrigger(token, trigger, type)));
   }
+
   _getDrawingsFromTriggers(drawings, triggers, type) {
     return drawings.filter((drawing) => triggers.some((trigger) => this._isDrawingTrigger(drawing, trigger, type)));
   }
@@ -476,6 +482,7 @@ export class TriggerHappy {
     if (canvas.activeLayer === canvas.drawings) return [];
     return triggers.filter((trigger) => drawings.some((drawing) => this._isDrawingTrigger(drawing, trigger, type)));
   }
+
   _onCanvasReady(canvas) {
     const triggers = this.triggers.filter((trigger) => this._isSceneTrigger(canvas.scene, trigger));
     this._executeTriggers(triggers);
@@ -618,6 +625,7 @@ export class TriggerHappy {
     }
     return true;
   }
+
   // Arguments match the new prototype of FVTT 0.8.x
   _onPreUpdateToken(tokenDocument, update, options, userId) {
     if (!tokenDocument.object?.scene?.isView) return true;
@@ -668,6 +676,7 @@ export class TriggerHappy {
       });
     }
   }
+
   _doCaptureTriggersEdge(tokenDocument, scene, update) {
     const token = tokenDocument.object;
     // Get all trigger tokens in scene
@@ -768,6 +777,7 @@ export class TriggerHappy {
       ...Array.from(scene.tiles),
       ...Array.from(scene.walls),
       ...Array.from(scene.drawings),
+      ...Array.from(scene.stairways) // Add stairways...
     ]
       .deepFlatten()
       .filter(Boolean);

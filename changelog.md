@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.12
+
+- Added `@Tag[list of tag separate from ',']` as an filter link to interact with a specific placeable object on the canvas.
+- Add eslint
+- Add gulp build file
+- Add github action for generate release with 'module.zip' and 'module.json'
+
 ## 0.8.11
 
 - Added `@JournalEntry[id]{label}` as an effect link to interact with note on the canvas.

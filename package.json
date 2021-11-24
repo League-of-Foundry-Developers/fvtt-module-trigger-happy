@@ -1,0 +1,51 @@
+{
+  "private": true,
+  "name": "trigger-happy",
+  "title": "Trigger Happy",
+  "description": "Automate everything in your world by creating triggers for your players to spring traps or anything you can think of!",
+  "version": "0.8.12",
+  "scripts": {
+    "package": "gulp package",
+    "build": "gulp clean && gulp build && gulp link",
+    "build:watch": "gulp watch",
+    "clean": "gulp clean && gulp link --clean",
+    "lint": "eslint --ext .ts,.js,.vue .",
+    "lintfix": "eslint --fix --ext .ts,.js,.vue ./src",
+    "prettier-format": "prettier --config .prettierrc --write \"./src/**/*.(ts|js|json|scss|css)\""
+  },
+  "author": "",
+  "license": "",
+  "devDependencies": {
+    "archiver": "^5.2.0",
+    "chalk": "^4.1.2",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb": "^18.2.1",
+    "eslint-config-jquery": "^3.0.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-jsx-a11y": "^6.4.1",
+    "eslint-plugin-prettier": "^3.4.0",
+    "eslint-plugin-tsdoc": "^0.2.14",
+    "fs-extra": "^9.1.0",
+    "gulp": "^4.0.2",
+    "gulp-changed": "^4.0.3",
+    "gulp-eslint": "^6.0.0",
+    "gulp-git": "^2.10.1",
+    "gulp-less": "^4.0.1",
+    "gulp-rename": "^2.0.0",
+    "gulp-sass": "^4.1.0",
+    "gulp-typescript": "^6.0.0-alpha.1",
+    "json-stringify-pretty-compact": "^2.0.0",
+    "prettier": "^2.4.1",
+    "sass": "^1.42.0",
+    "yargs": "^15.4.1"
+  },
+  "lint-staged": {
+    "*.(ts|js)": "eslint --fix",
+    "*.(json|scss)": "prettier --write"
+  },
+  "dependencies": {
+    "del": "^6.0.0",
+    "typescript": "^4.4.3"
+  }
+}
