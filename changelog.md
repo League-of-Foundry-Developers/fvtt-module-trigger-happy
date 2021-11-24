@@ -2,10 +2,11 @@
 
 ## 0.8.12
 
-- Added `@Tag[list of tag separate from ',']` as an filter link to interact with a specific placeable object on the canvas.
-- Add eslint
-- Add gulp build file
+- Added `@Tag[list of tag separate from ',']` as a filter link to interact with a specific placeable object on the canvas.
+- Add basic eslint
+- Add gulp build file for more relaxing build of the source
 - Add github action for generate release with 'module.zip' and 'module.json'
+- Partial integration with Stairways mdule
 
 ## 0.8.11
 

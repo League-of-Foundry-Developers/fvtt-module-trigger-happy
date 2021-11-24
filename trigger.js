@@ -88,7 +88,7 @@ Hooks.once('init', async () => {
     scope: 'world',
     config: true,
     default: '',
-    type: string,
+    type: String,
     onChange: () => {
       if (game.triggers) game.triggers._parseJournals.bind(game.triggers)();
     },
@@ -133,7 +133,8 @@ export const TRIGGER_ENTITY_TYPES = {
   SCENE: 'Scene',
   DRAWING: 'Drawing',
   DOOR: 'Door',
-  JOURNAL_ENTRY: 'JournalEntry'
+  JOURNAL_ENTRY: 'JournalEntry',
+  STAIRWAY: 'Stairway'
 };
 
 export const TRIGGER_ENTITY_LINK_TYPES = {
@@ -143,7 +144,8 @@ export const TRIGGER_ENTITY_LINK_TYPES = {
   DRAWING: 'Drawing',
   DOOR: 'Door',
   COMPENDIUM: 'Compendium',
-  JOURNAL_ENTRY: 'JournalEntry'
+  JOURNAL_ENTRY: 'JournalEntry',
+  STAIRWAY: 'Stairway'
 };
 
 export class TriggerHappy {
@@ -194,7 +196,13 @@ export class TriggerHappy {
       .replace(/(<p>|<div>|<br *\/?>)/gm, '\n')
       .replace(/&nbsp;/gm, ' ')
       .split('\n');
-    for (const line of triggerLines) {
+
+    // Remove empty/undefined lines befor loop
+    const filteredTriggerLines = triggerLines.filter(function (el) {
+      return el != null;
+    });
+    
+    for (const line of filteredTriggerLines) {
       const entityLinks = CONST.ENTITY_LINK_TYPES.concat([
         TRIGGER_ENTITY_LINK_TYPES.CHAT_MESSAGE,
         TRIGGER_ENTITY_LINK_TYPES.TOKEN,
@@ -225,47 +233,63 @@ export class TriggerHappy {
       let options = [];
       const effects = [];
       for (let match of lineTmp.matchAll(rgx)) {
-        const [triggerJournal, entity, id, label] = match;
-
-        const placeableObjects = this._getObjectsFromScene(game.scenes.current);
-        const placeableObjectTrigger = placeableObjects.filter((obj) => obj.id === id)[0];
-        if (!placeableObjectTrigger) {
-          ui.notifications?.warn(
-            `${TRIGGER_HAPPY_MODULE_NAME} | No placeable object find for the id '${id}' on '${triggerJournal}' can't use trigger happy`,
-          );
-          continue;
-        }
-
-        // Before do anything check the tagger feature module settings
-        if(this.taggerModuleActive){
-          // Check if the current placeable object has the specific tags from the global module settings
-          const tagsFromPlaceableObject = Tagger.getTags(placeableObjectTrigger) || [];
-          const tagsFromSetting = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
-          if (tagsFromSetting.length > 0) {
-            // Check if every tags on settings is included on the current placeableObject tag list
-            const isValid = tagsFromPlaceableObject.some((tagToCheck) => tagsFromSetting.includes(tagToCheck));
-            if(!isValid){
-              continue;
-            }
-          }
-          // Check if the current placeable object has the specific tags from the specific placeable object settings
-          if(filterTags && filterTags.length > 0){
-            // Check if the current placeable object has the specific tag from the @TAG[label] annotation
-            const placeableObjectsByTag = Tagger.getByTag(filterTags, { caseInsensitive: true, sceneId: game.scenes.current.id }) || [];
-            if (placeableObjectsByTag.length > 0) {
-              // If at least one of the tags is present on the triggered placeableObject
-              const isValid = placeableObjectsByTag.find((p) => p.id == placeableObjectTrigger.id);
-              if(!isValid){
-                continue;
-              }
-            }
-          }
-        }
+        let [triggerJournal, entity, id, label] = match;
 
         if (entity === TRIGGER_ENTITY_LINK_TYPES.TRIGGER) {
           options = id.split(' ');
           continue;
         }
+
+        const relevantDocument = this._retrieveDocumentFromEntity(entity, id);
+        if(!relevantDocument){
+          // ui.notifications?.warn(
+          //   `${TRIGGER_HAPPY_MODULE_NAME} | No placeable object find for the id '${id}' on '${triggerJournal}' can't use trigger happy`,
+          // );
+          continue;
+        }
+
+        id = relevantDocument.id;
+
+        // Chat messagge and compendium are special case because they are not placeable object
+        if(entity != TRIGGER_ENTITY_LINK_TYPES.CHAT_MESSAGE && entity != TRIGGER_ENTITY_LINK_TYPES.COMPENDIUM){
+          // Filter your triggers only for the current scene
+          const placeableObjects = this._getObjectsFromScene(game.scenes.current);
+          const placeableObjectTrigger = placeableObjects.filter((obj) => obj.id === id)[0];
+          if (!placeableObjectTrigger) {
+            // ui.notifications?.warn(
+            //   `${TRIGGER_HAPPY_MODULE_NAME} | No placeable object find for the id '${id}' on '${triggerJournal}' can't use trigger happy`,
+            // );
+            continue;
+          }
+
+          // Before do anything check the tagger feature module settings
+          if(this.taggerModuleActive){
+            // Check if the current placeable object has the specific tags from the global module settings
+            const tagsFromPlaceableObject = Tagger.getTags(placeableObjectTrigger) || [];
+            const tagsFromSetting = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
+            if (tagsFromSetting.length > 0) {
+              // Check if every tags on settings is included on the current placeableObject tag list
+              const isValid = tagsFromPlaceableObject.some((tagToCheck) => tagsFromSetting.includes(tagToCheck));
+              if(!isValid){
+                continue;
+              }
+            }
+            // Check if the current placeable object has the specific tags from the specific placeable object settings
+            if(filterTags && filterTags.length > 0){
+              // Check if the current placeable object has the specific tag from the @TAG[label] annotation
+              const placeableObjectsByTag = Tagger.getByTag(filterTags, { caseInsensitive: true, sceneId: game.scenes.current.id }) || [];
+              if (placeableObjectsByTag.length > 0) {
+                // If at least one of the tags is present on the triggered placeableObject
+                const isValid = placeableObjectsByTag.find((p) => p.id == placeableObjectTrigger.id);
+                if(!isValid){
+                  continue;
+                }
+              }
+            }
+          }
+          
+        }
+
         if (
           !trigger &&
           ![
@@ -275,27 +299,40 @@ export class TriggerHappy {
             TRIGGER_ENTITY_TYPES.DRAWING,
             TRIGGER_ENTITY_TYPES.DOOR,
             TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY,
+            TRIGGER_ENTITY_TYPES.STAIRWAY,
           ].includes(entity)
-        )
+        ){
           break;
+        }
         let effect = null;
+
+        // Chat messagge and compendium are special case because they are not placeable object
+
         if (entity === TRIGGER_ENTITY_LINK_TYPES.CHAT_MESSAGE) {
           effect = new ChatMessage({ content: id, speaker: { alias: label } }, {});
-        } else if (entity === TRIGGER_ENTITY_LINK_TYPES.TOKEN) {
-          effect = new TokenDocument({ name: id }, {});
-        } else if (!trigger && entity === TRIGGER_ENTITY_LINK_TYPES.DRAWING) {
-          effect = new DrawingDocument({ type: 'r', text: id }, {});
-        } else if (!trigger && entity === TRIGGER_ENTITY_LINK_TYPES.DOOR) {
-          const coords = id.split(',').map((c) => Number(c));
-          effect = new WallDocument({ door: 1, c: coords }, {});
         } else if (trigger && entity === TRIGGER_ENTITY_LINK_TYPES.COMPENDIUM) {
           // compendium links can only be effects not triggers
           const parts = id.split(".");
           if (parts.length !== 3) continue;
-          effect = new CompendiumLink(parts.slice(0,2).join("."), parts[2], label)
+          effect = new CompendiumLink(parts.slice(0,2).join("."), parts[2], label) 
+        } 
+
+        // Common case placeables object
+
+        else if (entity === TRIGGER_ENTITY_LINK_TYPES.TOKEN) {
+          // effect = new TokenDocument({ name: id }, {});
+          effect = relevantDocument;
+        } else if (!trigger && entity === TRIGGER_ENTITY_LINK_TYPES.DRAWING) {
+          // effect = new DrawingDocument({ type: 'r', text: id }, {});
+          effect = relevantDocument;
+        } else if (!trigger && entity === TRIGGER_ENTITY_LINK_TYPES.DOOR) {
+          // const coords = id.split(',').map((c) => Number(c));
+          // effect = new WallDocument({ door: 1, c: coords }, {});
+          effect = relevantDocument;
         } else if (!trigger && entity === TRIGGER_ENTITY_LINK_TYPES.JOURNAL_ENTRY) {
-          const noteDocument = canvas.notes.documentCollection.find(note => note.label == id)
-          effect = noteDocument;
+          // const noteDocument = canvas.notes.documentCollection.find(note => note.label == id)
+          // effect = noteDocument;
+          effect = relevantDocument;
         } else {
           const config = CONFIG[entity];
           if (!config){
@@ -320,6 +357,10 @@ export class TriggerHappy {
       }
 
       if (trigger){
+        // Make sure is a document
+        if (trigger instanceof PlaceableObject) {
+          trigger = trigger.document;
+        }
         this.triggers.push({ trigger, effects, options });
       }
     }
@@ -782,4 +823,124 @@ export class TriggerHappy {
       .deepFlatten()
       .filter(Boolean);
   }
+
+  _retrieveDocumentFromEntity(entity, idOrName){
+    // if(entity == TRIGGER_ENTITY_LINK_TYPES.CHAT_MESSAGE || entity == TRIGGER_ENTITY_LINK_TYPES.COMPENDIUM){
+    //   return true;
+    // }
+    if (entity == TRIGGER_ENTITY_LINK_TYPES.TOKEN) {
+      const tokenTarget = this._retrieveDocumentFromIdOrName(canvas.tokens?.placeables, idOrName);
+      return tokenTarget;
+    // TODO ADD AMBIENT LIGHT INTEGRATION
+    // } else if (relevantDocument instanceof AmbientLightDocument) {
+    //   const ambientLightTarget = this._retrieveDocumentFromIdOrName(canvas.lighting?.placeables, idOrName);
+    //   return ambientLightTarget;
+    // TODO ADD AMBIENT SOUND INTEGRATION
+    // } else if (relevantDocument instanceof AmbientSoundDocument) {
+    //   const ambientSoundTarget = this._retrieveDocumentFromIdOrName(canvas.sounds?.placeables, idOrName);
+    //   return ambientSoundTarget;
+    // TODO ADD TILE INTEGRATION
+    // } else if (relevantDocument instanceof TileDocument) {
+    //   const tileTarget = this._retrieveDocumentFromIdOrName(canvas.foreground?.placeables, idOrName);
+    //   return tileTarget;
+    } else if (entity == TRIGGER_ENTITY_LINK_TYPES.DOOR) {
+      const doorControlTarget = this._retrieveDocumentFromIdOrName(canvas.controls?.doors?.children, idOrName);
+      return doorControlTarget;
+    } else if(entity == TRIGGER_ENTITY_LINK_TYPES.DRAWING) {
+      const drawingTarget = this._retrieveDocumentFromIdOrName(canvas.drawings?.placeables, idOrName);
+      return drawingTarget;
+    } else if (entity == TRIGGER_ENTITY_LINK_TYPES.JOURNAL_ENTRY) {
+      const noteTarget = this._retrieveDocumentFromIdOrName(canvas.notes?.placeables, idOrName);
+      return noteTarget;
+    } else if (entity == TRIGGER_ENTITY_LINK_TYPES.STAIRWAY) {
+      const stairwayTarget = this._retrieveDocumentFromIdOrName(canvas.stairways?.placeables, idOrName);
+      return stairwayTarget;
+    } else {
+      return null;
+    }
+  }
+
+  _retrieveDocumentFromIdOrName(placeables, IdOrName){
+    let target;
+    target = placeables?.find((x) => {
+      return x.id == IdOrName;
+    });
+    if(!target){
+      target = placeables?.find((x) => {
+        return x.data.name == IdOrName;
+      });
+    }
+    if(!target){
+      target = placeables?.find((x) => {
+        return x.data.text == IdOrName;
+      });
+    }
+    if(!target){
+      target = placeables?.find((x) => {
+        return x.data.label == IdOrName;
+      });
+    }
+    return target;
+  }
+
+  // MAYBE CAN BE USEFUL IN OTHER CONTEXT ????
+  // _retrieveDocumentFromPlaceableObject(placeableObject){
+  //     let relevantDocument;
+  //     if (placeableObject instanceof PlaceableObject) {
+  //       relevantDocument = placeableObject?.document;
+  //     } else {
+  //       relevantDocument = placeableObject;
+  //     }
+  //     if (relevantDocument instanceof TokenDocument) {
+  //       const tokenTarget = this._retrieveDocumentFromDocument(canvas.tokens?.placeables, relevantDocument);
+  //       return tokenTarget;
+  //     } else if (relevantDocument instanceof AmbientLightDocument) {
+  //       const ambientLightTarget = this._retrieveDocumentFromDocument(canvas.lighting?.placeables, relevantDocument);
+  //       return ambientLightTarget;
+  //     } else if (relevantDocument instanceof AmbientSoundDocument) {
+  //       const ambientSoundTarget = this._retrieveDocumentFromDocument(canvas.sounds?.placeables, relevantDocument);
+  //       return ambientSoundTarget;
+  //     } else if (relevantDocument instanceof TileDocument) {
+  //       const tileTarget = this._retrieveDocumentFromDocument(canvas.foreground?.placeables, relevantDocument);
+  //       return tileTarget;
+  //     } else if (relevantDocument instanceof WallDocument) {
+  //       const doorControlTarget = this._retrieveDocumentFromDocument(canvas.controls?.doors?.children, relevantDocument);
+  //       return doorControlTarget;
+  //     } else if (relevantDocument instanceof DrawingDocument) {
+  //       const drawingTarget = this._retrieveDocumentFromDocument(canvas.drawings?.placeables, relevantDocument);
+  //       return drawingTarget;
+  //     } else if (relevantDocument instanceof NoteDocument) {
+  //       const noteTarget = this._retrieveDocumentFromDocument(canvas.notes?.placeables, relevantDocument);
+  //       return noteTarget;
+  //     } else if (relevantDocument.name == 'Stairway') {
+  //       const stairwayTarget = this._retrieveDocumentFromDocument(canvas.stairways?.placeables, relevantDocument);
+  //       return stairwayTarget;
+  //     } else {
+  //       return null;
+  //     }
+  // }  
+
+  // MAYBE CAN BE USEFUL IN OTHER CONTEXT ????
+  // _retrieveDocumentFromDocument(placeables, relevantDocument){
+  //   let target;
+  //   target = placeables?.find((x) => {
+  //     return x.id == relevantDocument._id;
+  //   });
+  //   if(!target && relevantDocument.data.name){
+  //     target = placeables?.find((x) => {
+  //       return x.data.name == relevantDocument.data.name;
+  //     });
+  //   }
+  //   if(!target && relevantDocument.data.text){
+  //     target = placeables?.find((x) => {
+  //       return x.data.text == relevantDocument.data.text;
+  //     });
+  //   }
+  //   if(!target && relevantDocument.data.label){
+  //     target = placeables?.find((x) => {
+  //       return x.data.label == relevantDocument.data.label;
+  //     });
+  //   }
+  //   return target;
+  // }
 }
