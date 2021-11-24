@@ -77,6 +77,23 @@ Hooks.once('init', async () => {
       }
     },
   });
+
+  // ========================================================
+  // TAGGER SUPPORT
+  // ========================================================
+
+  game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration', {
+    name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableTaggerIntegration.name`),
+    hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableTaggerIntegration.hint`),
+    scope: 'world',
+    config: true,
+    default: '',
+    type: string,
+    onChange: () => {
+      if (game.triggers) game.triggers._parseJournals.bind(game.triggers)();
+    },
+  });
+
 });
 
 /* ------------------------------------ */
@@ -143,6 +160,7 @@ export class TriggerHappy {
     Hooks.on('preUpdateNote', this._onPreUpdateNote.bind(this));
 
     this.triggers = [];
+    this.taggerModuleActive = game.modules.get('tagger')?.active
     this.release = game.settings.get("core", "leftClickRelease");
   }
 
@@ -186,13 +204,60 @@ export class TriggerHappy {
         TRIGGER_ENTITY_LINK_TYPES.COMPENDIUM,
         TRIGGER_ENTITY_LINK_TYPES.JOURNAL_ENTRY,
       ]);
+
+      // We check this anyway with module tagger active or no
+      const entityMatchRgxTagger = `@(TAG)\\[([^\\]]+)\\](?:{([^}]+)})?`;
+      const rgxTagger = new RegExp(entityMatchRgxTagger, 'g');
+      const matchAllTags = line.matchAll(rgxTagger) || [];
+      const mathTag = matchAllTags[0];
+      let filterTag = '';
+
+      let lineTmp = line;
+      if(mathTag){
+        lineTmp = lineTmp.replace(rgxTagger, '');
+        filterTag = mathTag;
+      }
+
       const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
       const rgx = new RegExp(entityMatchRgx, 'g');
       let trigger = null;
       let options = [];
       const effects = [];
-      for (let match of line.matchAll(rgx)) {
-        const [string, entity, id, label] = match;
+      for (let match of lineTmp.matchAll(rgx)) {
+        const [triggerJournal, entity, id, label] = match;
+
+        const placeableObjects = this._getObjectsFromScene(game.scenes.current);
+        const placeableObject = placeableObjects.filter((obj) => obj.id === id)[0];
+        if (!placeableObject) {
+          ui.notifications?.warn(
+            `${TRIGGER_HAPPY_MODULE_NAME} | No placeable object find for the id '${id}' on '${triggerJournal}' can't use trigger happy`,
+          );
+          continue;
+        }
+
+        // Before do anything check the tagger feature module settings
+        if(this.taggerModuleActive){
+          // Check if the current placeable object has the specific tags from the global module settings
+          const tagsFromPlaceableObject = Tagger?.getTags(placeableObject) || [];
+          const tagsFromSetting = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
+          if (tagsFromSetting.length > 0) {
+            const isValid = tagsFromPlaceableObject.some((p) => tagsFromSetting.includes(p));
+            if(!isValid){
+              continue;
+            }
+          }
+          if(filterTag){
+            // Check if the current placeable object has the specific tag from the @TAG[label] annotation
+            const placeableObjectsByTag = await Tagger?.getByTags(filterTag, { caseInsensitive: true, sceneId: game.scenes.current.id }) || [];
+            if (placeableObjectsByTag.length > 0) {
+              const isValid = placeableObjectsByTag.find((p) => p.id == placeableObject.id);
+              if(!isValid){
+                continue;
+              }
+            }
+          }
+        }
+
         if (entity === TRIGGER_ENTITY_LINK_TYPES.TRIGGER) {
           options = id.split(' ');
           continue;
@@ -229,19 +294,30 @@ export class TriggerHappy {
           effect = noteDocument;
         } else {
           const config = CONFIG[entity];
-          if (!config) continue;
+          if (!config){
+            continue;
+          }
           effect = config.collection.instance.get(id);
-          if (!effect) effect = config.collection.instance.getName(id);
+          if (!effect){
+            effect = config.collection.instance.getName(id);
+          }
         }
-        if (!trigger && !effect) break;
+        if (!trigger && !effect){
+          break;
+        }
         if (!trigger) {
           trigger = effect;
           continue;
         }
-        if (!effect) continue;
+        if (!effect){
+          continue;
+        }
         effects.push(effect);
       }
-      if (trigger) this.triggers.push({ trigger, effects, options });
+
+      if (trigger){
+        this.triggers.push({ trigger, effects, options });
+      }
     }
   }
 
@@ -681,5 +757,19 @@ export class TriggerHappy {
       }
     }
     return true;
+  }
+
+  _getObjectsFromScene(scene) {
+    return [
+      ...Array.from(scene.tokens),
+      ...Array.from(scene.lights),
+      ...Array.from(scene.sounds),
+      ...Array.from(scene.templates),
+      ...Array.from(scene.tiles),
+      ...Array.from(scene.walls),
+      ...Array.from(scene.drawings),
+    ]
+      .deepFlatten()
+      .filter(Boolean);
   }
 }

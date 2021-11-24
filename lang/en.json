@@ -7,5 +7,7 @@
   "trigger-happy.settings.edgeCollision.hint": " ",
   "trigger-happy.settings.enableTriggerButton.name": "Add enable/disable trigger happy button",
   "trigger-happy.settings.enableTriggerButton.hint": " ",
-  "trigger-happy.labels.button.layer.enableTriggerHappy": "Enable Trigger Happy triggers"
+  "trigger-happy.labels.button.layer.enableTriggerHappy": "Enable Trigger Happy triggers",
+  "trigger-happy.settings.enableTaggerIntegration.name":"Enable tagger integration feature",
+  "trigger-happy.settings.enableTaggerIntegration.hint":"This feature need the tagger module installed and enabled, we filter the triggers only for the placeable object with one of the tag setted, the list is a string of tags separate from ','. NOTE: you can avoid to enable this feature and just use @TAG on the journal"
 }
