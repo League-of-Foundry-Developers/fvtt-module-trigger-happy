@@ -14,6 +14,10 @@ export const i18nFormat = (key, data = {}) => {
   return game.i18n.format(key, data);
 };
 
+export const uiwarn = (text) => {
+  ui.notifications?.warn(`${TRIGGER_HAPPY_MODULE_NAME} | ${text}`);
+}
+
 
 class CompendiumLink {
   packId;
@@ -113,7 +117,9 @@ Hooks.once('ready', () => {
 
 // Add any additional hooks if necessary
 
-export const TRIGGERS = {
+export const EVENT_TRIGGER_KEY = 'Trigger',
+
+export const EVENT_ENTITY_TYPES = {
   OOC: `ooc`,
   EMOTE: `emote`,
   WHISPER: `whisper`,
@@ -137,10 +143,9 @@ export const TRIGGER_ENTITY_TYPES = {
   STAIRWAY: 'Stairway'
 };
 
-export const TRIGGER_ENTITY_LINK_TYPES = {
+export const EFFECT_ENTITY_TYPES = {
   CHAT_MESSAGE: 'ChatMessage',
   TOKEN: 'Token',
-  TRIGGER: 'Trigger',
   DRAWING: 'Drawing',
   DOOR: 'Door',
   COMPENDIUM: 'Compendium',
@@ -191,6 +196,7 @@ export class TriggerHappy {
     if (game.user.isGM && !game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTriggers')) return;
     this.journals.forEach((journal) => this._parseJournal(journal));
   }
+
   _parseJournal(journal) {
     const triggerLines = journal.data.content
       .replace(/(<p>|<div>|<br *\/?>)/gm, '\n')
@@ -201,18 +207,19 @@ export class TriggerHappy {
     const filteredTriggerLines = triggerLines.filter(function (el) {
       return el != null;
     });
-    
-    for (const line of filteredTriggerLines) {
-      const entityLinks = CONST.ENTITY_LINK_TYPES.concat([
-        TRIGGER_ENTITY_LINK_TYPES.CHAT_MESSAGE,
-        TRIGGER_ENTITY_LINK_TYPES.TOKEN,
-        TRIGGER_ENTITY_LINK_TYPES.TRIGGER,
-        TRIGGER_ENTITY_LINK_TYPES.DRAWING,
-        TRIGGER_ENTITY_LINK_TYPES.DOOR,
-        TRIGGER_ENTITY_LINK_TYPES.COMPENDIUM,
-        TRIGGER_ENTITY_LINK_TYPES.JOURNAL_ENTRY,
-      ]);
 
+    const entityLinks = CONST.ENTITY_LINK_TYPES.concat([
+      EFFECT_ENTITY_TYPES.CHAT_MESSAGE,
+      EFFECT_ENTITY_TYPES.TOKEN,
+      EFFECT_ENTITY_TYPES.DRAWING,
+      EFFECT_ENTITY_TYPES.DOOR,
+      EFFECT_ENTITY_TYPES.COMPENDIUM,
+      EFFECT_ENTITY_TYPES.JOURNAL_ENTRY,
+      EFFECT_ENTITY_TYPES.STAIRWAY,
+      EVENT_TRIGGER_KEY,
+    ]);
+
+    for (const line of filteredTriggerLines) {
       // We check this anyway with module tagger active or no
       const entityMatchRgxTagger = `@(Tag)\\[([^\\]]+)\\]`;
       const rgxTagger = new RegExp(entityMatchRgxTagger, 'g');
@@ -229,36 +236,57 @@ export class TriggerHappy {
 
       const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
       const rgx = new RegExp(entityMatchRgx, 'g');
-      let trigger = null;
       let options = [];
+      let trigger;
+      let eventLink;
       const effects = [];
+
+      let matchs = lineTmp.matchAll(rgx);
+      let index = 0;
+      for (let match of matchs) {
+        let [triggerJournal, entity, id, label] = match;
+        if(index === 0){
+          trigger = this._manageTrigger(triggerJournal, entity, id, label, filterTags);
+          if(!trigger){
+            break;
+          }
+        } else if(index === 1){
+          eventLink = this._manageEventLink(triggerJournal, entity, id, label);
+          if(!eventLink){
+            break;
+          }
+        } else {
+          const effect = this._manageEffect(triggerJournal, entity, id, label);
+          if(effect){
+            effects.push(effect);
+          }
+        }
+        index++;
+      }
+
+      // OLD CODE DON'T DELETE FOR NOW MADE A BETTER MORE INTUITIVE CODE
+      /*
       for (let match of lineTmp.matchAll(rgx)) {
         let [triggerJournal, entity, id, label] = match;
 
-        if (entity === TRIGGER_ENTITY_LINK_TYPES.TRIGGER) {
+        if (entity === EVENT_TRIGGER_KEY) {
           options = id.split(' ');
           continue;
         }
 
         const relevantDocument = this._retrieveDocumentFromEntity(entity, id);
         if(!relevantDocument){
-          // ui.notifications?.warn(
-          //   `${TRIGGER_HAPPY_MODULE_NAME} | No placeable object find for the id '${id}' on '${triggerJournal}' can't use trigger happy`,
-          // );
           continue;
         }
 
         id = relevantDocument.id;
 
         // Chat messagge and compendium are special case because they are not placeable object
-        if(entity != TRIGGER_ENTITY_LINK_TYPES.CHAT_MESSAGE && entity != TRIGGER_ENTITY_LINK_TYPES.COMPENDIUM){
+        if(entity != EFFECT_ENTITY_TYPES.CHAT_MESSAGE && entity != EFFECT_ENTITY_TYPES.COMPENDIUM){
           // Filter your triggers only for the current scene
           const placeableObjects = this._getObjectsFromScene(game.scenes.current);
           const placeableObjectTrigger = placeableObjects.filter((obj) => obj.id === id)[0];
           if (!placeableObjectTrigger) {
-            // ui.notifications?.warn(
-            //   `${TRIGGER_HAPPY_MODULE_NAME} | No placeable object find for the id '${id}' on '${triggerJournal}' can't use trigger happy`,
-            // );
             continue;
           }
 
@@ -287,7 +315,6 @@ export class TriggerHappy {
               }
             }
           }
-          
         }
 
         if (
@@ -302,34 +329,36 @@ export class TriggerHappy {
             TRIGGER_ENTITY_TYPES.STAIRWAY,
           ].includes(entity)
         ){
+          // Ignore trigger if entity is not managed
+          warn( `Can't manage the entity '${entity}' with trigger '${trigger}' on '${triggerJournal}' can't use trigger happy`);
           break;
         }
         let effect = null;
 
         // Chat messagge and compendium are special case because they are not placeable object
 
-        if (entity === TRIGGER_ENTITY_LINK_TYPES.CHAT_MESSAGE) {
+        if (entity === EFFECT_ENTITY_TYPES.CHAT_MESSAGE) {
           effect = new ChatMessage({ content: id, speaker: { alias: label } }, {});
-        } else if (trigger && entity === TRIGGER_ENTITY_LINK_TYPES.COMPENDIUM) {
+        } else if (trigger && entity === EFFECT_ENTITY_TYPES.COMPENDIUM) {
           // compendium links can only be effects not triggers
           const parts = id.split(".");
           if (parts.length !== 3) continue;
-          effect = new CompendiumLink(parts.slice(0,2).join("."), parts[2], label) 
-        } 
+          effect = new CompendiumLink(parts.slice(0,2).join("."), parts[2], label)
+        }
 
         // Common case placeables object
 
-        else if (entity === TRIGGER_ENTITY_LINK_TYPES.TOKEN) {
+        else if (entity === EFFECT_ENTITY_TYPES.TOKEN) {
           // effect = new TokenDocument({ name: id }, {});
           effect = relevantDocument;
-        } else if (!trigger && entity === TRIGGER_ENTITY_LINK_TYPES.DRAWING) {
+        } else if (!trigger && entity === EFFECT_ENTITY_TYPES.DRAWING) {
           // effect = new DrawingDocument({ type: 'r', text: id }, {});
           effect = relevantDocument;
-        } else if (!trigger && entity === TRIGGER_ENTITY_LINK_TYPES.DOOR) {
+        } else if (!trigger && entity === EFFECT_ENTITY_TYPES.DOOR) {
           // const coords = id.split(',').map((c) => Number(c));
           // effect = new WallDocument({ door: 1, c: coords }, {});
           effect = relevantDocument;
-        } else if (!trigger && entity === TRIGGER_ENTITY_LINK_TYPES.JOURNAL_ENTRY) {
+        } else if (!trigger && entity === EFFECT_ENTITY_TYPES.JOURNAL_ENTRY) {
           // const noteDocument = canvas.notes.documentCollection.find(note => note.label == id)
           // effect = noteDocument;
           effect = relevantDocument;
@@ -355,15 +384,169 @@ export class TriggerHappy {
         }
         effects.push(effect);
       }
-
-      if (trigger){
-        // Make sure is a document
-        if (trigger instanceof PlaceableObject) {
-          trigger = trigger.document;
-        }
+      */
+      if (trigger && trigger instanceof PlaceableObject && effects.length > 0){
         this.triggers.push({ trigger, effects, options });
       }
     }
+  }
+
+  async _manageTrigger(triggerJournal, entity, id, label, filterTags){
+    // Chat messagge and compendium are special case because they are not placeable object
+    if (entity === EVENT_TRIGGER_KEY ||
+        entity === EFFECT_ENTITY_TYPES.CHAT_MESSAGE ||
+        entity === EFFECT_ENTITY_TYPES.COMPENDIUM){
+      warn( `Can't manage the trigger '${entity}' on '${triggerJournal}'`);
+      return;
+    }
+    if (
+      ![
+        TRIGGER_ENTITY_TYPES.ACTOR,
+        TRIGGER_ENTITY_TYPES.TOKEN,
+        TRIGGER_ENTITY_TYPES.SCENE,
+        TRIGGER_ENTITY_TYPES.DRAWING,
+        TRIGGER_ENTITY_TYPES.DOOR,
+        TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY,
+        TRIGGER_ENTITY_TYPES.STAIRWAY,
+      ].includes(entity)
+    ){
+      warn( `Can't manage the trigger '${entity}' on '${triggerJournal}'`);
+      return;
+    }
+    if(!id){
+      warn( `Can't manage the empty trigger '${entity}' on '${triggerJournal}'`);
+      return;
+    }
+
+    const relevantDocument = this._retrieveDocumentFromEntity(entity, id);
+    if(!relevantDocument){
+      return;
+    }
+
+    const placeableObjectId = relevantDocument.id;
+
+    // Filter your triggers only for the current scene
+    const placeableObjects = this._getObjectsFromScene(game.scenes.current);
+    const placeableObjectTrigger = placeableObjects.filter((obj) => obj.id === placeableObjectId)[0];
+    if (!placeableObjectTrigger) {
+      return;
+    }
+
+    // Before do anything check the tagger feature module settings
+    if(this.taggerModuleActive){
+      // Check if the current placeable object has the specific tags from the global module settings
+      const tagsFromPlaceableObject = Tagger.getTags(placeableObjectTrigger) || [];
+      const tagsFromSetting = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
+      if (tagsFromSetting.length > 0) {
+        // Check if every tags on settings is included on the current placeableObject tag list
+        const isValid = tagsFromPlaceableObject.some((tagToCheck) => tagsFromSetting.includes(tagToCheck));
+        if(!isValid){
+          return;
+        }
+      }
+      // Check if the current placeable object has the specific tags from the specific placeable object settings
+      if(filterTags && filterTags.length > 0){
+        // Check if the current placeable object has the specific tag from the @TAG[label] annotation
+        const placeableObjectsByTag = Tagger.getByTag(filterTags, { caseInsensitive: true, sceneId: game.scenes.current.id }) || [];
+        if (placeableObjectsByTag.length > 0) {
+          // If at least one of the tags is present on the triggered placeableObject
+          const isValid = placeableObjectsByTag.find((p) => p.id == placeableObjectTrigger.id);
+          if(!isValid){
+            return;
+          }
+        }
+      }
+    }
+    return placeableObjectTrigger;
+
+  }
+
+  async _manageEventLink(triggerJournal, entity, id, label){
+    if (entity === EVENT_TRIGGER_KEY){
+      warn( `Can't manage the trigger '${entity}' on '${triggerJournal}'`);
+      return;
+    }
+    if (
+      ![
+        EVENT_ENTITY_TYPES.OOC,
+        EVENT_ENTITY_TYPES.EMOTE,
+        EVENT_ENTITY_TYPES.WHISPER,
+        EVENT_ENTITY_TYPES.SELF_WHISPER,
+        EVENT_ENTITY_TYPES.PRELOAD,
+        EVENT_ENTITY_TYPES.CLICK,
+        EVENT_ENTITY_TYPES.MOVE,
+        EVENT_ENTITY_TYPES.STOP_MOVEMENT,
+        EVENT_ENTITY_TYPES.CAPTURE,
+        EVENT_ENTITY_TYPES.DOOR_CLOSE,
+        EVENT_ENTITY_TYPES.DOOR_OPEN
+      ].includes(id)
+    ){
+      warn( `Can't manage the event '${entity}' on '${triggerJournal}'`);
+      return;
+    }
+    if(!id){
+      warn( `Can't manage the empty event '${entity}' on '${triggerJournal}'`);
+      return;
+    }
+    return id;
+  }
+
+  async _manageEffect(triggerJournal, entity, id, label){
+    if (
+      ![
+        EFFECT_ENTITY_TYPES.CHAT_MESSAGE,
+        EFFECT_ENTITY_TYPES.TOKEN,
+        EFFECT_ENTITY_TYPES.DRAWING,
+        EFFECT_ENTITY_TYPES.DOOR,
+        EFFECT_ENTITY_TYPES.COMPENDIUM,
+        EFFECT_ENTITY_TYPES.JOURNAL_ENTRY,
+        EFFECT_ENTITY_TYPES.STAIRWAY
+      ].includes(entity)
+    ){
+      warn( `Can't manage the event '${entity}' on '${triggerJournal}'`);
+      return;
+    }
+    if(!id){
+      warn( `Can't manage the empty event '${entity}' on '${triggerJournal}'`);
+      return;
+    }
+    if (
+      entity != EFFECT_ENTITY_TYPES.CHAT_MESSAGE ||
+      entity != EFFECT_ENTITY_TYPES.COMPENDIUM){
+        // must be a placeable object
+        const relevantDocument = this._retrieveDocumentFromEntity(entity, id);
+        if(!relevantDocument){
+          return;
+        }
+        effect = relevantDocument;
+        // const placeableObjectId = relevantDocument.id;
+
+        // // Filter your triggers only for the current scene
+        // const placeableObjects = this._getObjectsFromScene(game.scenes.current);
+        // const placeableObjectTrigger = placeableObjects.filter((obj) => obj.id === placeableObjectId)[0];
+        // if (!placeableObjectTrigger) {
+        //   return;
+        // }
+    }
+    // Chat messagge and compendium are special case because they are not placeable object
+    else if (entity === EFFECT_ENTITY_TYPES.CHAT_MESSAGE) {
+      effect = new ChatMessage({ content: id, speaker: { alias: label } }, {});
+    } else if (entity === EFFECT_ENTITY_TYPES.COMPENDIUM) {
+      // compendium links can only be effects not triggers
+      const parts = id.split(".");
+      if (parts.length !== 3) continue;
+      effect = new CompendiumLink(parts.slice(0,2).join("."), parts[2], label)
+    }else{
+      const config = CONFIG[entity];
+      if (!config){
+        continue;
+      }
+      effect = config.collection.instance.get(id);
+      if (!effect){
+        effect = config.collection.instance.getName(id);
+      }
+    }
+    return effect;
   }
 
   async _executeTriggers(triggers) {
@@ -371,7 +554,7 @@ export class TriggerHappy {
     for (const trigger of triggers) {
       for (let effect of trigger.effects) {
         if (effect.documentName === 'Scene') {
-          if (trigger.options.includes(TRIGGERS.PRELOAD)) await game.scenes.preload(effect.id);
+          if (trigger.options.includes(EVENT_ENTITY_TYPES.PRELOAD)) await game.scenes.preload(effect.id);
           else {
             const scene = game.scenes.get(effect.id);
             await scene.view();
@@ -382,14 +565,14 @@ export class TriggerHappy {
           await effect.draw();
         } else if (effect instanceof ChatMessage) {
           const chatData = duplicate(effect.data);
-          if (trigger.options.includes(TRIGGERS.OOC)) {
+          if (trigger.options.includes(EVENT_ENTITY_TYPES.OOC)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.OOC;
-          } else if (trigger.options.includes(TRIGGERS.EMOTE)) {
+          } else if (trigger.options.includes(EVENT_ENTITY_TYPES.EMOTE)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.EMOTE;
-          } else if (trigger.options.includes(TRIGGERS.WHISPER)) {
+          } else if (trigger.options.includes(EVENT_ENTITY_TYPES.WHISPER)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.WHISPER;
             chatData.whisper = ChatMessage.getWhisperRecipients('GM');
-          } else if (trigger.options.includes(TRIGGERS.SELF_WHISPER)) {
+          } else if (trigger.options.includes(EVENT_ENTITY_TYPES.SELF_WHISPER)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.WHISPER;
             chatData.whisper = [game.user.id];
           }
@@ -426,15 +609,15 @@ export class TriggerHappy {
           trigger.trigger.data.id === token.id ||
           trigger.trigger.data.name === token.id));
     if (!isTrigger) return false;
-    if (type === TRIGGERS.CLICK)
+    if (type === EVENT_ENTITY_TYPES.CLICK)
       return (
-        trigger.options.includes(TRIGGERS.CLICK) || (!trigger.options.includes(TRIGGERS.MOVE) && !token.data.hidden)
+        trigger.options.includes(EVENT_ENTITY_TYPES.CLICK) || (!trigger.options.includes(EVENT_ENTITY_TYPES.MOVE) && !token.data.hidden)
       );
-    if (type === TRIGGERS.MOVE)
+    if (type === EVENT_ENTITY_TYPES.MOVE)
       return (
-        trigger.options.includes(TRIGGERS.MOVE) || (!trigger.options.includes(TRIGGERS.CLICK) && token.data.hidden)
+        trigger.options.includes(EVENT_ENTITY_TYPES.MOVE) || (!trigger.options.includes(EVENT_ENTITY_TYPES.CLICK) && token.data.hidden)
       );
-    if (type === TRIGGERS.CAPTURE) return trigger.options.includes(TRIGGERS.CAPTURE);
+    if (type === EVENT_ENTITY_TYPES.CAPTURE) return trigger.options.includes(EVENT_ENTITY_TYPES.CAPTURE);
     return true;
   }
 
@@ -451,30 +634,30 @@ export class TriggerHappy {
         (trigger.trigger instanceof NoteDocument && trigger.trigger.label === note.text) ||
         (trigger.trigger instanceof NoteDocument && trigger.trigger.label === note.data.text);
       if (!isTrigger) return false;
-      if (type === TRIGGERS.CLICK)
+      if (type === EVENT_ENTITY_TYPES.CLICK)
         return (
-          trigger.options.includes(TRIGGERS.CLICK) || (!trigger.options.includes(TRIGGERS.MOVE))
+          trigger.options.includes(EVENT_ENTITY_TYPES.CLICK) || (!trigger.options.includes(EVENT_ENTITY_TYPES.MOVE))
         );
-      if (type === TRIGGERS.MOVE)
+      if (type === EVENT_ENTITY_TYPES.MOVE)
         return (
-          trigger.options.includes(TRIGGERS.MOVE) || (!trigger.options.includes(TRIGGERS.CLICK))
+          trigger.options.includes(EVENT_ENTITY_TYPES.MOVE) || (!trigger.options.includes(EVENT_ENTITY_TYPES.CLICK))
         );
-      if (type === TRIGGERS.CAPTURE) return trigger.options.includes(TRIGGERS.CAPTURE);
+      if (type === EVENT_ENTITY_TYPES.CAPTURE) return trigger.options.includes(EVENT_ENTITY_TYPES.CAPTURE);
       return true;
   }
 
   _isDrawingTrigger(drawing, trigger, type) {
     const isTrigger = trigger.trigger instanceof DrawingDocument && trigger.trigger.data.text === drawing.data.text;
     if (!isTrigger) return false;
-    if (type === TRIGGERS.CLICK)
+    if (type === EVENT_ENTITY_TYPES.CLICK)
       return (
-        trigger.options.includes(TRIGGERS.CLICK) || (!trigger.options.includes(TRIGGERS.MOVE) && !drawing.data.hidden)
+        trigger.options.includes(EVENT_ENTITY_TYPES.CLICK) || (!trigger.options.includes(EVENT_ENTITY_TYPES.MOVE) && !drawing.data.hidden)
       );
-    if (type === TRIGGERS.MOVE)
+    if (type === EVENT_ENTITY_TYPES.MOVE)
       return (
-        trigger.options.includes(TRIGGERS.MOVE) || (!trigger.options.includes(TRIGGERS.CLICK) && drawing.data.hidden)
+        trigger.options.includes(EVENT_ENTITY_TYPES.MOVE) || (!trigger.options.includes(EVENT_ENTITY_TYPES.CLICK) && drawing.data.hidden)
       );
-    if (type === TRIGGERS.CAPTURE) return trigger.options.includes(TRIGGERS.CAPTURE);
+    if (type === EVENT_ENTITY_TYPES.CAPTURE) return trigger.options.includes(EVENT_ENTITY_TYPES.CAPTURE);
     return true;
   }
 
@@ -544,9 +727,9 @@ export class TriggerHappy {
     const clickDrawings = this._getPlaceablesAt(canvas.drawings.placeables, position);
     const clickNotes = this._getPlaceablesAt(canvas.notes.placeables, position);
     if (clickTokens.length === 0 && clickDrawings.length == 0 && clickNotes.length == 0) return;
-    const downTriggers = this._getTriggersFromTokens(this.triggers, clickTokens, TRIGGERS.CLICK);
-    downTriggers.push(...this._getTriggersFromDrawings(this.triggers, clickDrawings, TRIGGERS.CLICK));
-    downTriggers.push(...this._getTriggersFromNotes(this.triggers, clickNotes, TRIGGERS.CLICK));
+    const downTriggers = this._getTriggersFromTokens(this.triggers, clickTokens, EVENT_ENTITY_TYPES.CLICK);
+    downTriggers.push(...this._getTriggersFromDrawings(this.triggers, clickDrawings, EVENT_ENTITY_TYPES.CLICK));
+    downTriggers.push(...this._getTriggersFromNotes(this.triggers, clickNotes, EVENT_ENTITY_TYPES.CLICK));
     if (downTriggers.length === 0) return;
     // Needed this for module compatibility and the release on click left option active
     if(this.release) {
@@ -562,9 +745,9 @@ export class TriggerHappy {
       const upDrawings = this._getPlaceablesAt(drawings, position);
       const upNotes = this._getPlaceablesAt(notes, position);
       if (upTokens.length === 0 && upDrawings.length === 0 && upNotes.length === 0) return;
-      const triggers = this._getTriggersFromTokens(this.triggers, upTokens, TRIGGERS.CLICK);
-      triggers.push(...this._getTriggersFromDrawings(this.triggers, upDrawings, TRIGGERS.CLICK));
-      triggers.push(...this._getTriggersFromNotes(this.triggers, upNotes, TRIGGERS.CLICK));
+      const triggers = this._getTriggersFromTokens(this.triggers, upTokens, EVENT_ENTITY_TYPES.CLICK);
+      triggers.push(...this._getTriggersFromDrawings(this.triggers, upDrawings, EVENT_ENTITY_TYPES.CLICK));
+      triggers.push(...this._getTriggersFromNotes(this.triggers, upNotes, EVENT_ENTITY_TYPES.CLICK));
       this._executeTriggers(triggers);
     }finally{
       // Needed this for module compatibility and the release on click left option active
@@ -575,7 +758,7 @@ export class TriggerHappy {
   _onControlToken(token, controlled) {
     if (!controlled) return;
     const tokens = [token];
-    const triggers = this._getTriggersFromTokens(this.triggers, tokens, TRIGGERS.CLICK);
+    const triggers = this._getTriggersFromTokens(this.triggers, tokens, EVENT_ENTITY_TYPES.CLICK);
     if (triggers.length === 0) return;
     // Needed this for module compatibility and the release on click left option active
     if(this.release){
@@ -595,12 +778,12 @@ export class TriggerHappy {
     const drawings = this._getPlaceablesAt(canvas.drawings.placeables, position);
     const notes = this._getPlaceablesAt(canvas.notes.placeables, position);
     if (tokens.length === 0 && drawings.length === 0 && notes.length === 0) return true;
-    const triggers = this._getTriggersFromTokens(this.triggers, tokens, TRIGGERS.MOVE);
-    triggers.push(...this._getTriggersFromDrawings(this.triggers, drawings, TRIGGERS.MOVE));
-    triggers.push(...this._getTriggersFromNotes(this.triggers, notes, TRIGGERS.MOVE));
+    const triggers = this._getTriggersFromTokens(this.triggers, tokens, EVENT_ENTITY_TYPES.MOVE);
+    triggers.push(...this._getTriggersFromDrawings(this.triggers, drawings, EVENT_ENTITY_TYPES.MOVE));
+    triggers.push(...this._getTriggersFromNotes(this.triggers, notes, EVENT_ENTITY_TYPES.MOVE));
 
     if (triggers.length === 0) return true;
-    if (triggers.some((trigger) => trigger.options.includes(TRIGGERS.STOP_MOVEMENT))) {
+    if (triggers.some((trigger) => trigger.options.includes(EVENT_ENTITY_TYPES.STOP_MOVEMENT))) {
       this._executeTriggers(triggers);
       return false;
     }
@@ -611,9 +794,9 @@ export class TriggerHappy {
   _doCaptureTriggers(tokenDocument, scene, update) {
     // Get all trigger tokens in scene
     const token = tokenDocument.object;
-    let targets = this._getTokensFromTriggers(canvas.tokens.placeables, this.triggers, TRIGGERS.CAPTURE);
-    targets.push(...this._getDrawingsFromTriggers(canvas.drawings.placeables, this.triggers, TRIGGERS.CAPTURE));
-    targets.push(...this._getNotesFromTriggers(canvas.notes.placeables, this.triggers, TRIGGERS.CAPTURE));
+    let targets = this._getTokensFromTriggers(canvas.tokens.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE);
+    targets.push(...this._getDrawingsFromTriggers(canvas.drawings.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE));
+    targets.push(...this._getNotesFromTriggers(canvas.notes.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE));
 
     if (targets.length === 0) return;
 
@@ -685,8 +868,8 @@ export class TriggerHappy {
     const triggers = this.triggers.filter((trigger) => {
       if (!(trigger.trigger instanceof WallDocument)) return false;
       if (wallDocument.data.c.toString() !== trigger.trigger.data.c.toString()) return false;
-      const onClose = trigger.options.includes(TRIGGERS.DOOR_CLOSE);
-      const onOpen = !trigger.options.includes(TRIGGERS.DOOR_CLOSE) || trigger.options.includes(TRIGGERS.DOOR_OPEN);
+      const onClose = trigger.options.includes(EVENT_ENTITY_TYPES.DOOR_CLOSE);
+      const onOpen = !trigger.options.includes(EVENT_ENTITY_TYPES.DOOR_CLOSE) || trigger.options.includes(EVENT_ENTITY_TYPES.DOOR_OPEN);
       return (update.ds === 1 && onOpen) || (update.ds === 0 && onClose && wallDocument.data.ds === 1);
     });
     this._executeTriggers(triggers);
@@ -721,8 +904,8 @@ export class TriggerHappy {
   _doCaptureTriggersEdge(tokenDocument, scene, update) {
     const token = tokenDocument.object;
     // Get all trigger tokens in scene
-    let targets = this._getTokensFromTriggers(canvas.tokens.placeables, this.triggers, TRIGGERS.CAPTURE);
-    targets.push(...this._getDrawingsFromTriggers(canvas.drawings.placeables, this.triggers, TRIGGERS.CAPTURE));
+    let targets = this._getTokensFromTriggers(canvas.tokens.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE);
+    targets.push(...this._getDrawingsFromTriggers(canvas.drawings.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE));
 
     if (!targets) return;
 
@@ -825,12 +1008,15 @@ export class TriggerHappy {
   }
 
   _retrieveDocumentFromEntity(entity, idOrName){
-    // if(entity == TRIGGER_ENTITY_LINK_TYPES.CHAT_MESSAGE || entity == TRIGGER_ENTITY_LINK_TYPES.COMPENDIUM){
+    // if(entity == EFFECT_ENTITY_TYPES.CHAT_MESSAGE || entity == EFFECT_ENTITY_TYPES.COMPENDIUM){
     //   return true;
     // }
-    if (entity == TRIGGER_ENTITY_LINK_TYPES.TOKEN) {
+    if (entity == EFFECT_ENTITY_TYPES.TOKEN) {
       const tokenTarget = this._retrieveDocumentFromIdOrName(canvas.tokens?.placeables, idOrName);
       return tokenTarget;
+    } else if (entity == EFFECT_ENTITY_TYPES.ACTOR) {
+        const actorTarget = this._retrieveDocumentFromIdOrName(game.actors, idOrName);
+        return actorTarget;
     // TODO ADD AMBIENT LIGHT INTEGRATION
     // } else if (relevantDocument instanceof AmbientLightDocument) {
     //   const ambientLightTarget = this._retrieveDocumentFromIdOrName(canvas.lighting?.placeables, idOrName);
@@ -843,16 +1029,16 @@ export class TriggerHappy {
     // } else if (relevantDocument instanceof TileDocument) {
     //   const tileTarget = this._retrieveDocumentFromIdOrName(canvas.foreground?.placeables, idOrName);
     //   return tileTarget;
-    } else if (entity == TRIGGER_ENTITY_LINK_TYPES.DOOR) {
+    } else if (entity == EFFECT_ENTITY_TYPES.DOOR) {
       const doorControlTarget = this._retrieveDocumentFromIdOrName(canvas.controls?.doors?.children, idOrName);
       return doorControlTarget;
-    } else if(entity == TRIGGER_ENTITY_LINK_TYPES.DRAWING) {
+    } else if(entity == EFFECT_ENTITY_TYPES.DRAWING) {
       const drawingTarget = this._retrieveDocumentFromIdOrName(canvas.drawings?.placeables, idOrName);
       return drawingTarget;
-    } else if (entity == TRIGGER_ENTITY_LINK_TYPES.JOURNAL_ENTRY) {
+    } else if (entity == EFFECT_ENTITY_TYPES.JOURNAL_ENTRY) {
       const noteTarget = this._retrieveDocumentFromIdOrName(canvas.notes?.placeables, idOrName);
       return noteTarget;
-    } else if (entity == TRIGGER_ENTITY_LINK_TYPES.STAIRWAY) {
+    } else if (entity == EFFECT_ENTITY_TYPES.STAIRWAY) {
       const stairwayTarget = this._retrieveDocumentFromIdOrName(canvas.stairways?.placeables, idOrName);
       return stairwayTarget;
     } else {
@@ -918,7 +1104,7 @@ export class TriggerHappy {
   //     } else {
   //       return null;
   //     }
-  // }  
+  // }
 
   // MAYBE CAN BE USEFUL IN OTHER CONTEXT ????
   // _retrieveDocumentFromDocument(placeables, relevantDocument){
