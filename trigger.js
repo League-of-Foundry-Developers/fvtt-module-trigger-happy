@@ -255,6 +255,7 @@ export class TriggerHappy {
           if(!eventLink){
             break;
           }
+          options.push(eventLink);
         } else {
           const effect = this._manageEffect(triggerJournal, entity, id, label);
           if(effect){
@@ -264,7 +265,7 @@ export class TriggerHappy {
         index++;
       }
 
-      // OLD CODE DON'T DELETE FOR NOW MADE A BETTER MORE INTUITIVE CODE
+      // OLD CODE DON'T DELETE FOR NOW BUT I MADE A BETTER MORE INTUITIVE CODE
       /*
       for (let match of lineTmp.matchAll(rgx)) {
         let [triggerJournal, entity, id, label] = match;
@@ -385,7 +386,8 @@ export class TriggerHappy {
         effects.push(effect);
       }
       */
-      if (trigger && trigger instanceof PlaceableObject && effects.length > 0){
+      // TODO Trigger for now can be a placeableobject or just a document to solve in a future release
+      if (trigger && effects.length > 0){
         this.triggers.push({ trigger, effects, options });
       }
     }
@@ -492,27 +494,21 @@ export class TriggerHappy {
   }
 
   async _manageEffect(triggerJournal, entity, id, label){
-    if (
-      ![
-        EFFECT_ENTITY_TYPES.CHAT_MESSAGE,
-        EFFECT_ENTITY_TYPES.TOKEN,
-        EFFECT_ENTITY_TYPES.DRAWING,
-        EFFECT_ENTITY_TYPES.DOOR,
-        EFFECT_ENTITY_TYPES.COMPENDIUM,
-        EFFECT_ENTITY_TYPES.JOURNAL_ENTRY,
-        EFFECT_ENTITY_TYPES.STAIRWAY
-      ].includes(entity)
-    ){
-      warn( `Can't manage the event '${entity}' on '${triggerJournal}'`);
-      return;
-    }
     if(!id){
       warn( `Can't manage the empty event '${entity}' on '${triggerJournal}'`);
       return;
     }
+    // If is a placeable object
     if (
-      entity != EFFECT_ENTITY_TYPES.CHAT_MESSAGE ||
-      entity != EFFECT_ENTITY_TYPES.COMPENDIUM){
+      [
+        TRIGGER_ENTITY_TYPES.ACTOR,
+        TRIGGER_ENTITY_TYPES.TOKEN,
+        TRIGGER_ENTITY_TYPES.SCENE,
+        TRIGGER_ENTITY_TYPES.DRAWING,
+        TRIGGER_ENTITY_TYPES.DOOR,
+        TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY,
+        TRIGGER_ENTITY_TYPES.STAIRWAY,
+      ].includes(entity)){
         // must be a placeable object
         const relevantDocument = this._retrieveDocumentFromEntity(entity, id);
         if(!relevantDocument){
@@ -520,7 +516,6 @@ export class TriggerHappy {
         }
         effect = relevantDocument;
         // const placeableObjectId = relevantDocument.id;
-
         // // Filter your triggers only for the current scene
         // const placeableObjects = this._getObjectsFromScene(game.scenes.current);
         // const placeableObjectTrigger = placeableObjects.filter((obj) => obj.id === placeableObjectId)[0];
@@ -537,6 +532,7 @@ export class TriggerHappy {
       if (parts.length !== 3) continue;
       effect = new CompendiumLink(parts.slice(0,2).join("."), parts[2], label)
     }else{
+      // Generic last standing
       const config = CONFIG[entity];
       if (!config){
         continue;
@@ -585,9 +581,8 @@ export class TriggerHappy {
           if ( !pack.index.length ) await pack.getIndex();
           const entity = await pack.getDocument(effect.id);
           if (entity) entity.sheet.render(true);
-        } else if (effect.documentName === 'Note' || effect instanceof NoteDocument
-            || effect.documentName === 'JournalEntry') {
-            effect.sheet.render(true);
+        } else if (effect instanceof NoteDocument) {
+          effect.sheet.render(true);
         }
         else {
           await effect.sheet.render(true);
@@ -604,10 +599,8 @@ export class TriggerHappy {
   _isTokenTrigger(token, trigger, type) {
     const isTrigger =
       (trigger.trigger instanceof Actor && trigger.trigger.id === token.data.actorId) ||
-      (trigger.trigger instanceof TokenDocument &&
-        (trigger.trigger.data.name === token.data.name ||
-          trigger.trigger.data.id === token.id ||
-          trigger.trigger.data.name === token.id));
+      (trigger.trigger instanceof TokenDocument && trigger.trigger.id === token.id) ||
+      (trigger.trigger instanceof Token && trigger.trigger.id === token.id);
     if (!isTrigger) return false;
     if (type === EVENT_ENTITY_TYPES.CLICK)
       return (
@@ -621,7 +614,7 @@ export class TriggerHappy {
     return true;
   }
 
-    /**
+  /**
    * Checks if a note is causing a trigger to be activated
    * @param {Note} note       The note to test
    * @param {Object} trigger    The trigger to test against
@@ -630,9 +623,7 @@ export class TriggerHappy {
   _isNoteTrigger(note, trigger, type) {
       const isTrigger =
         (trigger.trigger instanceof Note && trigger.trigger.id === note.id) ||
-        (trigger.trigger instanceof NoteDocument && trigger.trigger.id === note.id) ||
-        (trigger.trigger instanceof NoteDocument && trigger.trigger.label === note.text) ||
-        (trigger.trigger instanceof NoteDocument && trigger.trigger.label === note.data.text);
+        (trigger.trigger instanceof NoteDocument && trigger.trigger.id === note.id);
       if (!isTrigger) return false;
       if (type === EVENT_ENTITY_TYPES.CLICK)
         return (
@@ -646,8 +637,33 @@ export class TriggerHappy {
       return true;
   }
 
+  /**
+   * Checks if a stairway is causing a trigger to be activated
+   * @param {Stairway} stairway       The stairway to test
+   * @param {Object} trigger    The trigger to test against
+   * @param {String} type       Type of trigger, can be 'click' or 'move'
+   */
+  _isStairwayTrigger(stairway, trigger, type) {
+    const isTrigger =
+      (trigger.trigger instanceof Stairway && trigger.trigger.id === stairway.id) ||
+      (trigger.trigger instanceof StairwayDocument && trigger.trigger.id === stairway.id);
+    if (!isTrigger) return false;
+    if (type === EVENT_ENTITY_TYPES.CLICK)
+      return (
+        trigger.options.includes(EVENT_ENTITY_TYPES.CLICK) || (!trigger.options.includes(EVENT_ENTITY_TYPES.MOVE))
+      );
+    if (type === EVENT_ENTITY_TYPES.MOVE)
+      return (
+        trigger.options.includes(EVENT_ENTITY_TYPES.MOVE) || (!trigger.options.includes(EVENT_ENTITY_TYPES.CLICK))
+      );
+    if (type === EVENT_ENTITY_TYPES.CAPTURE) return trigger.options.includes(EVENT_ENTITY_TYPES.CAPTURE);
+    return true;
+  }
+
   _isDrawingTrigger(drawing, trigger, type) {
-    const isTrigger = trigger.trigger instanceof DrawingDocument && trigger.trigger.data.text === drawing.data.text;
+    const isTrigger =
+      (trigger.trigger instanceof Drawing && trigger.trigger.id === drawing.id) ||
+      (trigger.trigger instanceof DrawingDocument && trigger.trigger.id === drawing.id);
     if (!isTrigger) return false;
     if (type === EVENT_ENTITY_TYPES.CLICK)
       return (
@@ -692,13 +708,25 @@ export class TriggerHappy {
     return notes.filter((note) => triggers.some((trigger) => this._isNoteTrigger(note, trigger, type)));
   }
 
+  _getStairwaysFromTriggers(stairways, triggers, type) {
+    return stairways.filter((stairway) => triggers.some((trigger) => this._isStairwayTrigger(stairway, trigger, type)));
+  }
+
   // return all triggers for the set of tokens
   _getTriggersFromTokens(triggers, tokens, type) {
     return triggers.filter((trigger) => tokens.some((token) => this._isTokenTrigger(token, trigger, type)));
   }
 
   _getTriggersFromNotes(triggers, notes, type) {
+    // Don't trigger on notes while on the drawing layer.
+    if (canvas.activeLayer === canvas.notes) return [];
     return triggers.filter((trigger) => notes.some((note) => this._isNoteTrigger(note, trigger, type)));
+  }
+
+  _getTriggersFromStairways(triggers, stairways, type) {
+    // Don't trigger on stairways while on the drawing layer.
+    if (canvas.activeLayer === canvas.stairways) return [];
+    return triggers.filter((trigger) => stairways.some((stairway) => this._isStairwayTrigger(stairway, trigger, type)));
   }
 
   _getTriggersFromDrawings(triggers, drawings, type) {
@@ -723,31 +751,40 @@ export class TriggerHappy {
 
   _onMouseDown(event) {
     const position = this._getMousePosition(event);
-    const clickTokens = this._getPlaceablesAt(canvas.tokens.placeables, position);
-    const clickDrawings = this._getPlaceablesAt(canvas.drawings.placeables, position);
-    const clickNotes = this._getPlaceablesAt(canvas.notes.placeables, position);
-    if (clickTokens.length === 0 && clickDrawings.length == 0 && clickNotes.length == 0) return;
+    const clickTokens = this._getPlaceablesAt(canvas.tokens?.placeables, position);
+    const clickDrawings = this._getPlaceablesAt(canvas.drawings?.placeables, position);
+    const clickNotes = this._getPlaceablesAt(canvas.notes?.placeables, position);
+    const clickStairways = this._getPlaceablesAt(canvas.stairways?.placeables, position);
+    if (clickTokens.length === 0 && clickDrawings.length == 0 &&
+      clickNotes.length == 0 && clickStairways.length == 0){
+      return;
+    }
     const downTriggers = this._getTriggersFromTokens(this.triggers, clickTokens, EVENT_ENTITY_TYPES.CLICK);
     downTriggers.push(...this._getTriggersFromDrawings(this.triggers, clickDrawings, EVENT_ENTITY_TYPES.CLICK));
     downTriggers.push(...this._getTriggersFromNotes(this.triggers, clickNotes, EVENT_ENTITY_TYPES.CLICK));
-    if (downTriggers.length === 0) return;
+    downTriggers.push(...this._getTriggersFromStairways(this.triggers, clickStairways, EVENT_ENTITY_TYPES.CLICK));
+    if (downTriggers.length === 0){
+      return;
+    }
     // Needed this for module compatibility and the release on click left option active
     if(this.release) {
       game.settings.set("core", "leftClickRelease", false);
     }
-    canvas.stage.once('mouseup', (ev) => this._onMouseUp(ev, clickTokens, clickDrawings, clickNotes, downTriggers));
+    canvas.stage.once('mouseup', (ev) => this._onMouseUp(ev, clickTokens, clickDrawings, clickNotes, clickStairways, downTriggers));
   }
 
-  _onMouseUp(event, tokens, drawings, notes, downTriggers) {
+  _onMouseUp(event, tokens, drawings, notes, stairways, downTriggers) {
     try{
       const position = this._getMousePosition(event);
       const upTokens = this._getPlaceablesAt(tokens, position);
       const upDrawings = this._getPlaceablesAt(drawings, position);
       const upNotes = this._getPlaceablesAt(notes, position);
+      const upStairways = this._getPlaceablesAt(stairways, position);
       if (upTokens.length === 0 && upDrawings.length === 0 && upNotes.length === 0) return;
       const triggers = this._getTriggersFromTokens(this.triggers, upTokens, EVENT_ENTITY_TYPES.CLICK);
       triggers.push(...this._getTriggersFromDrawings(this.triggers, upDrawings, EVENT_ENTITY_TYPES.CLICK));
       triggers.push(...this._getTriggersFromNotes(this.triggers, upNotes, EVENT_ENTITY_TYPES.CLICK));
+      triggers.push(...this._getTriggersFromStairways(this.triggers, upStairways, EVENT_ENTITY_TYPES.CLICK));
       this._executeTriggers(triggers);
     }finally{
       // Needed this for module compatibility and the release on click left option active
@@ -764,7 +801,7 @@ export class TriggerHappy {
     if(this.release){
       game.settings.set("core", "leftClickRelease", false);
     }
-    token.once('click', (ev) => this._onMouseUp(ev, tokens, [], [], triggers));
+    token.once('click', (ev) => this._onMouseUp(ev, tokens, [], [], [], triggers));
   }
 
   _doMoveTriggers(tokenDocument, scene, update) {
@@ -775,12 +812,14 @@ export class TriggerHappy {
     };
     const movementTokens = canvas.tokens.placeables.filter((tok) => tok.data._id !== token.id);
     const tokens = this._getPlaceablesAt(movementTokens, position);
-    const drawings = this._getPlaceablesAt(canvas.drawings.placeables, position);
-    const notes = this._getPlaceablesAt(canvas.notes.placeables, position);
+    const drawings = this._getPlaceablesAt(canvas.drawings?.placeables, position);
+    const notes = this._getPlaceablesAt(canvas.notes?.placeables, position);
+    const stairways = this._getPlaceablesAt(canvas.stairways?.placeables, position);
     if (tokens.length === 0 && drawings.length === 0 && notes.length === 0) return true;
     const triggers = this._getTriggersFromTokens(this.triggers, tokens, EVENT_ENTITY_TYPES.MOVE);
     triggers.push(...this._getTriggersFromDrawings(this.triggers, drawings, EVENT_ENTITY_TYPES.MOVE));
     triggers.push(...this._getTriggersFromNotes(this.triggers, notes, EVENT_ENTITY_TYPES.MOVE));
+    triggers.push(...this._getTriggersFromStairways(this.triggers, stairways, EVENT_ENTITY_TYPES.MOVE));
 
     if (triggers.length === 0) return true;
     if (triggers.some((trigger) => trigger.options.includes(EVENT_ENTITY_TYPES.STOP_MOVEMENT))) {
@@ -794,9 +833,10 @@ export class TriggerHappy {
   _doCaptureTriggers(tokenDocument, scene, update) {
     // Get all trigger tokens in scene
     const token = tokenDocument.object;
-    let targets = this._getTokensFromTriggers(canvas.tokens.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE);
-    targets.push(...this._getDrawingsFromTriggers(canvas.drawings.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE));
-    targets.push(...this._getNotesFromTriggers(canvas.notes.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE));
+    let targets = this._getTokensFromTriggers(canvas.tokens?.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE);
+    targets.push(...this._getDrawingsFromTriggers(canvas.drawings?.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE));
+    targets.push(...this._getNotesFromTriggers(canvas.notes?.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE));
+    targets.push(...this._getStairwaysFromTriggers(canvas.stairways?.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE));
 
     if (targets.length === 0) return;
 
@@ -855,9 +895,12 @@ export class TriggerHappy {
     if (!tokenDocument.object?.scene?.isView) return true;
     if (update.x === undefined && update.y === undefined) return true;
     let stop;
-    if (game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'edgeCollision'))
+    if (game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'edgeCollision')){
       stop = this._doCaptureTriggersEdge(tokenDocument, tokenDocument.object.scene, update);
-    else stop = this._doCaptureTriggers(tokenDocument, tokenDocument.object.scene, update);
+    }
+    else {
+      stop = this._doCaptureTriggers(tokenDocument, tokenDocument.object.scene, update);
+    }
     if (stop === false) return false;
     return this._doMoveTriggers(tokenDocument, tokenDocument.object.scene, update);
   }
@@ -904,8 +947,10 @@ export class TriggerHappy {
   _doCaptureTriggersEdge(tokenDocument, scene, update) {
     const token = tokenDocument.object;
     // Get all trigger tokens in scene
-    let targets = this._getTokensFromTriggers(canvas.tokens.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE);
-    targets.push(...this._getDrawingsFromTriggers(canvas.drawings.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE));
+    let targets = this._getTokensFromTriggers(canvas.tokens?.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE);
+    targets.push(...this._getDrawingsFromTriggers(canvas.drawings?.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE));
+    targets.push(...this._getNotesFromTriggers(canvas.notes?.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE));
+    targets.push(...this._getStairwaysFromTriggers(canvas.stairways?.placeables, this.triggers, EVENT_ENTITY_TYPES.CAPTURE));
 
     if (!targets) return;
 
