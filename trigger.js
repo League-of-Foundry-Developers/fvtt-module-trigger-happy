@@ -159,30 +159,30 @@ Hooks.once('ready', () => {
 // Add any additional hooks if necessary
 
 export const TRIGGER_ENTITY_TYPES = {
-  TRIGGER: 'Trigger',
-  CHAT_MESSAGE: 'ChatMessage',
-  ACTOR: 'Actor',
-  TOKEN: 'Token',
-  SCENE: 'Scene',
-  DRAWING: 'Drawing',
-  DOOR: 'Door',
-  COMPENDIUM: 'Compendium',
-  JOURNAL_ENTRY: 'JournalEntry',
-  STAIRWAY: 'Stairway'
+  TRIGGER: 'trigger',
+  CHAT_MESSAGE: 'chatmessage',
+  ACTOR: 'actor',
+  TOKEN: 'token',
+  SCENE: 'scene',
+  DRAWING: 'drawing',
+  DOOR: 'door',
+  COMPENDIUM: 'compendium',
+  JOURNAL_ENTRY: 'journalentry',
+  STAIRWAY: 'stairway'
 };
 
 export const EVENT_TRIGGER_ENTITY_TYPES = {
   OOC: `ooc`,
   EMOTE: `emote`,
   WHISPER: `whisper`,
-  SELF_WHISPER: `selfWhisper`,
+  SELF_WHISPER: `selfwhisper`,
   PRELOAD: `preload`,
   CLICK: `click`,
   MOVE: `move`,
-  STOP_MOVEMENT: `stopMovement`,
+  STOP_MOVEMENT: `stopmovement`,
   CAPTURE: `capture`,
-  DOOR_CLOSE: `doorClose`,
-  DOOR_OPEN: `doorOpen`,
+  DOOR_CLOSE: `doorclose`,
+  DOOR_OPEN: `dooropen`,
 };
 
 export class TriggerHappy {
@@ -203,6 +203,17 @@ export class TriggerHappy {
     this.triggers = [];
     this.taggerModuleActive = game.modules.get('tagger')?.active
     this.release = game.settings.get('core', 'leftClickRelease');
+
+    this.arrayTriggers = Object.values(TRIGGER_ENTITY_TYPES);
+    this.arrayEvents = Object.values(EVENT_TRIGGER_ENTITY_TYPES);
+    this.arrayPlaceableObjects = [
+      TRIGGER_ENTITY_TYPES.ACTOR,
+      TRIGGER_ENTITY_TYPES.TOKEN,
+      TRIGGER_ENTITY_TYPES.DRAWING,
+      TRIGGER_ENTITY_TYPES.DOOR,
+      TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY,
+      TRIGGER_ENTITY_TYPES.STAIRWAY,
+    ];
   }
 
   get folderJournalName() {
@@ -263,25 +274,26 @@ export class TriggerHappy {
       return el != null && el != undefined && el != '' && el.includes('@');
     });
 
-    const entityLinks = CONST.ENTITY_LINK_TYPES.concat(Object.values(TRIGGER_ENTITY_TYPES));
+    const entityLinks = CONST.ENTITY_LINK_TYPES.concat(this.arrayTriggers);
 
     for (const line of filteredTriggerLines) {
       // We check this anyway with module tagger active or no
       const entityMatchRgxTagger = `@(Tag)\\[([^\\]]+)\\]`;
-      const rgxTagger = new RegExp(entityMatchRgxTagger, 'g');
+      const rgxTagger = new RegExp(entityMatchRgxTagger, 'ig');
       const matchAllTags = line.matchAll(rgxTagger) || [];
-      const matchTag = matchAllTags[0];
       let filterTags = [];
-
       let lineTmp = line;
-      if(matchTag){
-        lineTmp = lineTmp.replace(rgxTagger, '');
-        // Remove prefix '@Tag[' and suffix ']'
-        filterTags = matchTag.substring(5, matchTag.length-1).split(',');
+      for (let matchTag of matchAllTags) {
+        if(matchTag){
+          let [triggerJournal, entity, id, label] = matchTag;
+          lineTmp = lineTmp.replace(rgxTagger, '');
+          // Remove prefix '@Tag[' and suffix ']'
+          filterTags.push(triggerJournal.substring(5, triggerJournal.length-1).split(','));
+        }
       }
 
       const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
-      const rgx = new RegExp(entityMatchRgx, 'g');
+      const rgx = new RegExp(entityMatchRgx, 'ig');
       let options = [];
       let trigger;
       let effects = [];
@@ -291,18 +303,30 @@ export class TriggerHappy {
       for (let match of matchs) {
         let [triggerJournal, entity, id, label] = match;
         if(index === 0){
-          trigger = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
+          trigger = this._manageTriggerEvent(triggerJournal, entity.toLowerCase(), id, label, filterTags);
           if(!trigger){
             break;
           }
+          if(trigger instanceof String){
+            trigger = trigger.toLowerCase();
+          }
         } else if(index === 1 || entity === TRIGGER_ENTITY_TYPES.TRIGGER){
-          const eventLink = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
+          let eventLink = this._manageTriggerEvent(triggerJournal, entity.toLowerCase(), id, label, filterTags);
           if(!eventLink){
             break;
           }
+          if(eventLink instanceof String){
+            eventLink = eventLink.toLowerCase();
+          }
           options.push(eventLink);
         } else {
-          const effect = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
+          let effect = this._manageTriggerEvent(triggerJournal, entity.toLowerCase(), id, label, filterTags);
+          if(!effect){
+            continue;
+          }
+          if(effect instanceof String){
+            eventLink = effect.toLowerCase();
+          }
           if(effect){
             effects.push(effect);
           }
@@ -318,27 +342,19 @@ export class TriggerHappy {
 
   _manageTriggerEvent(triggerJournal, entity, id, label, filterTags){
     let trigger;
+    if(label){
+      id = label;
+    }
     if(!id){
       warn( `Can't manage the empty trigger '${entity}' on '${triggerJournal}'`);
       return;
     }
     // If is a trigger event
     if (entity === TRIGGER_ENTITY_TYPES.TRIGGER) {
-      if (
-        ![
-          EVENT_TRIGGER_ENTITY_TYPES.OOC,
-          EVENT_TRIGGER_ENTITY_TYPES.EMOTE,
-          EVENT_TRIGGER_ENTITY_TYPES.WHISPER,
-          EVENT_TRIGGER_ENTITY_TYPES.SELF_WHISPER,
-          EVENT_TRIGGER_ENTITY_TYPES.PRELOAD,
-          EVENT_TRIGGER_ENTITY_TYPES.CLICK,
-          EVENT_TRIGGER_ENTITY_TYPES.MOVE,
-          EVENT_TRIGGER_ENTITY_TYPES.STOP_MOVEMENT,
-          EVENT_TRIGGER_ENTITY_TYPES.CAPTURE,
-          EVENT_TRIGGER_ENTITY_TYPES.DOOR_CLOSE,
-          EVENT_TRIGGER_ENTITY_TYPES.DOOR_OPEN
-        ].includes(id)
-      ){
+      const found = this.arrayEvents.find((el) => {
+        return el.toLowerCase() === id.toLowerCase();
+      });
+      if (!found){
         warn( `Can't manage the event '${entity}' on '${triggerJournal}'`);
         return;
       }
@@ -350,14 +366,9 @@ export class TriggerHappy {
     }
     // If is a placeable object
     else if(
-      [
-        TRIGGER_ENTITY_TYPES.ACTOR,
-        TRIGGER_ENTITY_TYPES.TOKEN,
-        TRIGGER_ENTITY_TYPES.DRAWING,
-        TRIGGER_ENTITY_TYPES.DOOR,
-        TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY,
-        TRIGGER_ENTITY_TYPES.STAIRWAY,
-      ].includes(entity)
+      this.arrayPlaceableObjects.find((el) => {
+        return el.toLowerCase() === entity.toLowerCase();
+      })
     ){
 
       const relevantDocument = this._retrieveFromEntity(entity, id);
@@ -382,7 +393,7 @@ export class TriggerHappy {
         const tagsFromSetting = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
         if (tagsFromSetting.length > 0) {
           // Check if every tags on settings is included on the current placeableObject tag list
-          const isValid = tagsFromPlaceableObject.some((tagToCheck) => tagsFromSetting.includes(tagToCheck));
+          const isValid = tagsFromPlaceableObject.some((tagToCheck) => tagsFromSetting.toLowerCase().includes(tagToCheck.toLowerCase()));
           if(!isValid){
             return;
           }
@@ -406,9 +417,17 @@ export class TriggerHappy {
       const scene = this._retrieveFromIdOrName(game.scenes, id);
       trigger = scene;
     }else{
+      let configKey;
+      for (let key of Object.keys(CONFIG)) {
+        if(key.toLowerCase() === entity){
+          configKey = key;
+          break;
+        }
+      }
       // Generic last standing
-      const config = CONFIG[entity];
+      const config = CONFIG[configKey];
       if (!config){
+        warn( `Can't manage the config with entity '${entity}' and key '${configKey}' on '${triggerJournal}'`);
         return;
       }
       trigger = config.collection.instance.get(id);
@@ -456,12 +475,16 @@ export class TriggerHappy {
         } else if (effect instanceof CompendiumLink) {
           const pack = game.packs.get(effect.packId);
           if ( !pack.index.length ) await pack.getIndex();
-          const entity = await pack.getDocument(effect.id);
-          if (entity) await entity.sheet.render(true);
+          const compendium = await pack.getDocument(effect.id);
+          if (compendium) await compendium.sheet.render(true);
         } else if (effect instanceof Note || effect instanceof NoteDocument) {
           const placeablesToken = this._getNotes();
           const note = placeablesToken.find((t) => t.name === effect.name || t.id === effect.id);
           if(note) await note.sheet.render(true);
+        } else if (effect.documentName === 'JournalEntry') {
+          const placeablesJournal = this._getJournals();
+          const journal = placeablesJournal.find((t) => t.name === effect.name || t.id === effect.id);
+          if(journal) await journal.sheet.render(true);
         }
         else {
           await effect.sheet.render(true);
@@ -470,12 +493,6 @@ export class TriggerHappy {
     }
   }
 
-  /**
-   * Checks if a token is causing a trigger to be activated
-   * @param {Token} token       The token to test
-   * @param {Object} trigger    The trigger to test against
-   * @param {String} type       Type of trigger, can be 'click' or 'move'
-   */
   _isTokenTrigger(token, trigger, type) {
     const isTrigger =
       (trigger.trigger instanceof Actor && trigger.trigger.id === token.data.actorId) ||
@@ -494,12 +511,6 @@ export class TriggerHappy {
     return true;
   }
 
-  /**
-   * Checks if a note is causing a trigger to be activated
-   * @param {Note} note       The note to test
-   * @param {Object} trigger    The trigger to test against
-   * @param {String} type       Type of trigger, can be 'click' or 'move'
-   */
   _isNoteTrigger(note, trigger, type) {
       const isTrigger =
         (trigger.trigger instanceof Note && trigger.trigger.id === note.id) ||
@@ -517,12 +528,22 @@ export class TriggerHappy {
       return true;
   }
 
-  /**
-   * Checks if a stairway is causing a trigger to be activated
-   * @param {Stairway} stairway       The stairway to test
-   * @param {Object} trigger    The trigger to test against
-   * @param {String} type       Type of trigger, can be 'click' or 'move'
-   */
+  _isJournalTrigger(journal, trigger, type) {
+    const isTrigger =
+      (trigger.trigger.documentName === 'JournalEntry' && trigger.trigger.id === journal.id);
+    if (!isTrigger) return false;
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
+      return (
+        trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE))
+      );
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE)
+      return (
+        trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK))
+      );
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    return true;
+  }
+
   _isStairwayTrigger(stairway, trigger, type) {
     const isTrigger =
       (trigger.trigger instanceof Stairway && trigger.trigger.id === stairway.id) ||
@@ -588,6 +609,10 @@ export class TriggerHappy {
     return notes.filter((note) => triggers.some((trigger) => this._isNoteTrigger(note, trigger, type)));
   }
 
+  _getJournalsFromTriggers(journals, triggers, type) {
+    return journals.filter((journal) => triggers.some((trigger) => this._isJournalTrigger(journal, trigger, type)));
+  }
+
   _getStairwaysFromTriggers(stairways, triggers, type) {
     return stairways.filter((stairway) => triggers.some((trigger) => this._isStairwayTrigger(stairway, trigger, type)));
   }
@@ -601,6 +626,12 @@ export class TriggerHappy {
     // Don't trigger on notes while on the note layer.
     if (canvas.activeLayer === canvas.notes) return [];
     return triggers.filter((trigger) => notes.some((note) => this._isNoteTrigger(note, trigger, type)));
+  }
+
+  _getTriggersFromJournals(triggers, journals, type) {
+    // Don't trigger on notes while on the note layer.
+    if (canvas.activeLayer === canvas.notes) return [];
+    return triggers.filter((trigger) => journals.some((journal) => this._isJournalTrigger(journal, trigger, type)));
   }
 
   _getTriggersFromStairways(triggers, stairways, type) {
@@ -634,14 +665,17 @@ export class TriggerHappy {
     const clickTokens = this._getPlaceablesAt(this._getTokens(), position);
     const clickDrawings = this._getPlaceablesAt(this._getDrawings(), position);
     const clickNotes = this._getPlaceablesAt(this._getNotes(), position);
+    const clickJournals = this._getPlaceablesAt(this._getJournals(), position);
     const clickStairways = this._getPlaceablesAt(this._getStairways(), position);
     if (clickTokens.length === 0 && clickDrawings.length == 0 &&
-      clickNotes.length == 0 && clickStairways.length == 0){
+      clickNotes.length == 0 && clickStairways.length == 0 &&
+      clickJournals == 0){
       return;
     }
     const downTriggers = this._getTriggersFromTokens(this.triggers, clickTokens, EVENT_TRIGGER_ENTITY_TYPES.CLICK);
     downTriggers.push(...this._getTriggersFromDrawings(this.triggers, clickDrawings, EVENT_TRIGGER_ENTITY_TYPES.CLICK));
     downTriggers.push(...this._getTriggersFromNotes(this.triggers, clickNotes, EVENT_TRIGGER_ENTITY_TYPES.CLICK));
+    downTriggers.push(...this._getTriggersFromJournals(this.triggers, clickJournals, EVENT_TRIGGER_ENTITY_TYPES.CLICK));
     downTriggers.push(...this._getTriggersFromStairways(this.triggers, clickStairways, EVENT_TRIGGER_ENTITY_TYPES.CLICK));
     if (downTriggers.length === 0){
       return;
@@ -650,20 +684,25 @@ export class TriggerHappy {
     if(this.release) {
       game.settings.set('core', 'leftClickRelease', false);
     }
-    canvas.stage.once('mouseup', (ev) => this._onMouseUp(ev, clickTokens, clickDrawings, clickNotes, clickStairways, downTriggers));
+    canvas.stage.once('mouseup', (ev) => this._onMouseUp(ev, downTriggers, clickTokens, clickDrawings, clickNotes, clickJournals, clickStairways));
   }
 
-  _onMouseUp(event, tokens, drawings, notes, stairways, downTriggers) {
+  _onMouseUp(event, downTriggers, tokens, drawings, notes, journals, stairways) {
     try{
       const position = this._getMousePosition(event);
       const upTokens = this._getPlaceablesAt(tokens, position);
       const upDrawings = this._getPlaceablesAt(drawings, position);
       const upNotes = this._getPlaceablesAt(notes, position);
+      const upJournals = this._getPlaceablesAt(journals, position);
       const upStairways = this._getPlaceablesAt(stairways, position);
-      if (upTokens.length === 0 && upDrawings.length === 0 && upNotes.length === 0) return;
+      if (upTokens.length === 0 && upDrawings.length === 0 && 
+        upNotes.length === 0 && upJournals === 0){
+        return;
+      }
       const triggers = this._getTriggersFromTokens(this.triggers, upTokens, EVENT_TRIGGER_ENTITY_TYPES.CLICK);
       triggers.push(...this._getTriggersFromDrawings(this.triggers, upDrawings, EVENT_TRIGGER_ENTITY_TYPES.CLICK));
       triggers.push(...this._getTriggersFromNotes(this.triggers, upNotes, EVENT_TRIGGER_ENTITY_TYPES.CLICK));
+      triggers.push(...this._getTriggersFromJournals(this.triggers, upJournals, EVENT_TRIGGER_ENTITY_TYPES.CLICK));
       triggers.push(...this._getTriggersFromStairways(this.triggers, upStairways, EVENT_TRIGGER_ENTITY_TYPES.CLICK));
       this._executeTriggers(triggers);
     }finally{
@@ -681,7 +720,7 @@ export class TriggerHappy {
     if(this.release){
       game.settings.set('core', 'leftClickRelease', false);
     }
-    token.once('click', (ev) => this._onMouseUp(ev, tokens, [], [], [], triggers));
+    token.once('click', (ev) => this._onMouseUp(ev, triggers, tokens, [], [], [], []));
   }
 
   _doMoveTriggers(tokenDocument, scene, update) {
@@ -694,13 +733,16 @@ export class TriggerHappy {
     const tokens = this._getPlaceablesAt(movementTokens, position);
     const drawings = this._getPlaceablesAt(this._getDrawings(), position);
     const notes = this._getPlaceablesAt(this._getNotes(), position);
+    const journals = this._getPlaceablesAt(this._getJournals(), position);
     const stairways = this._getPlaceablesAt(this._getStairways(), position);
-    if (tokens.length === 0 && drawings.length === 0 && notes.length === 0){
+    if (tokens.length === 0 && drawings.length === 0 && 
+      notes.length === 0 && journals.length === 0){
       return true;
     }
     const triggers = this._getTriggersFromTokens(this.triggers, tokens, EVENT_TRIGGER_ENTITY_TYPES.MOVE);
     triggers.push(...this._getTriggersFromDrawings(this.triggers, drawings, EVENT_TRIGGER_ENTITY_TYPES.MOVE));
     triggers.push(...this._getTriggersFromNotes(this.triggers, notes, EVENT_TRIGGER_ENTITY_TYPES.MOVE));
+    triggers.push(...this._getTriggersFromJournals(this.triggers, journals, EVENT_TRIGGER_ENTITY_TYPES.MOVE));
     triggers.push(...this._getTriggersFromStairways(this.triggers, stairways, EVENT_TRIGGER_ENTITY_TYPES.MOVE));
 
     if (triggers.length === 0) return true;
@@ -718,6 +760,7 @@ export class TriggerHappy {
     let targets = this._getTokensFromTriggers(this._getTokens(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
     targets.push(...this._getDrawingsFromTriggers(this._getDrawings(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE));
     targets.push(...this._getNotesFromTriggers(this._getNotes(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE));
+    targets.push(...this._getJournalsFromTriggers(this._getJournals(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE));
     targets.push(...this._getStairwaysFromTriggers(this._getStairways(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE));
 
     if (targets.length === 0){
@@ -834,6 +877,7 @@ export class TriggerHappy {
     let targets = this._getTokensFromTriggers(this._getTokens(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
     targets.push(...this._getDrawingsFromTriggers(this._getDrawings(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE));
     targets.push(...this._getNotesFromTriggers(this._getNotes(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE));
+    targets.push(...this._getJournalsFromTriggers(this._getJournals(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE));
     targets.push(...this._getStairwaysFromTriggers(this._getStairways(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE));
 
     if (!targets){
@@ -938,6 +982,8 @@ export class TriggerHappy {
   }
 
   _retrieveFromEntity(entity, idOrName){
+    if(!entity) return null;
+    entity = entity.toLowerCase();
     if(entity == TRIGGER_ENTITY_TYPES.CHAT_MESSAGE){
       // TODO always undefined i suppose
     }
@@ -971,6 +1017,9 @@ export class TriggerHappy {
       return drawingTarget;
     } else if (entity == TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY) {
       const noteTarget = this._retrieveFromIdOrName(this._getNotes(), idOrName);
+      if(!noteTarget){
+        noteTarget = this._retrieveFromIdOrName(this._getJournals(), idOrName);
+      }
       return noteTarget;
     } else if (entity == TRIGGER_ENTITY_TYPES.STAIRWAY) {
       const stairwayTarget = this._retrieveFromIdOrName(this._getStairways(), idOrName);
@@ -986,21 +1035,21 @@ export class TriggerHappy {
   _retrieveFromIdOrName(placeables, IdOrName){
     let target;
     target = placeables?.find((x) => {
-      return x.id == IdOrName;
+      return x.id.toLowerCase() == IdOrName.toLowerCase();
     });
     if(!target){
       target = placeables?.find((x) => {
-        return x.data.name == IdOrName;
+        return x.data.name?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
     if(!target){
       target = placeables?.find((x) => {
-        return x.data.text == IdOrName;
+        return x.data.text?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
     if(!target){
       target = placeables?.find((x) => {
-        return x.data.label == IdOrName;
+        return x.data.label?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
     return target;
@@ -1010,12 +1059,12 @@ export class TriggerHappy {
     const placeablesToken =
       canvas.tokens?.placeables && canvas.tokens?.placeables.length > 0
       ? canvas.tokens?.placeables
-      : game.scenes.current.tokens?.placeables;
+      : game.scenes.current.tokens?.contents;
     return placeablesToken ?? [];
   }
 
   _getActors(){
-    const placeablesActor = game.actors;
+    const placeablesActor = game.actors.contents;
     return placeablesActor ?? [];
   }
 
@@ -1023,7 +1072,7 @@ export class TriggerHappy {
     const placeablesDoors =
       canvas.controls?.doors?.children && canvas.controls?.doors?.children.length > 0
       ? canvas.controls?.doors?.children
-      : game.scenes.current.walls?.placeables;
+      : game.scenes.current.walls?.contents;
     return placeablesDoors ?? [];
   }
 
@@ -1031,7 +1080,7 @@ export class TriggerHappy {
     const placeablesDrawings =
       canvas.drawings?.placeables && canvas.drawings?.placeables.length > 0
       ? canvas.drawings?.placeables
-      : game.scenes.current.drawings?.placeables;
+      : game.scenes.current.drawings?.contents;
     return placeablesDrawings ?? [];
   }
 
@@ -1039,25 +1088,30 @@ export class TriggerHappy {
     const placeablesNotes =
       canvas.notes?.placeables && canvas.notes?.placeables.length > 0
       ? canvas.notes?.placeables
-      : game.scenes.current.notes?.placeables;
+      : game.scenes.current.notes?.contents;
     return placeablesNotes ?? [];
+  }
+
+  _getJournals(){
+    const placeablesJournals = game.journal?.contents;
+    return placeablesJournals ?? [];
   }
 
   _getStairways(){
     const placeablesStairways =
       canvas.stairways?.placeables && canvas.stairways?.placeables.length > 0
       ? canvas.stairways?.placeables
-      : game.scenes.current.stairways?.placeables;
+      : game.scenes.current.stairways?.contents;
     return placeablesStairways ?? [];
   }
 
   _getScenes(){
-    const placeablesScenes = game.scenes;
+    const placeablesScenes = game.scenes.contents;
     return placeablesScenes ?? [];
   }
 
   _getCompendiums(){
-    const placeablesCompendiums = game.packs;
+    const placeablesCompendiums = game.packs.contents;
     return placeablesCompendiums ?? [];
   }
 
@@ -1065,7 +1119,7 @@ export class TriggerHappy {
       const placeablesLightings =
         canvas.lighting?.placeables && canvas.lighting?.placeables.length > 0
         ? canvas.lighting?.placeables
-        : game.scenes.current.lights;
+        : game.scenes.current.lights.contents;
       return placeablesLightings ?? [];
   }
 
@@ -1073,7 +1127,7 @@ export class TriggerHappy {
       const placeablesSounds =
         canvas.sounds?.placeables && canvas.sounds?.placeables.length > 0
         ? canvas.sounds?.placeables
-        : game.scenes.current.sounds;
+        : game.scenes.current.sounds.contents;
       return placeablesSounds ?? [];
   }
 
@@ -1081,8 +1135,13 @@ export class TriggerHappy {
       const placeablesTiles =
         canvas.foreground?.placeables && canvas.foreground?.placeables.length > 0
         ? canvas.foreground?.placeables
-        : game.scenes.current.tiles;
+        : game.scenes.current.tiles.contents;
       return placeablesTiles ?? [];
+  }
+
+  _getTables(){
+    const placeablesTables = game.tables?.contents;
+    return placeablesTables ?? [];
   }
 
 }

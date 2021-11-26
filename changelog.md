@@ -7,6 +7,7 @@
 - Add gulp build file for more relaxing build of the source
 - Add github action for generate release with 'module.zip' and 'module.json'
 - Partial integration with Stairways mdule
+- Made check for entity case insensitive avoid many minor issue
 
 ## 0.8.11
 
