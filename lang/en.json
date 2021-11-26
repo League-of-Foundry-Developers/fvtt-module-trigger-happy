@@ -1,6 +1,8 @@
 {
+  "trigger-happy.settings.folderJournalName.name": "Name of the Trigger Folder on Note sidebar to use",
+  "trigger-happy.settings.folderJournalName.hint": "The name of the Trigger Folder on Note sidebar to use for listing triggers. The suggestion is to use one folder with this name. Default is 'Trigger Happy'",
   "trigger-happy.settings.journalName.name": "Name of the Trigger Journal to use",
-  "trigger-happy.settings.journalName.hint": "The name of the journal entry to use for listing triggers. There can only be one. Refer to README file in module website for how to configure triggers.",
+  "trigger-happy.settings.journalName.hint": "The name of the journal entry to use for listing triggers. There can only be one. Refer to README file in module website for how to configure triggers. Default is 'Trigger Happy'",
   "trigger-happy.settings.enableTriggers.name": "Enable triggers when running as GM",
   "trigger-happy.settings.enableTriggers.hint": " ",
   "trigger-happy.settings.edgeCollision.name": "Capture at edge of drawing/token",
@@ -9,5 +11,7 @@
   "trigger-happy.settings.enableTriggerButton.hint": " ",
   "trigger-happy.labels.button.layer.enableTriggerHappy": "Enable Trigger Happy triggers",
   "trigger-happy.settings.enableTaggerIntegration.name":"Enable tagger integration feature",
-  "trigger-happy.settings.enableTaggerIntegration.hint":"This feature need the tagger module installed and enabled, we filter the triggers only for the placeable object with one of the tag setted, the list is a string of tags separate from ','. NOTE: you can avoid to enable this feature and just use @TAG on the journal"
+  "trigger-happy.settings.enableTaggerIntegration.hint":"This feature need the tagger module installed and active, we filter the triggers only for the placeables object with one of the tag setted, the value is read like list of strings of tags separate from ',' e.g. 'tag1,tag2'. NOTE: you can avoid to enable this feature and just use @TAG on the journal, this is more for set some global tag to all the triggers",
+  "trigger-happy.settings.enableJournalForSceneIntegration.name":"Enable 'journal for every scene' integration feature",
+  "trigger-happy.settings.enableJournalForSceneIntegration.hint":"Sometime trigger are mixed up between scene and broke something, if this feature is enabled the module will try to find and parse only the journal starting with the same name (or id) of the current scene the client are viewing, if no journal is found is rollback to standard mechanism and parse all the journals under the . NOTE: if more scene have the same name the trigger are activated for all these scenes, if you really want you can avoid this specific issue by using the id of the scene"
 }
