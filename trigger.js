@@ -342,27 +342,25 @@ export class TriggerHappy {
 
   _manageTriggerEvent(triggerJournal, entity, id, label, filterTags){
     let trigger;
-    if(label){
-      id = label;
-    }
-    if(!id){
+    if(!id && !label){
       warn( `Can't manage the empty trigger '${entity}' on '${triggerJournal}'`);
       return;
     }
     // If is a trigger event
     if (entity === TRIGGER_ENTITY_TYPES.TRIGGER) {
       const found = this.arrayEvents.find((el) => {
-        return el.toLowerCase() === id.toLowerCase();
+        return el.toLowerCase() === id?.toLowerCase() || el.toLowerCase() === label?.toLowerCase() ;
       });
       if (!found){
         warn( `Can't manage the event '${entity}' on '${triggerJournal}'`);
         return;
       }
-      if(!id){
-        warn( `Can't manage the empty event '${entity}' on '${triggerJournal}'`);
-        return;
+      if(id){
+        trigger = id;
       }
-      trigger = id;
+      if(label){
+        trigger = label;
+      }
     }
     // If is a placeable object
     else if(
@@ -371,7 +369,10 @@ export class TriggerHappy {
       })
     ){
 
-      const relevantDocument = this._retrieveFromEntity(entity, id);
+      let relevantDocument = this._retrieveFromEntity(entity, id);
+      if(!relevantDocument){
+        relevantDocument = this._retrieveFromEntity(entity, label);
+      }
       if(!relevantDocument){
         return;
       }
@@ -590,6 +591,11 @@ export class TriggerHappy {
       Number.between(position.x, placeable.data.x, placeable.data.x + w) &&
       Number.between(position.y, placeable.data.y, placeable.data.y + h)
     );
+    // const coords = this.getPlaceableObjectCenter(placeable);
+    // return (
+    //   Number.between(position.x, coords.x, coords.x + w) &&
+    //   Number.between(position.y, coords.y, coords.y + h)
+    // );
   }
 
   _getPlaceablesAt(placeables, position) {
@@ -1018,7 +1024,8 @@ export class TriggerHappy {
     } else if (entity == TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY) {
       const noteTarget = this._retrieveFromIdOrName(this._getNotes(), idOrName);
       if(!noteTarget){
-        noteTarget = this._retrieveFromIdOrName(this._getJournals(), idOrName);
+        const journalTarget = this._retrieveFromIdOrName(this._getJournals(), idOrName);
+        return journalTarget;
       }
       return noteTarget;
     } else if (entity == TRIGGER_ENTITY_TYPES.STAIRWAY) {
@@ -1054,6 +1061,70 @@ export class TriggerHappy {
     }
     return target;
   }
+
+  // getPlaceableObjectCenter(placeableObject) {
+  //   const width = placeableObject.w || placeableObject.data.width || placeableObject.width;
+  //   const height = placeableObject.h || placeableObject.data.height || placeableObject.height;
+  //   const shapes = this.getPlaceableObjectShape(placeableObject, width, height);
+  //   if (shapes && shapes.length > 0) {
+  //     const shape0 = shapes[0];
+  //     return { x: shape0.x, y: shape0.y };
+  //   }
+  //   const placeableObjectCenter = { x: placeableObject.x + width / 2, y: placeableObject.y + height / 2 };
+  //   return placeableObjectCenter;
+  // }
+
+  // getPlaceableObjectShape(placeableObject, width, height) {
+  //   if (game.scenes.current.data.gridType === CONST.GRID_TYPES.GRIDLESS) {
+  //     return [{ x: 0, y: 0 }];
+  //   } else if (game.scenes.current.data.gridType === CONST.GRID_TYPES.SQUARE) {
+  //     const topOffset = -Math.floor(height / 2);
+  //     const leftOffset = -Math.floor(width / 2);
+  //     const shape = [];
+  //     for (let y = 0; y < height; y++) {
+  //       for (let x = 0; x < width; x++) {
+  //         shape.push({ x: x + leftOffset, y: y + topOffset });
+  //       }
+  //     }
+  //     return shape;
+  //   } else {
+  //     // Hex grids
+  //     if (game.modules.get('hex-size-support')?.active && CONFIG.hexSizeSupport.getAltSnappingFlag(placeableObject)) {
+  //       const borderSize = placeableObject.data.flags['hex-size-support'].borderSize;
+  //       let shape = [{ x: 0, y: 0 }];
+  //       if (borderSize >= 2)
+  //         shape = shape.concat([
+  //           { x: 0, y: -1 },
+  //           { x: -1, y: -1 },
+  //         ]);
+  //       if (borderSize >= 3)
+  //         shape = shape.concat([
+  //           { x: 0, y: 1 },
+  //           { x: -1, y: 1 },
+  //           { x: -1, y: 0 },
+  //           { x: 1, y: 0 },
+  //         ]);
+  //       if (borderSize >= 4)
+  //         shape = shape.concat([
+  //           { x: -2, y: -1 },
+  //           { x: 1, y: -1 },
+  //           { x: -1, y: -2 },
+  //           { x: 0, y: -2 },
+  //           { x: 1, y: -2 },
+  //         ]);
+  //       //@ts-ignore
+  //       if (Boolean(CONFIG.hexSizeSupport.getAltOrientationFlag(placeableObject)) !== canvas.grid?.grid?.options.columns)
+  //         shape.forEach((space) => (space.y *= -1));
+  //       if (canvas.grid?.grid?.options.columns)
+  //         shape = shape.map((space) => {
+  //           return { x: space.y, y: space.x };
+  //         });
+  //       return shape;
+  //     } else {
+  //       return [{ x: 0, y: 0 }];
+  //     }
+  //   }
+  // }
 
   _getTokens(){
     const placeablesToken =
