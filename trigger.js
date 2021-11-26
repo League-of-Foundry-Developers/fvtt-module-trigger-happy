@@ -232,16 +232,16 @@ export class TriggerHappy {
     return folders.reduce((contents, folder) => {
       let content;
       if(currentScene && (j.data.name.startsWith(currentScene.name) || j.id.startsWith(currentScene.id))){
-          // Cannot use folder.content and folder.children because they are set on populate and only show what the user can see
-          content = game.journal.contents.filter((j) => j.data.folder === folder.id);
-      }else{
         if(!onlyUseJournalForScene){
           // Cannot use folder.content and folder.children because they are set on populate and only show what the user can see
           content = game.journal.contents.filter((j) => j.data.folder === folder.id);
         }
+      }else{
+        // Cannot use folder.content and folder.children because they are set on populate and only show what the user can see
+        content = game.journal.contents.filter((j) => j.data.folder === folder.id);
       }
       const children = game.folders.contents.filter((f) => f.type === 'JournalEntry' && f.data.parent === folder.id);
-      contents.push(...content);
+      if(content) contents.push(...content);
       return this._getFoldersContentsRecursive(children, contents);
     }, contents);
   }
@@ -295,7 +295,7 @@ export class TriggerHappy {
           if(!trigger){
             break;
           }
-        } else if(index === 1){
+        } else if(index === 1 || entity === TRIGGER_ENTITY_TYPES.TRIGGER){
           const eventLink = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
           if(!eventLink){
             break;
@@ -309,7 +309,7 @@ export class TriggerHappy {
         }
         index++;
       }
-      // TODO Trigger for now can be a placeableobject or document or something find a ' better' solution in a future release
+
       if (trigger && effects.length > 0){
         this.triggers.push({ trigger, effects, options });
       }
@@ -365,7 +365,6 @@ export class TriggerHappy {
         return;
       }
 
-      // TODO force to filter only for the current scene ???
       // const placeableObjectId = relevantDocument.id;
       // Filter your triggers only for the current scene
       // const placeableObjects = this._getObjectsFromScene(game.scenes.current);
