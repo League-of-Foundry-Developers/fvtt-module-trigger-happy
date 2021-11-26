@@ -122,7 +122,19 @@ Hooks.once('init', async () => {
     default: false,
     type: Boolean,
     onChange: () => {
-      if (game.triggers) game.triggers._parseJournals.bind(game.triggers)();
+      if (game.triggers) game.triggers.journals.bind(game.triggers)();
+    },
+  });
+
+  game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'onlyUseJournalForSceneIntegration', {
+    name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.onlyUseJournalForSceneIntegration.name`),
+    hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.onlyUseJournalForSceneIntegration.hint`),
+    scope: 'world',
+    config: true,
+    default: false,
+    type: Boolean,
+    onChange: () => {
+      if (game.triggers) game.triggers.journals.bind(game.triggers)();
     },
   });
 
@@ -209,9 +221,25 @@ export class TriggerHappy {
   }
 
   _getFoldersContentsRecursive(folders, contents) {
+
+    let currentScene;
+    if(game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableJournalForSceneIntegration')){
+      currentScene = game.scenes.current;
+    }
+
+    const onlyUseJournalForScene = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'onlyUseJournalForSceneIntegration');
+
     return folders.reduce((contents, folder) => {
-      // Cannot use folder.content and folder.children because they are set on populate and only show what the user can see
-      const content = game.journal.contents.filter((j) => j.data.folder === folder.id);
+      let content;
+      if(currentScene && (j.data.name.startsWith(currentScene.name) || j.id.startsWith(currentScene.id))){
+          // Cannot use folder.content and folder.children because they are set on populate and only show what the user can see
+          content = game.journal.contents.filter((j) => j.data.folder === folder.id);
+      }else{
+        if(!onlyUseJournalForScene){
+          // Cannot use folder.content and folder.children because they are set on populate and only show what the user can see
+          content = game.journal.contents.filter((j) => j.data.folder === folder.id);
+        }
+      }
       const children = game.folders.contents.filter((f) => f.type === 'JournalEntry' && f.data.parent === folder.id);
       contents.push(...content);
       return this._getFoldersContentsRecursive(children, contents);
