@@ -400,9 +400,9 @@ export class TriggerHappy {
       })
     ){
 
-      let relevantDocument = this._retrieveFromEntity(entity, id);
+      let relevantDocument = this._retrieveFromEntity(entity, id, label);
       if(!relevantDocument){
-        relevantDocument = this._retrieveFromEntity(entity, label);
+        relevantDocument = this._retrieveFromEntity(entity, label, label);
       }
 
       // const placeableObjectId = relevantDocument.id;
@@ -444,9 +444,9 @@ export class TriggerHappy {
     else if(this.arrayNoPlaceableObjects.find((el) => {
       return el.toLowerCase() === entity.toLowerCase();
     })){
-      let relevantDocument = this._retrieveFromEntity(entity, id);
+      let relevantDocument = this._retrieveFromEntity(entity, id, label);
       if(!relevantDocument){
-        relevantDocument = this._retrieveFromEntity(entity, label);
+        relevantDocument = this._retrieveFromEntity(entity, label, label);
       }
       trigger = relevantDocument;
     }
@@ -1025,25 +1025,31 @@ export class TriggerHappy {
       .filter(Boolean);
   }
 
-  _retrieveFromEntity(entity, idOrName){
+  _retrieveFromEntity(entity, idOrName, label){
     if(!entity) return null;
     entity = entity.toLowerCase();
     if(entity == TRIGGER_ENTITY_TYPES.TRIGGER){
       return idOrName; // Should be always the label like 'Click'
     }
     if(entity == TRIGGER_ENTITY_TYPES.CHAT_MESSAGE){
-      // TODO always undefined i suppose we can't use a chat message like a trigger right ?
-      return null;
+      // chat messages can only be effects not triggers
+      let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: label } }, {});
+      return chatMessage;
     }
     else if(entity == TRIGGER_ENTITY_TYPES.COMPENDIUM){
-      // e.g. @Compendium[SupersHomebrewPack.classes.AH3dUnrFxZHDvY2o]{Bard}
-      const compendiumFounded = this._getCompendiums().find((compendium) => {
-        return idOrName.startsWith(compendium.metadata.package + '.' + compendium.metadata.name)
-      });
-      let compendiumLink = new CompendiumLink();
-      compendiumLink.packId = compendiumFounded.metadata.package + '.' + compendiumFounded.metadata.name;
-      compendiumLink.id = idOrName.replace(compendiumFounded.metadata.package + '.' + compendiumFounded.metadata.name + '.', '');
-      compendiumLink.label = compendiumFounded.metadata.label;
+      // compendium links can only be effects not triggers e.g. @Compendium[SupersHomebrewPack.classes.AH3dUnrFxZHDvY2o]{Bard}
+      const parts = idOrName.split(".");
+      if (parts.length !== 3){
+        return null;
+      }
+      let compendiumLink = new CompendiumLink(parts.slice(0,2).join("."), parts[2], label);
+      // const compendiumFounded = this._getCompendiums().find((compendium) => {
+      //   return idOrName.startsWith(compendium.metadata.package + '.' + compendium.metadata.name)
+      // });
+      // let compendiumLink = new CompendiumLink();
+      // compendiumLink.packId = compendiumFounded.metadata.package + '.' + compendiumFounded.metadata.name;
+      // compendiumLink.id = idOrName.replace(compendiumFounded.metadata.package + '.' + compendiumFounded.metadata.name + '.', '');
+      // compendiumLink.label = compendiumFounded.metadata.label;
       return compendiumLink;
       // const compendiumTarget = this._retrieveFromIdOrName(this._getCompendiums(), idOrName);
       // return compendiumTarget;
