@@ -23,8 +23,8 @@ class CompendiumLink {
   packId;
   id;
   label;
-  constructor(packid, id, label) {
-    this.packId = packid;
+  constructor(packId, id, label) {
+    this.packId = packId;
     this.id = id;
     this.label = label;
   }
@@ -289,9 +289,7 @@ export class TriggerHappy {
     if (game.user.isGM && !game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTriggers')){
       return;
     }
-    if(!this.journals){
-      this._updateJournals();
-    }
+    this._updateJournals();
     this.journals.forEach((journal) => this._parseJournal(journal));
   }
 
@@ -1034,12 +1032,21 @@ export class TriggerHappy {
       return idOrName; // Should be always the label like 'Click'
     }
     if(entity == TRIGGER_ENTITY_TYPES.CHAT_MESSAGE){
-      // TODO always undefined i suppose
+      // TODO always undefined i suppose we can't use a chat message like a trigger right ?
       return null;
     }
     else if(entity == TRIGGER_ENTITY_TYPES.COMPENDIUM){
-      const compendiumTarget = this._retrieveFromIdOrName(this._getCompendiums(), idOrName);
-      return compendiumTarget;
+      // e.g. @Compendium[SupersHomebrewPack.classes.AH3dUnrFxZHDvY2o]{Bard}
+      const compendiumFounded = this._getCompendiums().find((compendium) => {
+        return idOrName.startsWith(compendium.metadata.package + '.' + compendium.metadata.name)
+      });
+      let compendiumLink = new CompendiumLink();
+      compendiumLink.packId = compendiumFounded.metadata.package + '.' + compendiumFounded.metadata.name;
+      compendiumLink.id = idOrName.replace(compendiumFounded.metadata.package + '.' + compendiumFounded.metadata.name + '.', '');
+      compendiumLink.label = compendiumFounded.metadata.label;
+      return compendiumLink;
+      // const compendiumTarget = this._retrieveFromIdOrName(this._getCompendiums(), idOrName);
+      // return compendiumTarget;
     }
     else if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
       const tokenTarget = this._retrieveFromIdOrName(this._getTokens(), idOrName);
