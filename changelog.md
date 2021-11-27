@@ -3,11 +3,15 @@
 ## 0.8.12
 
 - Added `@Tag[list of tag separate from ',']` as a filter link to interact with a specific placeable object on the canvas.
-- Add basic eslint
-- Add gulp build file for more relaxing build of the source
+- Cleanup code and integrated a better readable workflow people like me
+- Add gulp build file for more relaxing build of the source and developing
 - Add github action for generate release with 'module.zip' and 'module.json'
-- Partial integration with Stairways mdule
-- Made check for entity case insensitive avoid many minor issue
+- Add integration with Stairways mdule
+- Made check for entity case insensitive avoid many minor issue form miss typinf the name ecc.
+- Add the setting 'Enable tagger integration feature'
+- Add the setting 'Enable 'journal for every scene' integration feature'
+- Add the setting 'Enable 'only use journal for every scene' integration feature'
+- Add the setting 'Enable avoid to deselect elements on the trigger event'
 
 ## 0.8.11
 

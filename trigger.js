@@ -110,10 +110,6 @@ Hooks.once('init', async () => {
     },
   });
 
-  // ========================================================
-  // JOURNAL FOR SCENE SUPPORT
-  // ========================================================
-
   game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'enableJournalForSceneIntegration', {
     name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableJournalForSceneIntegration.name`),
     hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableJournalForSceneIntegration.hint`),
@@ -136,6 +132,15 @@ Hooks.once('init', async () => {
     onChange: () => {
       if (game.triggers) game.triggers.journals.bind(game.triggers)();
     },
+  });
+
+  game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'enableAvoidDeselectOnTriggerEvent', {
+    name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableAvoidDeselectOnTriggerEvent.name`),
+    hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableAvoidDeselectOnTriggerEvent.hint`),
+    scope: 'world',
+    config: true,
+    default: false,
+    type: Boolean,
   });
 
 });
@@ -203,17 +208,23 @@ export class TriggerHappy {
     this.triggers = [];
     this.taggerModuleActive = game.modules.get('tagger')?.active
     this.release = game.settings.get('core', 'leftClickRelease');
+    this.enableRelease = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableAvoidDeselectOnTriggerEvent');
 
     this.arrayTriggers = Object.values(TRIGGER_ENTITY_TYPES);
     this.arrayEvents = Object.values(EVENT_TRIGGER_ENTITY_TYPES);
     this.arrayPlaceableObjects = [
-      TRIGGER_ENTITY_TYPES.ACTOR,
       TRIGGER_ENTITY_TYPES.TOKEN,
       TRIGGER_ENTITY_TYPES.DRAWING,
       TRIGGER_ENTITY_TYPES.DOOR,
       TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY,
       TRIGGER_ENTITY_TYPES.STAIRWAY,
     ];
+    this.arrayNoPlaceableObjects = [
+      TRIGGER_ENTITY_TYPES.ACTOR,
+      TRIGGER_ENTITY_TYPES.CHAT_MESSAGE,
+      TRIGGER_ENTITY_TYPES.COMPENDIUM,
+      TRIGGER_ENTITY_TYPES.SCENE
+    ]
   }
 
   get folderJournalName() {
@@ -302,30 +313,31 @@ export class TriggerHappy {
       let index = 0;
       for (let match of matchs) {
         let [triggerJournal, entity, id, label] = match;
+        entity = entity.toLowerCase(); // force lowercase for avoid miss typing from the user
         if(index === 0){
-          trigger = this._manageTriggerEvent(triggerJournal, entity.toLowerCase(), id, label, filterTags);
+          trigger = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
           if(!trigger){
             break;
           }
           if(trigger instanceof String){
-            trigger = trigger.toLowerCase();
+            trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
           }
         } else if(index === 1 || entity === TRIGGER_ENTITY_TYPES.TRIGGER){
-          let eventLink = this._manageTriggerEvent(triggerJournal, entity.toLowerCase(), id, label, filterTags);
+          let eventLink = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
           if(!eventLink){
             break;
           }
           if(eventLink instanceof String){
-            eventLink = eventLink.toLowerCase();
+            eventLink = eventLink.toLowerCase(); // force lowercase for avoid miss typing from the user
           }
           options.push(eventLink);
         } else {
-          let effect = this._manageTriggerEvent(triggerJournal, entity.toLowerCase(), id, label, filterTags);
+          let effect = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
           if(!effect){
             continue;
           }
           if(effect instanceof String){
-            eventLink = effect.toLowerCase();
+            eventLink = effect.toLowerCase(); // force lowercase for avoid miss typing from the user
           }
           if(effect){
             effects.push(effect);
@@ -346,7 +358,7 @@ export class TriggerHappy {
       warn( `Can't manage the empty trigger '${entity}' on '${triggerJournal}'`);
       return;
     }
-    // If is a trigger event
+    // If is a trigger event (special case)
     if (entity === TRIGGER_ENTITY_TYPES.TRIGGER) {
       const found = this.arrayEvents.find((el) => {
         return el.toLowerCase() === id?.toLowerCase() || el.toLowerCase() === label?.toLowerCase() ;
@@ -373,9 +385,6 @@ export class TriggerHappy {
       if(!relevantDocument){
         relevantDocument = this._retrieveFromEntity(entity, label);
       }
-      if(!relevantDocument){
-        return;
-      }
 
       // const placeableObjectId = relevantDocument.id;
       // Filter your triggers only for the current scene
@@ -383,41 +392,47 @@ export class TriggerHappy {
       // const placeableObjectTrigger = placeableObjects.filter((obj) => obj.id === placeableObjectId)[0];
 
       const placeableObjectTrigger = relevantDocument;
-      if (!placeableObjectTrigger) {
-        return;
-      }
-
-      // Before do anything check the tagger feature module settings (only for placeable object)
-      if(this.taggerModuleActive){
-        // Check if the current placeable object has the specific tags from the global module settings
-        const tagsFromPlaceableObject = Tagger.getTags(placeableObjectTrigger) || [];
-        const tagsFromSetting = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
-        if (tagsFromSetting.length > 0) {
-          // Check if every tags on settings is included on the current placeableObject tag list
-          const isValid = tagsFromPlaceableObject.some((tagToCheck) => tagsFromSetting.toLowerCase().includes(tagToCheck.toLowerCase()));
-          if(!isValid){
-            return;
-          }
-        }
-        // Check if the current placeable object has the specific tags from the specific placeable object settings
-        if(filterTags && filterTags.length > 0){
-          // Check if the current placeable object has the specific tag from the @TAG[label] annotation
-          const placeableObjectsByTag = Tagger.getByTag(filterTags, { caseInsensitive: true, sceneId: game.scenes.current.id }) || [];
-          if (placeableObjectsByTag.length > 0) {
-            // If at least one of the tags is present on the triggered placeableObject
-            const isValid = placeableObjectsByTag.find((p) => p.id == placeableObjectTrigger.id);
+      if (placeableObjectTrigger) {
+        // Before do anything check the tagger feature module settings (only for placeable object)
+        if(this.taggerModuleActive){
+          // Check if the current placeable object has the specific tags from the global module settings
+          const tagsFromPlaceableObject = Tagger.getTags(placeableObjectTrigger) || [];
+          const tagsFromSetting = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
+          if (tagsFromSetting.length > 0) {
+            // Check if every tags on settings is included on the current placeableObject tag list
+            const isValid = tagsFromPlaceableObject.some((tagToCheck) => tagsFromSetting.toLowerCase().includes(tagToCheck.toLowerCase()));
             if(!isValid){
-              return;
+              placeableObjectTrigger = null;
+            }
+          }
+          // Check if the current placeable object has the specific tags from the specific placeable object settings
+          if(filterTags && filterTags.length > 0){
+            // Check if the current placeable object has the specific tag from the @TAG[label] annotation
+            const placeableObjectsByTag = Tagger.getByTag(filterTags, { caseInsensitive: true, sceneId: game.scenes.current.id }) || [];
+            if (placeableObjectsByTag.length > 0) {
+              // If at least one of the tags is present on the triggered placeableObject
+              const isValid = placeableObjectsByTag.find((p) => p.id == placeableObjectTrigger.id);
+              if(!isValid){
+                placeableObjectTrigger = null;
+              }
             }
           }
         }
       }
-
       trigger = placeableObjectTrigger;
-    }else if(entity === TRIGGER_ENTITY_TYPES.SCENE){
-      const scene = this._retrieveFromIdOrName(game.scenes, id);
-      trigger = scene;
-    }else{
+    }
+    // If is not a placeable object
+    else if(this.arrayNoPlaceableObjects.find((el) => {
+      return el.toLowerCase() === entity.toLowerCase();
+    })){
+      let relevantDocument = this._retrieveFromEntity(entity, id);
+      if(!relevantDocument){
+        relevantDocument = this._retrieveFromEntity(entity, label);
+      }
+      trigger = relevantDocument;
+    }
+    // Generic last standing try to find a configuration for the key
+    if(!trigger){
       let configKey;
       for (let key of Object.keys(CONFIG)) {
         if(key.toLowerCase() === entity){
@@ -425,7 +440,6 @@ export class TriggerHappy {
           break;
         }
       }
-      // Generic last standing
       const config = CONFIG[configKey];
       if (!config){
         warn( `Can't manage the config with entity '${entity}' and key '${configKey}' on '${triggerJournal}'`);
@@ -515,7 +529,8 @@ export class TriggerHappy {
   _isNoteTrigger(note, trigger, type) {
       const isTrigger =
         (trigger.trigger instanceof Note && trigger.trigger.id === note.id) ||
-        (trigger.trigger instanceof NoteDocument && trigger.trigger.id === note.id);
+        (trigger.trigger instanceof NoteDocument && trigger.trigger.id === note.id) || 
+        (trigger.trigger.documentName === 'JournalEntry' && trigger.trigger.sceneNote?.id === note.id);
       if (!isTrigger) return false;
       if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
         return (
@@ -591,6 +606,8 @@ export class TriggerHappy {
       Number.between(position.x, placeable.data.x, placeable.data.x + w) &&
       Number.between(position.y, placeable.data.y, placeable.data.y + h)
     );
+    // TODO FIND A BETTER METHOD FOR THIS IF I SCALE A PLACEABLE OBJECT IS
+    // WORK ONLY ON THE ORIGINAL SCALE COORDINATES
     // const coords = this.getPlaceableObjectCenter(placeable);
     // return (
     //   Number.between(position.x, coords.x, coords.x + w) &&
@@ -687,7 +704,7 @@ export class TriggerHappy {
       return;
     }
     // Needed this for module compatibility and the release on click left option active
-    if(this.release) {
+    if(this.release && this.enableRelease) {
       game.settings.set('core', 'leftClickRelease', false);
     }
     canvas.stage.once('mouseup', (ev) => this._onMouseUp(ev, downTriggers, clickTokens, clickDrawings, clickNotes, clickJournals, clickStairways));
@@ -712,8 +729,10 @@ export class TriggerHappy {
       triggers.push(...this._getTriggersFromStairways(this.triggers, upStairways, EVENT_TRIGGER_ENTITY_TYPES.CLICK));
       this._executeTriggers(triggers);
     }finally{
-      // Needed this for module compatibility and the release on click left option active
-      game.settings.set('core', 'leftClickRelease', this.release);
+      if(this.enableRelease){
+        // Needed this for module compatibility and the release on click left option active
+        game.settings.set('core', 'leftClickRelease', this.release);
+      }
     }
   }
 
@@ -723,7 +742,7 @@ export class TriggerHappy {
     const triggers = this._getTriggersFromTokens(this.triggers, tokens, EVENT_TRIGGER_ENTITY_TYPES.CLICK);
     if (triggers.length === 0) return;
     // Needed this for module compatibility and the release on click left option active
-    if(this.release){
+    if(this.release && this.enableRelease){
       game.settings.set('core', 'leftClickRelease', false);
     }
     token.once('click', (ev) => this._onMouseUp(ev, triggers, tokens, [], [], [], []));
@@ -990,8 +1009,12 @@ export class TriggerHappy {
   _retrieveFromEntity(entity, idOrName){
     if(!entity) return null;
     entity = entity.toLowerCase();
+    if(entity == TRIGGER_ENTITY_TYPES.TRIGGER){
+      return idOrName; // Should be always the label like 'Click'
+    }
     if(entity == TRIGGER_ENTITY_TYPES.CHAT_MESSAGE){
       // TODO always undefined i suppose
+      return null;
     }
     else if(entity == TRIGGER_ENTITY_TYPES.COMPENDIUM){
       const compendiumTarget = this._retrieveFromIdOrName(this._getCompendiums(), idOrName);

@@ -30,13 +30,20 @@ To install this module manually:
 4.  Click 'Install' and wait for installation to complete
 5.  Don't forget to enable the module in game using the "Manage Module" button
 
-### If your triggers mysteriously stop working check that you have not disabled them by mistake.
+# Known issue
+
+- When you scale a placeable object the event (click, ecc.), are limited only to the original coordinates {x, y} and not the "scaled" image
+- To remedy an incompatibility with other modules at the time of the 'mouse down' or other events together with the core setting 'Left-Click to Release Object' active, it is necessary that if a placeable object is selected on that event it remains at the event of 'mouse up' still selected. Unfortunately I have not found any other solution than to temporarily set the 'Left-Click to Release Object' setting to false (only if active) and then reset it to the original state at the 'mouse up' event. **You can enable/disable this 'patch' on the module setting 'Enable avoid to deselect elements on the trigger event' to true**
+
+# Details
+
+## If your triggers mysteriously stop working check that you have not disabled them by mistake.
 
 ![HUD](https://user-images.githubusercontent.com/4486143/136141666-b681c6f9-e1f6-4d76-977b-241f987d4f0c.png) 
 
 The laughing/crying face needs to be enabled or you can disable the face from the config settings.
 
-# Video and Step by Step instructions
+## Video and Step by Step instructions
 
 before we get into the details of how to use Trigger Happy, I think these links might be easier for people to get started quickly with using this module. Don't forget to come back and read the full README file to understand the full extent of how you can use Trigger Happy.
 
@@ -48,7 +55,7 @@ Here is a "Introduction to Trigger Happy" video tutorial by ['D&D Population Me'
 
 Trigger Happy also comes with journal entries in its compendiums that gives useful examples of trigger scenarios you can use.
 
-# How to use
+## How to use
 
 To create triggers for a scene, it's very easy, create a journal entry with the title "Trigger Happy" (configurable in module settings) in which you will drag & drop actors, journals, macros, and anything else you want to trigger.
 
@@ -59,21 +66,37 @@ One line in the journal entry represents one trigger as long as the first link i
 When a token that represents a trigger actor is clicked by a player, then any other links within that same line will be triggered. Macros will be executed, Scenes will be viewed, Roll tables will be rolled, Journal entries will be displayed and Tokens will be selected.
 
 As an example, you can put this into your entry : 
+
+#### Traps in Dungeon Room 37
+
 ```
-# Traps in Dungeon Room 37
 @Actor[Transparent actor above trap #1] @JournalEntry[You have triggered a trap]
 @Actor[Transparent actor above trap #2] @JournalEntry[You have triggered a trap]
+```
 
-# Teleport the PC if they touch the magic circle, I warned them not to approach that room anyway, so it's their fault if they do
+#### Teleport the PC if they touch the magic circle, I warned them not to approach that room anyway, so it's their fault if they do
+
+```
 @Actor[Magical Circle] @Scene[Prison Cell] @JournalEntry[You are teleported] @RollTable[Magical side effect from teleportation] @Macro[Spawn token at position 100,200]
+```
 
-# Move the players to the next scene when they open the door to the basement
+#### Move the players to the next scene when they open the door to the basement
+
+```
 @Actor[Transparent token on door tile] @Scene[The basement]
+```
 
-# Display a dialog with the latest rumors the PCs hear when they enter the tavern, and show them the lcoal prices
+
+#### Display a dialog with the latest rumors the PCs hear when they enter the tavern, and show them the lcoal prices
+
+```
 @Scene[Tavern] @Macro[Display Dialog about rumors] @JournalEntry[Tavern room prices]
+```
 
-# The next 100 lines could create a complex sequence of triggers that automate the entire game so the DM's job is obsolete
+#### The next 100 lines could create a complex sequence of triggers that automate the entire game so the DM's job is obsolete
+
+```
+@Scene[Tavern] @Macro[Display Dialog about rumors]
 ```
 
 The above example used the `@Actor[name]` format for simplicity, but when drag&dropping actors, they would appear in the journal entry as `@Actor[id]{name}`.
@@ -121,11 +144,14 @@ The following options are available :
 - `stopMovement`: Will prevent any tokens from moving on top of the trigger token
 - `capture`: Will cause the trigger token to capture any player moment that crosses it
 - `doorClose`: Will cause a `@Door` trigger to trigger when the door is closed instead of the default when it opens.
-- `doorOpen`: Will cause a `@Door` trigger to trigger when the door is open. This is the default, but it can be used along with `doorClose` option to have it trigger on both open and close
+- `doorOpen`: Will cause a `@Door` trigger to trigger when the door is open. This is the default, but it can be used along with 
+- `doorClose` option to have it trigger on both open and close
 
 If a token is hidden (GM layer), then it is automatically considered a 'move' trigger, otherwise it's a 'click' trigger. You can override it with the `@Trigger[click]` or `@Trigger[move]` options, or you can specify both options to make a token trigger on both clicks and moves.
 
 Contrarily to the `@Trigger[move]` triggers, which only activate when a token ends its movement on their, the `@Trigger[capture]` will trigger when a token crosses its path, which can be very useful to setting up a trap that the players cannot jump over. When a `capture` trigger is activated, the token movement will be stoped and the token will be moved to the center of the trigger. The token can only be moved out of the `capture` trigger if its starting position is the center of the trigger.
+
+## Examples
 
 Here's some examples of how these trigger options can be used together :
 
