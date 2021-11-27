@@ -46,7 +46,9 @@ Hooks.once('init', async () => {
     default: 'Trigger Happy',
     type: String,
     onChange: () => {
-      if (game.triggers) game.triggers._parseJournals.bind(game.triggers)();
+      if (game.triggers){
+        game.triggers._parseJournals.bind(game.triggers)();
+      }
     },
   });
 
@@ -58,9 +60,12 @@ Hooks.once('init', async () => {
     default: 'Trigger Happy',
     type: String,
     onChange: () => {
-      if (game.triggers) game.triggers._parseJournals.bind(game.triggers)();
+      if (game.triggers){
+        game.triggers._parseJournals.bind(game.triggers)();
+      }
     },
   });
+
   game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'enableTriggers', {
     name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableTriggers.name`),
     hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableTriggers.hint`),
@@ -69,9 +74,12 @@ Hooks.once('init', async () => {
     default: true,
     type: Boolean,
     onChange: () => {
-      if (game.triggers) game.triggers._parseJournals.bind(game.triggers)();
+      if (game.triggers){
+        game.triggers._parseJournals.bind(game.triggers)();
+      }
     },
   });
+
   game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'edgeCollision', {
     name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.edgeCollision.name`),
     hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.edgeCollision.hint`),
@@ -80,6 +88,7 @@ Hooks.once('init', async () => {
     default: false,
     type: Boolean,
   });
+
   game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'enableTriggerButton', {
     name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableTriggerButton.name`),
     hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableTriggerButton.hint`),
@@ -94,10 +103,6 @@ Hooks.once('init', async () => {
     },
   });
 
-  // ========================================================
-  // TAGGER SUPPORT
-  // ========================================================
-
   game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration', {
     name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableTaggerIntegration.name`),
     hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableTaggerIntegration.hint`),
@@ -106,7 +111,9 @@ Hooks.once('init', async () => {
     default: '',
     type: String,
     onChange: () => {
-      if (game.triggers) game.triggers._parseJournals.bind(game.triggers)();
+      if (game.triggers){
+        game.triggers._parseJournals.bind(game.triggers)();
+      }
     },
   });
 
@@ -118,7 +125,10 @@ Hooks.once('init', async () => {
     default: false,
     type: Boolean,
     onChange: () => {
-      if (game.triggers) game.triggers.journals.bind(game.triggers)();
+      if (game.triggers){
+        game.triggers._updateJournals.bind(game.triggers)();
+        game.triggers._parseJournals.bind(game.triggers)();
+      }
     },
   });
 
@@ -130,7 +140,10 @@ Hooks.once('init', async () => {
     default: false,
     type: Boolean,
     onChange: () => {
-      if (game.triggers) game.triggers.journals.bind(game.triggers)();
+      if (game.triggers){
+        game.triggers._updateJournals.bind(game.triggers)();
+        game.triggers._parseJournals.bind(game.triggers)();
+      }
     },
   });
 
@@ -158,7 +171,7 @@ Hooks.once('setup', function () {
 /* When ready							*/
 /* ------------------------------------ */
 Hooks.once('ready', () => {
-
+  // Do something
 });
 
 // Add any additional hooks if necessary
@@ -200,10 +213,10 @@ export class TriggerHappy {
     Hooks.on('deleteJournalEntry', this._parseJournals.bind(this));
     Hooks.on('preUpdateToken', this._onPreUpdateToken.bind(this));
     Hooks.on('preUpdateWall', this._onPreUpdateWall.bind(this));
-    Hooks.on('renderSettingsConfig', this._parseJournals.bind(this)); // TODO maybe we don't need this ???
+    Hooks.on('renderSettingsConfig', this._parseJournals.bind(this)); // TODO maybe we don't need this anymore ???
     Hooks.on('preUpdateNote', this._onPreUpdateNote.bind(this));
     Hooks.on('PreStairwayTeleport', this._parseJournals.bind(this));
-    Hooks.on('getSceneNavigationContext', this._parseJournals.bind(this));
+    Hooks.on('getSceneNavigationContext', this._parseJournals.bind(this)); // parse again the journal when change scene
 
     this.triggers = [];
     this.taggerModuleActive = game.modules.get('tagger')?.active
@@ -225,6 +238,7 @@ export class TriggerHappy {
       TRIGGER_ENTITY_TYPES.COMPENDIUM,
       TRIGGER_ENTITY_TYPES.SCENE
     ]
+    this.journals = [];
   }
 
   get folderJournalName() {
@@ -235,42 +249,49 @@ export class TriggerHappy {
     return game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'journalName') || 'Trigger Happy';
   }
 
-  get journals() {
+  _updateJournals(){
     const folders = game.folders.contents.filter((f) => f.type === 'JournalEntry' && f.name === this.folderJournalName);
     const journals = game.journal.contents.filter((j) => j.name === this.journalName);
     // Make sure there are no duplicates (journal name is within a folder with the trigger name)
-    return Array.from(new Set(this._getFoldersContentsRecursive(folders, journals)));
+    this.journals = Array.from(new Set(this._getFoldersContentsRecursive(folders, journals)));
   }
 
   _getFoldersContentsRecursive(folders, contents) {
 
-    let currentScene;
-    if(game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableJournalForSceneIntegration')){
-      currentScene = game.scenes.current;
-    }
-
+    const currentScene = game.scenes.current;
+    const enableJournalForScene = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableJournalForSceneIntegration');
     const onlyUseJournalForScene = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'onlyUseJournalForSceneIntegration');
 
     return folders.reduce((contents, folder) => {
-      let content;
-      if(currentScene && (j.data.name.startsWith(currentScene.name) || j.id.startsWith(currentScene.id))){
-        if(!onlyUseJournalForScene){
-          // Cannot use folder.content and folder.children because they are set on populate and only show what the user can see
-          content = game.journal.contents.filter((j) => j.data.folder === folder.id);
-        }
-      }else{
-        // Cannot use folder.content and folder.children because they are set on populate and only show what the user can see
-        content = game.journal.contents.filter((j) => j.data.folder === folder.id);
+      // Cannot use folder.content and folder.children because they are set on populate and only show what the user can see
+      let content = game.journal.contents.filter((j) => j.data.folder === folder.id) || []; // This is the array of journalEntry under the current folder
+      if(enableJournalForScene){
+        const contentTmp = [];
+        content.forEach((journalEntry) => {
+          if(currentScene && (journalEntry.data.name.startsWith(currentScene.name) || journalEntry.id.startsWith(currentScene.id))){
+            contentTmp.push(journalEntry);
+          }else{
+            if(!onlyUseJournalForScene){
+              contentTmp.push(journalEntry); // standard
+            }
+          }
+        });
+        content = contentTmp;
       }
+      if(content && content.length > 0) contents.push(...content);
       const children = game.folders.contents.filter((f) => f.type === 'JournalEntry' && f.data.parent === folder.id);
-      if(content) contents.push(...content);
       return this._getFoldersContentsRecursive(children, contents);
     }, contents);
   }
 
   async _parseJournals() {
     this.triggers = [];
-    if (game.user.isGM && !game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTriggers')) return;
+    if (game.user.isGM && !game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTriggers')){
+      return;
+    }
+    if(!this.journals){
+      this._updateJournals();
+    }
     this.journals.forEach((journal) => this._parseJournal(journal));
   }
 

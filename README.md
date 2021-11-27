@@ -34,6 +34,7 @@ To install this module manually:
 
 - When you scale a placeable object the event (click, ecc.), are limited only to the original coordinates {x, y} and not the "scaled" image
 - To remedy an incompatibility with other modules at the time of the 'mouse down' or other events together with the core setting 'Left-Click to Release Object' active, it is necessary that if a placeable object is selected on that event it remains at the event of 'mouse up' still selected. Unfortunately I have not found any other solution than to temporarily set the 'Left-Click to Release Object' setting to false (only if active) and then reset it to the original state at the 'mouse up' event. **You can enable/disable this 'patch' on the module setting 'Enable avoid to deselect elements on the trigger event' to true**
+- The code can be more performant ...
 
 # Details
 
