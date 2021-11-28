@@ -34,7 +34,14 @@ To install this module manually:
 
 - When you scale a placeable object the event (click, ecc.), are limited only to the original coordinates {x, y} and not the "scaled" image
 - To remedy an incompatibility with other modules at the time of the 'mouse down' or other events together with the core setting 'Left-Click to Release Object' active, it is necessary that if a placeable object is selected on that event it remains at the event of 'mouse up' still selected. Unfortunately I have not found any other solution than to temporarily set the 'Left-Click to Release Object' setting to false (only if active) and then reset it to the original state at the 'mouse up' event. **You can enable/disable this 'patch' on the module setting 'Enable avoid to deselect elements on the trigger event' to true**
-- The code can be more performant ...
+- Made the code more performant ...
+
+# Module compatibility
+
+- [Sound Link](https://github.com/superseva/sound-link)
+- [Forien Quest Log version 0.7.7 and later](https://github.com/League-of-Foundry-Developers/foundryvtt-forien-quest-log)
+- [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger)
+- [Stairway](https://gitlab.com/SWW13/foundryvtt-stairways) (limited only to click event :( )
 
 # Details
 
@@ -101,7 +108,12 @@ As an example, you can put this into your entry :
 #### The next 100 lines could create a complex sequence of triggers that automate the entire game so the DM's job is obsolete
 
 ```
+@JournalEntry[nREvRbeH8O4Fsngp]{Missioni}@Tag[test01]@Trigger[Click]@JournalEntry[bSsq0RnNTqp3YxUR]{Scorta al Lord}@RollTable[3pzl8ZBGWf9gp8II]{Catharina Combat}@Compendium[SupersHomebrewPack.classes.AH3dUnrFxZHDvY2o]{Bard}@ChatMessage[sdgfgfgf]{Gamemaster}@Sound[Test|Medieval_Fantasy City Under Attack audio atmosphere]{Attack}@Quest[nJRQV2mtlqygfmVe]{New Quest}
+```
+same but starting from a stairway
 
+```
+@Stairway[sw-43ayfc0q]{Vai di Sopra}@Trigger[Click]@JournalEntry[bSsq0RnNTqp3YxUR]{Scorta al Lord}@RollTable[3pzl8ZBGWf9gp8II]{Catharina Combat}@Compendium[SupersHomebrewPack.classes.AH3dUnrFxZHDvY2o]{Bard}@ChatMessage[sdgfgfgf]{Gamemaster}@Sound[Test|Medieval_Fantasy City Under Attack audio atmosphere]{Attack}@Quest[nJRQV2mtlqygfmVe]{New Quest}
 ```
 
 The above example used the `@Actor[name]` format for simplicity, but when drag&dropping actors, they would appear in the journal entry as `@Actor[id]{name}`.
@@ -156,7 +168,7 @@ If a token is hidden (GM layer), then it is automatically considered a 'move' tr
 
 Contrarily to the `@Trigger[move]` triggers, which only activate when a token ends its movement on their, the `@Trigger[capture]` will trigger when a token crosses its path, which can be very useful to setting up a trap that the players cannot jump over. When a `capture` trigger is activated, the token movement will be stoped and the token will be moved to the center of the trigger. The token can only be moved out of the `capture` trigger if its starting position is the center of the trigger.
 
-## Examples
+## Examples from the community add your own by open a issue `^_^`
 
 Here's some examples of how these trigger options can be used together :
 
@@ -254,7 +266,7 @@ and
 @JournalEntry[TEST] @Trigger[click] @JournalEntry[TEST 2]
 ```
 
-#### New Forien Quest Log support with the new 0.7.7 version and rhe ID Quest mechanism
+#### New Forien Quest Log support with the new 0.7.7 version and the ID Quest mechanism
 
 here the video on the exact minute: https://youtu.be/lfSYJXVQAcE?t=586
 

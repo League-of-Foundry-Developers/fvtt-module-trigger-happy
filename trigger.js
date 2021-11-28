@@ -183,6 +183,35 @@ Hooks.once('setup', function () {
 /* ------------------------------------ */
 Hooks.once('ready', () => {
   // Do something
+  Hooks.on('PreStairwayTeleport', (data) => {
+    const { sourceSceneId, sourceData, selectedTokenIds, targetSceneId, targetData, userId } = data;
+    // const event = { 
+    //   x: sourceData.x, 
+    //   y: sourceData.y, 
+    //   sceneId: sourceSceneId,
+    //   id: sourceData.name,
+    //   name: sourceData.label
+    // };
+    try{
+      // const position = (event.x && event.y) ? {x:event.x, y:event.y} : game.triggers._getMousePosition(event);
+      const upStairways = [];
+      if(sourceSceneId){
+        let clickStairway = game.triggers._retrieveFromIdOrName(game.triggers._getStairways(sourceSceneId), sourceData.name);
+        if(!clickStairway) game.triggers._retrieveFromIdOrName(game.triggers._getStairways(sourceSceneId), sourceData.label);
+        upStairways.push(clickStairway); 
+      }
+      if (upStairways.length === 0){
+        return;
+      }
+      const triggers = game.triggers._getTriggersFromStairways(game.triggers.triggers, upStairways, EVENT_TRIGGER_ENTITY_TYPES.CLICK);
+      game.triggers._executeTriggers(triggers);
+    }finally{
+      if(game.triggers.enableRelease){
+        // Needed this for module compatibility and the release on click left option active
+        game.settings.set('core', 'leftClickRelease', game.triggers.release);
+      }
+    }
+  });
 });
 
 // Add any additional hooks if necessary
@@ -227,7 +256,6 @@ export class TriggerHappy {
     Hooks.on('preUpdateWall', this._onPreUpdateWall.bind(this));
     Hooks.on('renderSettingsConfig', this._parseJournals.bind(this)); // TODO maybe we don't need this anymore ???
     Hooks.on('preUpdateNote', this._onPreUpdateNote.bind(this));
-    Hooks.on('PreStairwayTeleport', this._parseJournals.bind(this));
     Hooks.on('getSceneNavigationContext', this._parseJournals.bind(this)); // parse again the journal when change scene
 
     this.triggers = [];
@@ -364,9 +392,12 @@ export class TriggerHappy {
                 // const tagsFromPlaceableObject = Tagger.getTags(trigger) || [];
                 const tagsFromSetting = 
                   game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
-                if (tagsFromSetting.length > 0) {
+                const filteredTagsFromSetting = tagsFromSetting.filter(function (el) {
+                  return el != null && el != undefined && el != '';
+                });
+                if (filteredTagsFromSetting.length > 0) {
                   // Check if every tags on settings is included on the current placeableObject tag list
-                  const isValid = await Tagger.hasTags(trigger, tagsFromSetting, 
+                  const isValid = await Tagger.hasTags(trigger, filteredTagsFromSetting, 
                     { caseInsensitive: true, sceneId: game.scenes.current.id });
                   if(!isValid){
                     trigger = null;
@@ -483,6 +514,10 @@ export class TriggerHappy {
       const config = CONFIG[configKey];
       if (!config){
         warn( `Can't manage the config with entity '${entity}' and key '${configKey}' on '${triggerJournal}'`);
+        return;
+      }
+      if (!config.collection){
+        warn( `Can't manage the config collection with entity '${entity}' and key '${configKey}' on '${triggerJournal}'`);
         return;
       }
       trigger = config.collection.instance.get(id);
@@ -619,9 +654,12 @@ export class TriggerHappy {
   }
 
   _isStairwayTrigger(stairway, trigger, type) {
+    // const isTrigger =
+    //   (trigger.trigger instanceof Stairway && trigger.trigger.id === stairway.id) ||
+    //   (trigger.trigger instanceof StairwayDocument && trigger.trigger.id === stairway.id);
     const isTrigger =
-      (trigger.trigger instanceof Stairway && trigger.trigger.id === stairway.id) ||
-      (trigger.trigger instanceof StairwayDocument && trigger.trigger.id === stairway.id);
+      (trigger.trigger?.document?.documentName === 'Stairway' && trigger.trigger.id === stairway.id) ||
+      (trigger.trigger?.documentName  === 'Stairway' && trigger.trigger.id === stairway.id);
     if (!isTrigger) return false;
     if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
       return (
@@ -747,7 +785,9 @@ export class TriggerHappy {
     const clickDrawings = this._getPlaceablesAt(this._getDrawings(), position);
     const clickNotes = this._getPlaceablesAt(this._getNotes(), position);
     const clickJournals = this._getPlaceablesAt(this._getJournals(), position);
-    const clickStairways = this._getPlaceablesAt(this._getStairways(), position);
+    // TODO this not work find a better solution this work only because when click on canavs there can be only one stairways at the time
+    const clickStairways = this._getPlaceablesAt(this._getStairways(event.sceneId), position);
+
     if (clickTokens.length === 0 && clickDrawings.length == 0 &&
       clickNotes.length == 0 && clickStairways.length == 0 &&
       clickJournals == 0){
@@ -775,9 +815,10 @@ export class TriggerHappy {
       const upDrawings = this._getPlaceablesAt(drawings, position);
       const upNotes = this._getPlaceablesAt(notes, position);
       const upJournals = this._getPlaceablesAt(journals, position);
+      // TODO this not work find a better solution this work only because when click on canavs there can be only one stairways at the time
       const upStairways = this._getPlaceablesAt(stairways, position);
       if (upTokens.length === 0 && upDrawings.length === 0 && 
-        upNotes.length === 0 && upJournals === 0){
+        upNotes.length === 0 && upStairways.length === 0 && upJournals.length === 0){
         return;
       }
       const triggers = this._getTriggersFromTokens(this.triggers, upTokens, EVENT_TRIGGER_ENTITY_TYPES.CLICK);
@@ -1144,6 +1185,11 @@ export class TriggerHappy {
     });
     if(!target){
       target = placeables?.find((x) => {
+        return x && x.name?.toLowerCase() == IdOrName.toLowerCase();
+      });
+    }
+    if(!target){
+      target = placeables?.find((x) => {
         return x && x.data?.name?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
@@ -1266,12 +1312,20 @@ export class TriggerHappy {
     return placeablesJournals ?? [];
   }
 
-  _getStairways(){
-    const placeablesStairways =
-      canvas.stairways?.placeables && canvas.stairways?.placeables.length > 0
-      ? canvas.stairways?.placeables
-      : game.scenes.current.stairways?.contents;
-    return placeablesStairways ?? [];
+  _getStairways(sceneId){
+    if(!sceneId){
+      const placeablesStairways =
+        canvas.stairways?.placeables && canvas.stairways?.placeables.length > 0
+        ? canvas.stairways?.placeables
+        : game.scenes.current.stairways?.contents;
+      return placeablesStairways ?? [];
+    }else{
+      const currentScene = game.scenes.find((x) => {
+        return x && x.id == sceneId;
+      });
+      const placeablesStairways = currentScene.stairways?.contents;
+      return placeablesStairways ?? [];
+    }
   }
 
   _getScenes(){
