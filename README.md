@@ -66,6 +66,10 @@ One line in the journal entry represents one trigger as long as the first link i
 
 When a token that represents a trigger actor is clicked by a player, then any other links within that same line will be triggered. Macros will be executed, Scenes will be viewed, Roll tables will be rolled, Journal entries will be displayed and Tokens will be selected.
 
+Here the example structure of the line of the journal:
+
+![tutorial](./images/imageTutorial2.png)
+
 As an example, you can put this into your entry : 
 
 #### Traps in Dungeon Room 37

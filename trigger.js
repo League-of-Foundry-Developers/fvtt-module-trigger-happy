@@ -293,7 +293,7 @@ export class TriggerHappy {
     this.journals.forEach((journal) => this._parseJournal(journal));
   }
 
-  _parseJournal(journal) {
+  async _parseJournal(journal) {
     const triggerLines = journal.data.content
       .replace(/(<p>|<div>|<br *\/?>)/gm, '\n')
       .replace(/&nbsp;/gm, ' ')
@@ -318,7 +318,7 @@ export class TriggerHappy {
           let [triggerJournal, entity, id, label] = matchTag;
           lineTmp = lineTmp.replace(rgxTagger, '');
           // Remove prefix '@Tag[' and suffix ']'
-          filterTags.push(triggerJournal.substring(5, triggerJournal.length-1).split(','));
+          filterTags.push(...triggerJournal.substring(5, triggerJournal.length-1).split(','));
         }
       }
 
@@ -337,6 +337,39 @@ export class TriggerHappy {
           trigger = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
           if(!trigger){
             break;
+          }
+          // If is a placeable object
+          if(
+            this.arrayPlaceableObjects.find((el) => {
+              return el.toLowerCase() === entity.toLowerCase();
+            })
+          ){
+            if (trigger) {
+              // Before do anything check the tagger feature module settings (only for placeable object)
+              if(this.taggerModuleActive && window.Tagger && filterTags){
+                // Check if the current placeable object has the specific tags from the global module settings
+                // const tagsFromPlaceableObject = Tagger.getTags(trigger) || [];
+                const tagsFromSetting = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
+                if (tagsFromSetting.length > 0) {
+                  // Check if every tags on settings is included on the current placeableObject tag list
+                  const isValid = await Tagger.hasTags(trigger, tagsFromSetting, { caseInsensitive: true, sceneId: game.scenes.current.id });
+                  if(!isValid){
+                    trigger = null;
+                  }
+                }
+                // Check if the current placeable object has the specific tags from the specific placeable object settings
+                if(filterTags && filterTags.length > 0){
+                  // Check if the current placeable object has the specific tag from the @TAG[label] annotation
+                  const isValid = await Tagger.hasTags(trigger, filterTags, { caseInsensitive: true, sceneId: game.scenes.current.id });
+                  if(!isValid){
+                    trigger = null;
+                  }
+                }
+              }
+            }
+            if(!trigger){
+              break;
+            }
           }
           if(trigger instanceof String){
             trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
@@ -371,7 +404,7 @@ export class TriggerHappy {
     }
   }
 
-  _manageTriggerEvent(triggerJournal, entity, id, label, filterTags){
+  _manageTriggerEvent(triggerJournal, entity, id, label){
     let trigger;
     if(!id && !label){
       warn( `Can't manage the empty trigger '${entity}' on '${triggerJournal}'`);
@@ -404,41 +437,13 @@ export class TriggerHappy {
       if(!relevantDocument){
         relevantDocument = this._retrieveFromEntity(entity, label, label);
       }
-
+      trigger = relevantDocument;
       // const placeableObjectId = relevantDocument.id;
       // Filter your triggers only for the current scene
       // const placeableObjects = this._getObjectsFromScene(game.scenes.current);
       // const placeableObjectTrigger = placeableObjects.filter((obj) => obj.id === placeableObjectId)[0];
-
-      const placeableObjectTrigger = relevantDocument;
-      if (placeableObjectTrigger) {
-        // Before do anything check the tagger feature module settings (only for placeable object)
-        if(this.taggerModuleActive){
-          // Check if the current placeable object has the specific tags from the global module settings
-          const tagsFromPlaceableObject = Tagger.getTags(placeableObjectTrigger) || [];
-          const tagsFromSetting = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
-          if (tagsFromSetting.length > 0) {
-            // Check if every tags on settings is included on the current placeableObject tag list
-            const isValid = tagsFromPlaceableObject.some((tagToCheck) => tagsFromSetting.toLowerCase().includes(tagToCheck.toLowerCase()));
-            if(!isValid){
-              placeableObjectTrigger = null;
-            }
-          }
-          // Check if the current placeable object has the specific tags from the specific placeable object settings
-          if(filterTags && filterTags.length > 0){
-            // Check if the current placeable object has the specific tag from the @TAG[label] annotation
-            const placeableObjectsByTag = Tagger.getByTag(filterTags, { caseInsensitive: true, sceneId: game.scenes.current.id }) || [];
-            if (placeableObjectsByTag.length > 0) {
-              // If at least one of the tags is present on the triggered placeableObject
-              const isValid = placeableObjectsByTag.find((p) => p.id == placeableObjectTrigger.id);
-              if(!isValid){
-                placeableObjectTrigger = null;
-              }
-            }
-          }
-        }
-      }
-      trigger = placeableObjectTrigger;
+      // const placeableObjectTrigger = relevantDocument;
+      // trigger = placeableObjectTrigger;
     }
     // If is not a placeable object
     else if(this.arrayNoPlaceableObjects.find((el) => {
@@ -1082,6 +1087,9 @@ export class TriggerHappy {
       const noteTarget = this._retrieveFromIdOrName(this._getNotes(), idOrName);
       if(!noteTarget){
         const journalTarget = this._retrieveFromIdOrName(this._getJournals(), idOrName);
+        if(journalTarget?.sceneNote){
+          return journalTarget.sceneNote;
+        }
         return journalTarget;
       }
       return noteTarget;
@@ -1099,21 +1107,21 @@ export class TriggerHappy {
   _retrieveFromIdOrName(placeables, IdOrName){
     let target;
     target = placeables?.find((x) => {
-      return x.id.toLowerCase() == IdOrName.toLowerCase();
+      return x && x.id?.toLowerCase() == IdOrName.toLowerCase();
     });
     if(!target){
       target = placeables?.find((x) => {
-        return x.data.name?.toLowerCase() == IdOrName.toLowerCase();
+        return x && x.data?.name?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
     if(!target){
       target = placeables?.find((x) => {
-        return x.data.text?.toLowerCase() == IdOrName.toLowerCase();
+        return x && x.data?.text?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
     if(!target){
       target = placeables?.find((x) => {
-        return x.data.label?.toLowerCase() == IdOrName.toLowerCase();
+        return x && x.data?.label?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
     return target;
