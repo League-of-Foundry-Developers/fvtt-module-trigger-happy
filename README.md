@@ -43,6 +43,18 @@ To install this module manually:
 - [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger)
 - [Stairway](https://gitlab.com/SWW13/foundryvtt-stairways) (limited only to click event :( )
 
+# Settings
+
+- **Name of the Trigger Folder on Note sidebar to use :** The name of the Trigger Folder on Note sidebar to use for listing triggers. The suggestion is to use one folder with this name. Default is 'Trigger Happy'
+- **Name of the Trigger Journal to use :** The name of the journal entry to use for listing triggers. There can only be one. Refer to README file in module website for how to configure triggers. Default is 'Trigger Happy'
+- **Enable triggers when running as GM**
+- **Capture at edge of drawing/token**
+- **Add enable/disable trigger happy button**
+- **Enable tagger integration feature :** This feature need the tagger module installed and active, we filter the triggers only for the placeables object with one of the tag setted, the value is read like list of strings of tags separate from ',' e.g. 'tag1,tag2'. NOTE: you can avoid to enable this feature and just use @TAG on the journal, this is more for set some global tag to all the triggers
+- **Enable 'journal for every scene' integration feature :** Sometime trigger are mixed up between scene and broke something, if this feature is enabled the module will try to find and parse only the journal starting with the same name (or id) of the current scene the clients are viewing. If no journal is found is rollback to standard mechanism and parse all the journals under the trigger folder. NOTE: if more scene have the same name the trigger are activated for all these scenes, if you really want you can avoid this specific issue by using the id of the scene
+- **Enable 'only use journal for every scene' integration feature :** This setting make sense only with the setting 'journal for every scene' to true, it will disable the rollback to the standard parsing of the journals and make the parsing faster. ATTENTION: All the trigger on journals/notes that are not renamed based on a scene name/id will be ignored
+- **Enable avoid to deselect elements on the trigger event :** To remedy an incompatibility with other modules at the time of the 'mouse down' or other events together with the core setting 'Left-Click to Release Object' active, it is necessary that if a placeable object is selected on that event it remains at the event of 'mouse up' still selected. Unfortunately I have not found any other solution than to temporarily set the 'Left-Click to Release Object' setting to false (only if active) and then reset it to the original state at the 'mouse up' event. YOU NEED A REFRESH OF THE PAGE FOR APPLY THIS"
+
 # Details
 
 ## If your triggers mysteriously stop working check that you have not disabled them by mistake.
