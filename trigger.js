@@ -28,8 +28,19 @@ class CompendiumLink {
     this.id = id;
     this.label = label;
   }
-
 }
+
+class SoundLink {
+  playlistName;
+  soundName;
+  label;
+  constructor(playlistName, soundName, label) {
+    this.playlistName = playlistName;
+    this.soundName = soundName;
+    this.label = label;
+  }
+}
+
 /* ------------------------------------ */
 /* Initialize module					*/
 /* ------------------------------------ */
@@ -186,7 +197,8 @@ export const TRIGGER_ENTITY_TYPES = {
   DOOR: 'door',
   COMPENDIUM: 'compendium',
   JOURNAL_ENTRY: 'journalentry',
-  STAIRWAY: 'stairway'
+  STAIRWAY: 'stairway',
+  SOUND_LINK: 'sound' // not the ambient sound the one from the sound link module
 };
 
 export const EVENT_TRIGGER_ENTITY_TYPES = {
@@ -236,7 +248,8 @@ export class TriggerHappy {
       TRIGGER_ENTITY_TYPES.ACTOR,
       TRIGGER_ENTITY_TYPES.CHAT_MESSAGE,
       TRIGGER_ENTITY_TYPES.COMPENDIUM,
-      TRIGGER_ENTITY_TYPES.SCENE
+      TRIGGER_ENTITY_TYPES.SCENE,
+      TRIGGER_ENTITY_TYPES.SOUND_LINK
     ]
     this.journals = [];
   }
@@ -299,12 +312,12 @@ export class TriggerHappy {
       .replace(/&nbsp;/gm, ' ')
       .split('\n');
 
-    // Remove empty/undefined lines before loop
+    // Remove empty/undefined/non valid lines before loop more easy to debug
     const filteredTriggerLines = triggerLines.filter(function (el) {
       return el != null && el != undefined && el != '' && el.includes('@');
     });
 
-    const entityLinks = CONST.ENTITY_LINK_TYPES.concat(this.arrayTriggers);
+    const entityLinks = Object.keys(CONFIG).concat(this.arrayTriggers);
 
     for (const line of filteredTriggerLines) {
       // We check this anyway with module tagger active or no
@@ -349,10 +362,12 @@ export class TriggerHappy {
               if(this.taggerModuleActive && window.Tagger && filterTags){
                 // Check if the current placeable object has the specific tags from the global module settings
                 // const tagsFromPlaceableObject = Tagger.getTags(trigger) || [];
-                const tagsFromSetting = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
+                const tagsFromSetting = 
+                  game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
                 if (tagsFromSetting.length > 0) {
                   // Check if every tags on settings is included on the current placeableObject tag list
-                  const isValid = await Tagger.hasTags(trigger, tagsFromSetting, { caseInsensitive: true, sceneId: game.scenes.current.id });
+                  const isValid = await Tagger.hasTags(trigger, tagsFromSetting, 
+                    { caseInsensitive: true, sceneId: game.scenes.current.id });
                   if(!isValid){
                     trigger = null;
                   }
@@ -360,7 +375,8 @@ export class TriggerHappy {
                 // Check if the current placeable object has the specific tags from the specific placeable object settings
                 if(filterTags && filterTags.length > 0){
                   // Check if the current placeable object has the specific tag from the @TAG[label] annotation
-                  const isValid = await Tagger.hasTags(trigger, filterTags, { caseInsensitive: true, sceneId: game.scenes.current.id });
+                  const isValid = await Tagger.hasTags(trigger, filterTags, 
+                    { caseInsensitive: true, sceneId: game.scenes.current.id });
                   if(!isValid){
                     trigger = null;
                   }
@@ -516,6 +532,24 @@ export class TriggerHappy {
           if ( !pack.index.length ) await pack.getIndex();
           const compendium = await pack.getDocument(effect.id);
           if (compendium) await compendium.sheet.render(true);
+        } else if (effect instanceof SoundLink) {
+          let startsWith = '';
+          let playlistName = effect.playlistName;
+          let soundName = effect.soundName;
+          const playlist = game.playlists.contents.find((p) =>
+            startsWith ? p.name.startsWith(playlistName) : p.name === playlistName,
+          )
+          if (!playlist){
+            return;
+          }
+          const sound = playlist.sounds.find((s) =>
+            startsWith ? s.name.startsWith(soundName) : s.name === soundName,
+          )
+          if (sound){
+            playlist.updateEmbeddedDocuments('PlaylistSound', [
+              { _id: sound.id, playing: !sound.playing },
+            ])
+          }
         } else if (effect instanceof Note || effect instanceof NoteDocument) {
           const placeablesToken = this._getNotes();
           const note = placeablesToken.find((t) => t.name === effect.name || t.id === effect.id);
@@ -1042,22 +1076,21 @@ export class TriggerHappy {
       return chatMessage;
     }
     else if(entity == TRIGGER_ENTITY_TYPES.COMPENDIUM){
-      // compendium links can only be effects not triggers e.g. @Compendium[SupersHomebrewPack.classes.AH3dUnrFxZHDvY2o]{Bard}
+      // compendium links can only be effects not triggers 
+      // e.g. @Compendium[SupersHomebrewPack.classes.AH3dUnrFxZHDvY2o]{Bard}
       const parts = idOrName.split(".");
       if (parts.length !== 3){
         return null;
       }
       let compendiumLink = new CompendiumLink(parts.slice(0,2).join("."), parts[2], label);
-      // const compendiumFounded = this._getCompendiums().find((compendium) => {
-      //   return idOrName.startsWith(compendium.metadata.package + '.' + compendium.metadata.name)
-      // });
-      // let compendiumLink = new CompendiumLink();
-      // compendiumLink.packId = compendiumFounded.metadata.package + '.' + compendiumFounded.metadata.name;
-      // compendiumLink.id = idOrName.replace(compendiumFounded.metadata.package + '.' + compendiumFounded.metadata.name + '.', '');
-      // compendiumLink.label = compendiumFounded.metadata.label;
       return compendiumLink;
-      // const compendiumTarget = this._retrieveFromIdOrName(this._getCompendiums(), idOrName);
-      // return compendiumTarget;
+    }
+    else if(entity == TRIGGER_ENTITY_TYPES.SOUND_LINK){
+      // sound links can only be effects not triggers 
+      // e.g. @Sound[Test|Medieval_Fantasy City Under Attack audio atmosphere]{Attack}
+      const [playlistName, soundName] = idOrName.split('|')
+      let soundLink = new SoundLink(playlistName, soundName, label);
+      return soundLink;
     }
     else if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
       const tokenTarget = this._retrieveFromIdOrName(this._getTokens(), idOrName);
@@ -1067,11 +1100,11 @@ export class TriggerHappy {
       return actorTarget;
     // TODO ADD AMBIENT LIGHT INTEGRATION
     // } else if (relevantDocument instanceof AmbientLightDocument) {
-    //   const ambientLightTarget = this._retrieveFromIdOrName(this._getLights(), idOrName);
+    //   const ambientLightTarget = this._retrieveFromIdOrName(this._getAmbientLights(), idOrName);
     //   return ambientLightTarget;
     // TODO ADD AMBIENT SOUND INTEGRATION
     // } else if (relevantDocument instanceof AmbientSoundDocument) {
-    //   const ambientSoundTarget = this._retrieveFromIdOrName(this._getSounds(), idOrName);
+    //   const ambientSoundTarget = this._retrieveFromIdOrName(this._getAmbientSounds(), idOrName);
     //   return ambientSoundTarget;
     // TODO ADD TILE INTEGRATION
     // } else if (relevantDocument instanceof TileDocument) {
@@ -1251,7 +1284,7 @@ export class TriggerHappy {
     return placeablesCompendiums ?? [];
   }
 
-  _getLights(){
+  _getAmbientLights(){
       const placeablesLightings =
         canvas.lighting?.placeables && canvas.lighting?.placeables.length > 0
         ? canvas.lighting?.placeables
@@ -1259,7 +1292,7 @@ export class TriggerHappy {
       return placeablesLightings ?? [];
   }
 
-  _getSounds(){
+  _getAmbientSounds(){
       const placeablesSounds =
         canvas.sounds?.placeables && canvas.sounds?.placeables.length > 0
         ? canvas.sounds?.placeables
@@ -1278,6 +1311,15 @@ export class TriggerHappy {
   _getTables(){
     const placeablesTables = game.tables?.contents;
     return placeablesTables ?? [];
+  }
+
+  _getPlaylistSounds(){
+    // game.playlists.contents[0].data.sounds
+    const placeablesSounds = [];
+    game.playlists.contents.forEach((playlist, key) => { 
+      placeablesSounds.push(...Object.values(playlist.sounds));
+    });
+    return placeablesSounds ?? [];
   }
 
 }

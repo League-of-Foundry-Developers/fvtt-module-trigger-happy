@@ -101,7 +101,7 @@ As an example, you can put this into your entry :
 #### The next 100 lines could create a complex sequence of triggers that automate the entire game so the DM's job is obsolete
 
 ```
-@Scene[Tavern] @Macro[Display Dialog about rumors]
+
 ```
 
 The above example used the `@Actor[name]` format for simplicity, but when drag&dropping actors, they would appear in the journal entry as `@Actor[id]{name}`.

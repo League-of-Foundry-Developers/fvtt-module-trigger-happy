@@ -4,6 +4,7 @@
 
 - Added `@Tag[list of tag separate from ',']` as a filter link to interact with a specific placeable object on the canvas.
 - Cleanup code and integrated a better readable workflow people like me
+- Avoid where possibile to recreate already existent object. Now i try to recover from the canvas/scene/game every object i needed for the trigger instead to create runtime from a wrong id or name, i lose something in performance but i think is the right road to follow
 - Add gulp build file for more relaxing build of the source and developing
 - Add github action for generate release with 'module.zip' and 'module.json'
 - Add integration with Stairways mdule
@@ -14,6 +15,7 @@
 - Add the setting 'Enable 'only use journal for every scene' integration feature' (details on readme)
 - Add the setting 'Enable avoid to deselect elements on the trigger event' (details on readme)
 - Update README with some cool banner and images
+- Add integration with Sound Link mdule
 
 ## 0.8.11
 
