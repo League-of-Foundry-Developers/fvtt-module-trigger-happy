@@ -448,7 +448,10 @@ export class TriggerHappy {
         return el.toLowerCase() === entity.toLowerCase();
       })
     ){
-      if (trigger) {
+      if(trigger instanceof DoorControl){
+        trigger = trigger.wall;
+      }
+      if (trigger && trigger instanceof PlaceableObject) {
         // Before do anything check the tagger feature module settings (only for placeable object)
         if(this.taggerModuleActive && window.Tagger && filterTags){
           // Check if the current placeable object has the specific tags from the global module settings
@@ -467,7 +470,7 @@ export class TriggerHappy {
             }
           }
           // Check if the current placeable object has the specific tags from the specific placeable object settings
-          if(filterTags && filterTags.length > 0){
+          if(trigger && filterTags && filterTags.length > 0){
             // Check if the current placeable object has the specific tag from the @TAG[label] annotation
             const isValid = await Tagger.hasTags(trigger, filterTags, 
               { caseInsensitive: true, sceneId: game.scenes.current.id });
@@ -759,6 +762,24 @@ export class TriggerHappy {
     return trigger.trigger instanceof Scene && trigger.trigger.id === scene.id;
   }
 
+  _isWallTrigger(wall, trigger, type) {
+    const isTrigger =
+      (trigger.trigger instanceof Wall && trigger.trigger.id === note.id) ||
+      (trigger.trigger instanceof WallDocument && trigger.trigger.id === note.id) || 
+      (trigger.trigger instanceof DoorControl && trigger.trigger.sceneNote?.id === note.id);
+    if (!isTrigger) return false;
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
+      return (
+        trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE))
+      );
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE)
+      return (
+        trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK))
+      );
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    return true;
+  }
+
   _placeableContains(placeable, position) {
     // Tokens have getter (since width/height is in grid increments) but drawings use data.width/height directly
     const w = placeable.w || placeable.data.width || placeable.width;
@@ -1025,8 +1046,18 @@ export class TriggerHappy {
     // Only trigger on door state changes
     if (wallDocument.data.door === 0 || update.ds === undefined) return;
     const triggers = this.triggers.filter((trigger) => {
-      if (!(trigger.trigger instanceof WallDocument)) return false;
-      if (wallDocument.data.c.toString() !== trigger.trigger.data.c.toString()) return false;
+      //if (!(trigger.trigger instanceof WallDocument)) return false;
+      if (!(
+        (trigger.trigger instanceof Wall) ||
+        (trigger.trigger instanceof WallDocument) || 
+        (trigger.trigger instanceof DoorControl)
+        )
+      ){
+        return false;
+      }
+      if (wallDocument.data.c.toString() !== trigger.trigger.data.c.toString()) {
+        return false;
+      }
       const onClose = trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_CLOSE);
       const onOpen = !trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_CLOSE) || 
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_OPEN);
@@ -1398,7 +1429,9 @@ export class TriggerHappy {
     const placeablesDoors =
       canvas.controls?.doors?.children && canvas.controls?.doors?.children.length > 0
       ? canvas.controls?.doors?.children
-      : game.scenes.current.walls?.contents;
+      : game.scenes.current.walls?.contents.filter((wall) =>{
+        return wall.data.door > 0;
+      });
     return placeablesDoors ?? [];
   }
 

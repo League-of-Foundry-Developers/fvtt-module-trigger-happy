@@ -3,6 +3,7 @@
 ## 0.8.14
 
 - Add `@Door[id]{label}` like a effect
+- Bug fix trigger with DorrControl (forgot they are not placeable object)
 
 ## 0.8.13
 
