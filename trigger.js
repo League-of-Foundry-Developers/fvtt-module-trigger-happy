@@ -642,6 +642,22 @@ export class TriggerHappy {
           const placeablesJournal = this._getJournals();
           const journal = placeablesJournal.find((t) => t.name === effect.name || t.id === effect.id);
           if(journal) await journal.sheet.render(true);
+        } else if(effect instanceof WallDocument){
+          const state = effect.data.ds;
+          const states = CONST.WALL_DOOR_STATES;
+          // Determine whether the player can control the door at this time
+          if ( !game.user.can("WALL_DOORS") ) return;
+          if ( game.paused && !game.user.isGM ) {
+            ui.notifications.warn("GAME.PausedWarning", {localize: true});
+            return;
+          }
+          // Play an audio cue for locked doors
+          if ( state === states.LOCKED ) {
+            AudioHelper.play({src: CONFIG.sounds.lock});
+            return;
+          }
+          // Toggle between OPEN and CLOSED states
+          effect.document.update({ds: state === states.CLOSED ? states.OPEN : states.CLOSED});
         }
         else {
           await effect.sheet.render(true);
@@ -1012,7 +1028,8 @@ export class TriggerHappy {
       if (!(trigger.trigger instanceof WallDocument)) return false;
       if (wallDocument.data.c.toString() !== trigger.trigger.data.c.toString()) return false;
       const onClose = trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_CLOSE);
-      const onOpen = !trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_CLOSE) || trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_OPEN);
+      const onOpen = !trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_CLOSE) || 
+        trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_OPEN);
       return (update.ds === 1 && onOpen) || (update.ds === 0 && onClose && wallDocument.data.ds === 1);
     });
     this._executeTriggers(triggers);

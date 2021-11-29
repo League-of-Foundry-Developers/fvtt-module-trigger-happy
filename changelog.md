@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.14
+
+- Add `@Door[id]{label}` like a effect
+
 ## 0.8.13
 
 - Bug fix on if else on the 'event' if-else for manage multiple trigger
