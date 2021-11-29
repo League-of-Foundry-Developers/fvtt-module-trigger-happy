@@ -764,9 +764,9 @@ export class TriggerHappy {
 
   _isWallTrigger(wall, trigger, type) {
     const isTrigger =
-      (trigger.trigger instanceof Wall && trigger.trigger.id === note.id) ||
-      (trigger.trigger instanceof WallDocument && trigger.trigger.id === note.id) || 
-      (trigger.trigger instanceof DoorControl && trigger.trigger.sceneNote?.id === note.id);
+      (trigger.trigger instanceof Wall && trigger.trigger.id === wall.id) ||
+      (trigger.trigger instanceof WallDocument && trigger.trigger.id === wall.id) || 
+      (trigger.trigger instanceof DoorControl && trigger.trigger.doorControl?.id === wall.id);
     if (!isTrigger) return false;
     if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
       return (
