@@ -1,6 +1,41 @@
 # Changelog
 
+## 0.8.14
+
+- Add `@Door[id]{label}` like a effect
+- Bug fix trigger with DorrControl (forgot they are not placeable object)
+
+## 0.8.13
+
+- Bug fix on if else on the 'event' if-else for manage multiple trigger
+- Add new cofiguration with '*' on the 'trigger' e.g. `@Door["*"]` element for activate the same triger on all the placeable objects on the same scene. Support is only for placeable objects.
+- Bug fix on method `this._retrieveFromEntity(entity, label, label)` label can be undefined
+- Add @Playlist similar to @Sound of sound link module, but it randomize a sound from the playlist instead a specific one.
+
+## 0.8.12
+
+- Added `@Tag[list of tag separate from ',']` as a filter link to interact with a specific placeable object on the canvas.
+- Cleanup code and integrated a better readable workflow for no so smart people like me
+- Avoid where possibile to recreate already existent object. Now i try to recover from the canvas/scene/game every object i needed for the trigger instead to create runtime from a wrong id or name, i lose something in performance but i think is the right road to follow
+- Add gulp build file for more relaxing build of the source and developing
+- Add github action for generate release with 'module.zip' and 'module.json'
+- Add integration with Stairways module, limited only to click :(
+- Add integration with Tagger mdule (details on readme)
+- Made check for entity case insensitive avoid many minor issue form miss typing the name ecc.
+- Add the setting 'Enable tagger integration feature' (details on readme)
+- Add the setting 'Enable 'journal for every scene' integration feature' (details on readme)
+- Add the setting 'Enable 'only use journal for every scene' integration feature' (details on readme)
+- Add the setting 'Enable avoid to deselect elements on the trigger event' (details on readme)
+- Update README with some cool banner,images and more examples
+- Add integration with Sound Link module
+- Added `@JournalEntry[id]{label}` as an effect link to interact with note on the canvas.
+
+## 0.8.11
+
+- Added `@JournalEntry[id]{label}` as an effect link to interact with note on the canvas.
+
 ## 0.8.10
+
 - Added `@Compendium[id]{label}` as an effect link to display compendium entries.
 - Confirmed that @Quest entries work.
 

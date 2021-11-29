@@ -1,14 +1,22 @@
-![Trigger Happy](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FLeague-of-Foundry-Developers%2Fleague-repo-status%2Fshields-endpoint%2Ffvtt-module-trigger-happy.json)
-
 # Trigger Happy
+
+![Trigger Happy](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FLeague-of-Foundry-Developers%2Fleague-repo-status%2Fshields-endpoint%2Ffvtt-module-trigger-happy.json&style=for-the-badge)
+
+![Latest Release Download Count](https://img.shields.io/github/downloads/League-of-Foundry-Developers/fvtt-module-trigger-happy/latest/v0.8.11.zip?color=2b82fc&label=DOWNLOADS&style=for-the-badge) 
+
+[![Forge Installs](https://img.shields.io/badge/dynamic/json?label=Forge%20Installs&query=package.installs&suffix=%25&url=https%3A%2F%2Fforge-vtt.com%2Fapi%2Fbazaar%2Fpackage%2Ftrigger-happy&colorB=006400&style=for-the-badge)](https://forge-vtt.com/bazaar#package=trigger-happy) 
+
+![Foundry Core Compatible Version](https://img.shields.io/badge/dynamic/json.svg?url=https%3A%2F%2Fraw.githubusercontent.com%2FLeague-of-Foundry-Developers%2Ffvtt-module-trigger-happy%2Fmaster%2Fmodule.json&label=Foundry%20Version&query=$.compatibleCoreVersion&colorB=orange&style=for-the-badge)
+
+![Latest Version](https://img.shields.io/badge/dynamic/json.svg?url=https%3A%2F%2Fraw.githubusercontent.com%2FLeague-of-Foundry-Developers%2Ffvtt-module-trigger-happy%2Fmaster%2Fmodule.json&label=Latest%20Release&prefix=v&query=$.version&colorB=red&style=for-the-badge)
+
+[![Foundry Hub Endorsements](https://img.shields.io/endpoint?logoColor=white&url=https%3A%2F%2Fwww.foundryvtt-hub.com%2Fwp-json%2Fhubapi%2Fv1%2Fpackage%2Ftrigger-happy%2Fshield%2Fendorsements&style=for-the-badge)](https://www.foundryvtt-hub.com/package/trigger-happy/)
 
 `Trigger Happy` is an FVTT module which adds a powerful yet simple system for creating triggers and automating things within a world.
 
 This was created as a way of creating the interactive FVTT Tutorial on [The Forge](https://forgevtt.com/game/demo)
 
 # Installation
-
-## Installation
 
 It's always easiest to install modules from the in game add-on browser.
 
@@ -21,10 +29,41 @@ To install this module manually:
 
 4.  Click 'Install' and wait for installation to complete
 5.  Don't forget to enable the module in game using the "Manage Module" button
-### If your triggers mysteriously stop working check that you have not disabled them by mistake.
-![HUD](https://user-images.githubusercontent.com/4486143/136141666-b681c6f9-e1f6-4d76-977b-241f987d4f0c.png) The laughing/crying face needs to be enabled or you can disable the face from the config settings.
 
-# Video and Step by Step instructions
+# Known issue
+
+- When you scale a placeable object the event (click, ecc.), are limited only to the original coordinates {x, y} and not the "scaled" image
+- To remedy an incompatibility with other modules at the time of the 'mouse down' or other events together with the core setting 'Left-Click to Release Object' active, it is necessary that if a placeable object is selected on that event it remains at the event of 'mouse up' still selected. Unfortunately I have not found any other solution than to temporarily set the 'Left-Click to Release Object' setting to false (only if active) and then reset it to the original state at the 'mouse up' event. **You can enable/disable this 'patch' on the module setting 'Enable avoid to deselect elements on the trigger event' to true**
+- Made the code more performant ...
+
+# Module compatibility
+
+- [Sound Link](https://github.com/superseva/sound-link)
+- [Forien Quest Log version 0.7.7 and later](https://github.com/League-of-Foundry-Developers/foundryvtt-forien-quest-log)
+- [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger)
+- [Stairway](https://gitlab.com/SWW13/foundryvtt-stairways) (limited only to click event :( )
+
+# Settings
+
+- **Name of the Trigger Folder on Note sidebar to use :** The name of the Trigger Folder on Note sidebar to use for listing triggers. The suggestion is to use one folder with this name. Default is 'Trigger Happy'
+- **Name of the Trigger Journal to use :** The name of the journal entry to use for listing triggers. There can only be one. Refer to README file in module website for how to configure triggers. Default is 'Trigger Happy'
+- **Enable triggers when running as GM**
+- **Capture at edge of drawing/token**
+- **Add enable/disable trigger happy button**
+- **Enable tagger integration feature :** This feature need the tagger module installed and active, we filter the triggers only for the placeables object with one of the tag setted, the value is read like list of strings of tags separate from ',' e.g. 'tag1,tag2'. NOTE: you can avoid to enable this feature and just use @TAG on the journal, this is more for set some global tag to all the triggers
+- **Enable 'journal for every scene' integration feature :** Sometime trigger are mixed up between scene and broke something, if this feature is enabled the module will try to find and parse only the journal starting with the same name (or id) of the current scene the clients are viewing. If no journal is found is rollback to standard mechanism and parse all the journals under the trigger folder. NOTE: if more scene have the same name the trigger are activated for all these scenes, if you really want you can avoid this specific issue by using the id of the scene
+- **Enable 'only use journal for every scene' integration feature :** This setting make sense only with the setting 'journal for every scene' to true, it will disable the rollback to the standard parsing of the journals and make the parsing faster. ATTENTION: All the trigger on journals/notes that are not renamed based on a scene name/id will be ignored
+- **Enable avoid to deselect elements on the trigger event :** To remedy an incompatibility with other modules at the time of the 'mouse down' or other events together with the core setting 'Left-Click to Release Object' active, it is necessary that if a placeable object is selected on that event it remains at the event of 'mouse up' still selected. Unfortunately I have not found any other solution than to temporarily set the 'Left-Click to Release Object' setting to false (only if active) and then reset it to the original state at the 'mouse up' event. YOU NEED A REFRESH OF THE PAGE FOR APPLY THIS"
+
+# Details
+
+## If your triggers mysteriously stop working check that you have not disabled them by mistake.
+
+![HUD](https://user-images.githubusercontent.com/4486143/136141666-b681c6f9-e1f6-4d76-977b-241f987d4f0c.png) 
+
+The laughing/crying face needs to be enabled or you can disable the face from the config settings.
+
+## Video and Step by Step instructions
 
 before we get into the details of how to use Trigger Happy, I think these links might be easier for people to get started quickly with using this module. Don't forget to come back and read the full README file to understand the full extent of how you can use Trigger Happy.
 
@@ -36,7 +75,7 @@ Here is a "Introduction to Trigger Happy" video tutorial by ['D&D Population Me'
 
 Trigger Happy also comes with journal entries in its compendiums that gives useful examples of trigger scenarios you can use.
 
-# How to use
+## How to use
 
 To create triggers for a scene, it's very easy, create a journal entry with the title "Trigger Happy" (configurable in module settings) in which you will drag & drop actors, journals, macros, and anything else you want to trigger.
 
@@ -46,22 +85,66 @@ One line in the journal entry represents one trigger as long as the first link i
 
 When a token that represents a trigger actor is clicked by a player, then any other links within that same line will be triggered. Macros will be executed, Scenes will be viewed, Roll tables will be rolled, Journal entries will be displayed and Tokens will be selected.
 
+Here the example structure of the line of the journal:
+
+![tutorial](./images/imageTutorial2.png)
+
+Here the list of keys for category
+
+- **Trigger :** @Actor, @Token, @Scene, @Drawing, @Door, @JournalEntry, @Stairway
+- **Tag :** @Tag 
+- **Event :** @Trigger (read 'Advanced options' paragraph for more details)
+- **Effect :** @Actor, @Token, @Scene, @Drawing, @Door, @JournalEntry, @Stairway, @ChatMessage, @Compendium, @Sound, @Playlist
+
+From version `0.8.13` you can now use like id the character `*` for activate the same effect for all the trigger of that type
+
+Here a example:
+
+#### When open any journal on the scen open a specific one instead
+
+`@JournalEntry[*]{Missioni}@Trigger[Click]@JournalEntry[bSsq0RnNTqp3YxUR]{Scorta al Lord}`
+
+#### Every time yuo open a door on the scene put the game on pause
+
+`@Door[*]{Missioni}@Trigger[DoorOpen]@Macro[pause_the_game]`
+
 As an example, you can put this into your entry : 
+
+#### Traps in Dungeon Room 37
+
 ```
-# Traps in Dungeon Room 37
 @Actor[Transparent actor above trap #1] @JournalEntry[You have triggered a trap]
 @Actor[Transparent actor above trap #2] @JournalEntry[You have triggered a trap]
+```
 
-# Teleport the PC if they touch the magic circle, I warned them not to approach that room anyway, so it's their fault if they do
+#### Teleport the PC if they touch the magic circle, I warned them not to approach that room anyway, so it's their fault if they do
+
+```
 @Actor[Magical Circle] @Scene[Prison Cell] @JournalEntry[You are teleported] @RollTable[Magical side effect from teleportation] @Macro[Spawn token at position 100,200]
+```
 
-# Move the players to the next scene when they open the door to the basement
+#### Move the players to the next scene when they open the door to the basement
+
+```
 @Actor[Transparent token on door tile] @Scene[The basement]
+```
 
-# Display a dialog with the latest rumors the PCs hear when they enter the tavern, and show them the lcoal prices
+
+#### Display a dialog with the latest rumors the PCs hear when they enter the tavern, and show them the lcoal prices
+
+```
 @Scene[Tavern] @Macro[Display Dialog about rumors] @JournalEntry[Tavern room prices]
+```
 
-# The next 100 lines could create a complex sequence of triggers that automate the entire game so the DM's job is obsolete
+#### The next 100 lines could create a complex sequence of triggers that automate the entire game so the DM's job is obsolete
+
+```
+@JournalEntry[nREvRbeH8O4Fsngp]{Missioni}@Tag[test01]@Trigger[Click]@JournalEntry[bSsq0RnNTqp3YxUR]{Scorta al Lord}@RollTable[3pzl8ZBGWf9gp8II]{Catharina Combat}@Compendium[SupersHomebrewPack.classes.AH3dUnrFxZHDvY2o]{Bard}@ChatMessage[sdgfgfgf]{Gamemaster}@Sound[Test|Medieval_Fantasy City Under Attack audio atmosphere]{Attack}@Quest[nJRQV2mtlqygfmVe]{New Quest}
+```
+same but starting from a stairway
+
+```
+@Stairway[sw-43ayfc0q]{Vai di Sopra}@Trigger[Click]@JournalEntry[bSsq0RnNTqp3YxUR]{Scorta al Lord}@RollTable[3pzl8ZBGWf9gp8II]{Catharina Combat}@Compendium[SupersHomebrewPack.classes.AH3dUnrFxZHDvY2o]{Bard}@ChatMessage[sdgfgfgf]{Gamemaster}@Sound[Test|Medieval_Fantasy City Under Attack audio atmosphere]{Attack}@Quest[nJRQV2mtlqygfmVe]{New Quest}
 ```
 
 The above example used the `@Actor[name]` format for simplicity, but when drag&dropping actors, they would appear in the journal entry as `@Actor[id]{name}`.
@@ -73,6 +156,7 @@ You can also use some non-official 'links' by using the same format :
 - `@Drawing[label]` : This will trigger the effects when the player clicks/moves a token within the area of a drawing which has its text set to the `label` specified. Works best with rectangles.
 - `@Door[coordinates]` : This will trigger the effects when a player opens or closes a door (based on options). The coordinates can be copy/pasted from the wall configuration sheet (excluding the `[` and `]`).
 - `@Compendium[id]{name}` only useable as an effect will display the compendium entry.
+- `@JournalEntry[token name]` If used as a trigger, this will cause the triggers to activate on any journal with the specified name (you cannot set a token id in this case). As a trigger effect
 
 By using a `Token` trigger, you can have a single actor for your triggers (a door, a button or a transparent image) but setting a different and unique name for your tokens would allow you to use them as different triggers, without duplicating actors all over your actors directory.
 
@@ -108,32 +192,117 @@ The following options are available :
 - `stopMovement`: Will prevent any tokens from moving on top of the trigger token
 - `capture`: Will cause the trigger token to capture any player moment that crosses it
 - `doorClose`: Will cause a `@Door` trigger to trigger when the door is closed instead of the default when it opens.
-- `doorOpen`: Will cause a `@Door` trigger to trigger when the door is open. This is the default, but it can be used along with `doorClose` option to have it trigger on both open and close
+- `doorOpen`: Will cause a `@Door` trigger to trigger when the door is open. This is the default, but it can be used along with 
+- `doorClose` option to have it trigger on both open and close
 
 If a token is hidden (GM layer), then it is automatically considered a 'move' trigger, otherwise it's a 'click' trigger. You can override it with the `@Trigger[click]` or `@Trigger[move]` options, or you can specify both options to make a token trigger on both clicks and moves.
 
 Contrarily to the `@Trigger[move]` triggers, which only activate when a token ends its movement on their, the `@Trigger[capture]` will trigger when a token crosses its path, which can be very useful to setting up a trap that the players cannot jump over. When a `capture` trigger is activated, the token movement will be stoped and the token will be moved to the center of the trigger. The token can only be moved out of the `capture` trigger if its starting position is the center of the trigger.
 
-Here's an example of how these trigger options can be used together :
+## Examples from the community add your own by open a issue `^_^`
+
+Here's some examples of how these trigger options can be used together :
+
+#### When the player enters the scene, preload the next one
 
 ```
-# When the player enters the scene, preload the next one
 @Scene[Dungeon level 1] @Scene[Dungeon level 2] @Trigger[preload]
+```
 
-# When they click on the stairs, move them to the preloaded scene and select a token
+#### When they click on the stairs, move them to the preloaded scene and select a token
+
+```
 @Token[Lvl 1 bottom stairs] @Scene[Dungeon level 2] @Token[a specific token they can control]
+```
 
-# Prevent the player from jumping into the bonfire like a moron
+#### Prevent the player from jumping into the bonfire like a moron
+
+```
 @Token[Bonfire] @ChatMessage[Your friends stop you from jumping into the fire, that can be dangerous]{GM} @Trigger[move stopMovement ooc]
+```
 
-# But let them touch it
+But let them touch it
+
+```
 @Token[Bonfire] @Trigger[click] @ChatMessage[You burn your hand slightly]{GM}
+```
 
-# If they click or try to move through the chasm, say something, but let them jump over it
+#### If they click or try to move through the chasm, say something, but let them jump over it
+
+```
 @Token[hole in bridge over the chasm] @ChatMessage[The drop looks like 1000 feet]{Chasm} @Trigger[move click stopMovement ooc]
+```
+
+```
 @Token[hole in bridge over the chasm] @ChatMessage[is scared] @Trigger[emote]
+```
+
+#### When token is clicked start a sound
+
+```
+@Token[Bonfire] @Trigger[click] @ChatMessage[You burn your hand slightly]{GM}
+```
+
+I have a macro that play a sound, i call it "SonaX", you can name it at your will:
+
+```
+AudioHelper.play({src: args[0], volume: 1, autoplay: true, loop: false}, true);
+```
+
+Then, in Trigger Happy you can invoque taht macro and give the url to the sound. For example:
+
+```
+@Token[trap] @Trigger[capture move] @ChatMessage[/SonaX "Audios/cadenes.mp3"]
+```
+
+or if you want some random sound from playlist
+
+```
+const playlistName = args[0];
+const soundName = args[1];
+const toggle = args[2];
+const startsWith = args[3];
+if (!game.user.isGM) return;
+
+const playlist = game.playlists.entities.find(p => startsWith ? p.name.startsWith(playlistName) : p.name === playlistName);
+if (!playlist) return ui.notifications.warn('Playlist ${playlistName} was not found.');
+
+let sound = null;
+if(soundName){
+    sound = playlist.sounds.find(s => startsWith ? s.name.startsWith(soundName) : s.name === soundName);
+}else{
+    sound = playlist.sounds.roll().results[0]
+}
+if (!sound) return ui.notifications.warn('Sound ${soundName} in playlist ${playlist.name} was not found.');
+
+playlist.updateEmbeddedEntity("PlaylistSound", {_id: sound._id, playing: toggle == null ? !sound.playing : toggle});
+```
+
+and
+
+```
+@Token[tokenname]@Trigger[move]@ChatMessage[/SonaX "Playlist Name" "Track Name"]
+```
 
 
+#### When they click on the journal, a chat message in rendered
+
+```
+@JournalEntry[TEST] @Trigger[click] @ChatMessage[You burn your hand slightly]
+```
+
+#### When they click on the journal, open another journal instead ??
+
+```
+@JournalEntry[TEST] @Trigger[click] @JournalEntry[TEST 2]
+```
+
+#### New Forien Quest Log support with the new 0.7.7 version and the ID Quest mechanism
+
+here the video on the exact minute: https://youtu.be/lfSYJXVQAcE?t=586
+
+```
+@JournalEntry[TEST] @Trigger[click] @Quest[xXj5KZlMvGn3pTX8]{New Quest}
 ```
 
 ## [Changelog](./changelog.md)

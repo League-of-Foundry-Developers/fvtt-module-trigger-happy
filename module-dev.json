@@ -1,6 +1,6 @@
 {
   "name": "trigger-happy",
-  "title": "Trigger Happy",
+  "title": "Trigger Happy (Developer Edition)",
   "description": "Automate everything in your world by creating triggers for your players to spring traps or anything you can think of!",
   "version": "0.8.14",
   "author": "KaKaRoTo, tposney, p4535992",
@@ -58,12 +58,12 @@
       "package": "trigger-happy"
     }
   ],
-  "url": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy",
-  "manifest": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/releases/latest/download/module.json",
-  "download": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/releases/download/v0.8.14/module.zip",
-  "readme": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/blob/v0.8.14/README.md",
-  "changelog": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/blob/v0.8.14/changelog.md",
-  "bugs": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues",
+  "url": "https://github.com/p4535992/fvtt-module-trigger-happy",
+  "manifest": "https://github.com/p4535992/fvtt-module-trigger-happy/releases/latest/download/module.json",
+  "download": "https://github.com/p4535992/fvtt-module-trigger-happy/releases/download/v0.8.14/module.zip",
+  "readme": "https://github.com/p4535992/fvtt-module-trigger-happy/blob/v0.8.14/README.md",
+  "changelog": "https://github.com/p4535992/fvtt-module-trigger-happy/blob/v0.8.14/changelog.md",
+  "bugs": "https://github.com/p4535992/fvtt-module-trigger-happy/issues",
   "minimumCoreVersion": "0.8.3",
   "compatibleCoreVersion": "0.8.9",
   "allowBugReporter": true,
