@@ -227,7 +227,8 @@ export const TRIGGER_ENTITY_TYPES = {
   COMPENDIUM: 'compendium',
   JOURNAL_ENTRY: 'journalentry',
   STAIRWAY: 'stairway',
-  SOUND_LINK: 'sound' // not the ambient sound the one from the sound link module
+  SOUND_LINK: 'sound', // not the ambient sound the one from the sound link module
+  PLAYLIST: 'playlist'
 };
 
 export const EVENT_TRIGGER_ENTITY_TYPES = {
@@ -277,7 +278,8 @@ export class TriggerHappy {
       TRIGGER_ENTITY_TYPES.CHAT_MESSAGE,
       TRIGGER_ENTITY_TYPES.COMPENDIUM,
       TRIGGER_ENTITY_TYPES.SCENE,
-      TRIGGER_ENTITY_TYPES.SOUND_LINK
+      TRIGGER_ENTITY_TYPES.SOUND_LINK,
+      TRIGGER_ENTITY_TYPES.PLAYLIST
     ]
     this.journals = [];
   }
@@ -366,7 +368,7 @@ export class TriggerHappy {
       const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
       const rgx = new RegExp(entityMatchRgx, 'ig');
       let options = [];
-      let trigger;
+      let triggers = [];
       let effects = [];
 
       let matchs = lineTmp.matchAll(rgx);
@@ -375,53 +377,39 @@ export class TriggerHappy {
         let [triggerJournal, entity, id, label] = match;
         entity = entity.toLowerCase(); // force lowercase for avoid miss typing from the user
         if(index === 0){
-          trigger = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
-          if(!trigger){
-            break;
-          }
-          // If is a placeable object
-          if(
-            this.arrayPlaceableObjects.find((el) => {
-              return el.toLowerCase() === entity.toLowerCase();
-            })
-          ){
-            if (trigger) {
-              // Before do anything check the tagger feature module settings (only for placeable object)
-              if(this.taggerModuleActive && window.Tagger && filterTags){
-                // Check if the current placeable object has the specific tags from the global module settings
-                // const tagsFromPlaceableObject = Tagger.getTags(trigger) || [];
-                const tagsFromSetting = 
-                  game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
-                const filteredTagsFromSetting = tagsFromSetting.filter(function (el) {
-                  return el != null && el != undefined && el != '';
-                });
-                if (filteredTagsFromSetting.length > 0) {
-                  // Check if every tags on settings is included on the current placeableObject tag list
-                  const isValid = await Tagger.hasTags(trigger, filteredTagsFromSetting, 
-                    { caseInsensitive: true, sceneId: game.scenes.current.id });
-                  if(!isValid){
-                    trigger = null;
+          // Special case '*'
+          if(id === '*'){
+            const triggersTmp = this._retrieveAllFromEntity(entity) ?? [];
+            for(let trigger of triggersTmp){
+              if(trigger != null && trigger != undefined){
+                trigger = await this._checkTagsOnTrigger(entity, trigger, filterTags);
+                if(trigger){
+                  if(trigger instanceof String){
+                    trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
                   }
-                }
-                // Check if the current placeable object has the specific tags from the specific placeable object settings
-                if(filterTags && filterTags.length > 0){
-                  // Check if the current placeable object has the specific tag from the @TAG[label] annotation
-                  const isValid = await Tagger.hasTags(trigger, filterTags, 
-                    { caseInsensitive: true, sceneId: game.scenes.current.id });
-                  if(!isValid){
-                    trigger = null;
-                  }
+                  triggers.push(trigger);
                 }
               }
             }
+          }else{
+            let trigger = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
             if(!trigger){
               break;
             }
+            trigger = await this._checkTagsOnTrigger(entity, trigger, filterTags);
+            if(!trigger){
+              break;
+            }
+            if(trigger){
+              if(trigger instanceof String){
+                trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
+              }
+            }
+            if(trigger){
+              triggers.push(trigger);
+            }
           }
-          if(trigger instanceof String){
-            trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
-          }
-        } else if(index === 1 || entity === TRIGGER_ENTITY_TYPES.TRIGGER){
+        } else if(entity === TRIGGER_ENTITY_TYPES.TRIGGER){
           let eventLink = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
           if(!eventLink){
             break;
@@ -445,10 +433,55 @@ export class TriggerHappy {
         index++;
       }
 
-      if (trigger && effects.length > 0){
-        this.triggers.push({ trigger, effects, options });
+      if (triggers.length > 0 && effects.length > 0){
+        triggers.forEach((trigger) => {
+          this.triggers.push({ trigger, effects, options });
+        });
       }
     }
+  }
+
+  async _checkTagsOnTrigger(entity, trigger, filterTags){
+    // If is a placeable object
+    if(
+      this.arrayPlaceableObjects.find((el) => {
+        return el.toLowerCase() === entity.toLowerCase();
+      })
+    ){
+      if (trigger) {
+        // Before do anything check the tagger feature module settings (only for placeable object)
+        if(this.taggerModuleActive && window.Tagger && filterTags){
+          // Check if the current placeable object has the specific tags from the global module settings
+          // const tagsFromPlaceableObject = Tagger.getTags(trigger) || [];
+          const tagsFromSetting = 
+            game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
+          const filteredTagsFromSetting = tagsFromSetting.filter(function (el) {
+            return el != null && el != undefined && el != '';
+          });
+          if (filteredTagsFromSetting.length > 0) {
+            // Check if every tags on settings is included on the current placeableObject tag list
+            const isValid = await Tagger.hasTags(trigger, filteredTagsFromSetting, 
+              { caseInsensitive: true, sceneId: game.scenes.current.id });
+            if(!isValid){
+              trigger = null;
+            }
+          }
+          // Check if the current placeable object has the specific tags from the specific placeable object settings
+          if(filterTags && filterTags.length > 0){
+            // Check if the current placeable object has the specific tag from the @TAG[label] annotation
+            const isValid = await Tagger.hasTags(trigger, filterTags, 
+              { caseInsensitive: true, sceneId: game.scenes.current.id });
+            if(!isValid){
+              trigger = null;
+            }
+          }
+        }
+      }
+      if(!trigger){
+        trigger = null;
+      }
+    }
+    return trigger;
   }
 
   _manageTriggerEvent(triggerJournal, entity, id, label){
@@ -481,7 +514,7 @@ export class TriggerHappy {
     ){
 
       let relevantDocument = this._retrieveFromEntity(entity, id, label);
-      if(!relevantDocument){
+      if(!relevantDocument && label){
         relevantDocument = this._retrieveFromEntity(entity, label, label);
       }
       trigger = relevantDocument;
@@ -497,7 +530,7 @@ export class TriggerHappy {
       return el.toLowerCase() === entity.toLowerCase();
     })){
       let relevantDocument = this._retrieveFromEntity(entity, id, label);
-      if(!relevantDocument){
+      if(!relevantDocument && label){
         relevantDocument = this._retrieveFromEntity(entity, label, label);
       }
       trigger = relevantDocument;
@@ -521,8 +554,14 @@ export class TriggerHappy {
         return;
       }
       trigger = config.collection.instance.get(id);
-      if (!trigger){
+      if (!trigger && id){
         trigger = config.collection.instance.getName(id);
+      }
+      if (!trigger && label){
+        trigger = config.collection.instance.get(label);
+      }
+      if (!trigger && label){
+        trigger = config.collection.instance.getName(label);
       }
     }
     return trigger;
@@ -584,6 +623,16 @@ export class TriggerHappy {
             playlist.updateEmbeddedDocuments('PlaylistSound', [
               { _id: sound.id, playing: !sound.playing },
             ])
+          }
+        } else if (effect instanceof Playlist) {
+          const sounds = (effect.sounds && effect.sounds.contents) ?? [];
+          if(sounds && sounds.length > 0){
+            const sound = sounds[Math.floor(Math.random()*sounds.length)];
+            if (sound){
+              effect.updateEmbeddedDocuments('PlaylistSound', [
+                { _id: sound.id, playing: !sound.playing },
+              ])
+            }
           }
         } else if (effect instanceof Note || effect instanceof NoteDocument) {
           const placeablesToken = this._getNotes();
@@ -1111,7 +1160,7 @@ export class TriggerHappy {
     if(entity == TRIGGER_ENTITY_TYPES.TRIGGER){
       return idOrName; // Should be always the label like 'Click'
     }
-    if(entity == TRIGGER_ENTITY_TYPES.CHAT_MESSAGE){
+    else if(entity == TRIGGER_ENTITY_TYPES.CHAT_MESSAGE){
       // chat messages can only be effects not triggers
       let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: label } }, {});
       return chatMessage;
@@ -1132,6 +1181,11 @@ export class TriggerHappy {
       const [playlistName, soundName] = idOrName.split('|')
       let soundLink = new SoundLink(playlistName, soundName, label);
       return soundLink;
+    }
+    else if(entity == TRIGGER_ENTITY_TYPES.PLAYLIST){
+      // playlist can only be effects not triggers 
+      const playlistTarget = this._retrieveFromIdOrName(this._getPlaylists(), idOrName);
+      return playlistTarget;
     }
     else if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
       const tokenTarget = this._retrieveFromIdOrName(this._getTokens(), idOrName);
@@ -1270,6 +1324,46 @@ export class TriggerHappy {
   //   }
   // }
 
+  _retrieveAllFromEntity(entity){
+    if(!entity) return null;
+    entity = entity.toLowerCase();
+    if(entity == TRIGGER_ENTITY_TYPES.TRIGGER){
+      return null;// NOT SUPPORTED
+    } else if(entity == TRIGGER_ENTITY_TYPES.CHAT_MESSAGE){
+      return null;// NOT SUPPORTED
+    } else if(entity == TRIGGER_ENTITY_TYPES.COMPENDIUM){
+      return null;// NOT SUPPORTED
+    } else if(entity == TRIGGER_ENTITY_TYPES.SOUND_LINK){
+      return null;// NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
+      return this._getTokens();
+    } else if (entity == TRIGGER_ENTITY_TYPES.ACTOR) {
+      return this._getActors();
+    // TODO ADD AMBIENT LIGHT INTEGRATION
+    // TODO ADD AMBIENT SOUND INTEGRATION
+    // TODO ADD TILE INTEGRATION
+    } else if (entity == TRIGGER_ENTITY_TYPES.DOOR) {
+      return this._getDoors();
+    } else if(entity == TRIGGER_ENTITY_TYPES.DRAWING) {
+      return this._getDrawings();
+    } else if (entity == TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY) {
+      const noteTargets = this._getNotes() ?? [];
+      const journalTargets = this._getJournals() ?? [];
+      for(let journalTarget of journalTargets){
+        if(journalTarget?.sceneNote){
+          noteTargets.push(journalTarget.sceneNote);
+        }
+      }
+      return noteTargets;
+    } else if (entity == TRIGGER_ENTITY_TYPES.STAIRWAY) {
+      return this._getStairways();
+    } else if (entity == TRIGGER_ENTITY_TYPES.SCENE) {
+      return this._getScenes();
+    } else {
+      return null;
+    }
+  }
+
   _getTokens(){
     const placeablesToken =
       canvas.tokens?.placeables && canvas.tokens?.placeables.length > 0
@@ -1374,6 +1468,14 @@ export class TriggerHappy {
       placeablesSounds.push(...Object.values(playlist.sounds));
     });
     return placeablesSounds ?? [];
+  }
+
+  _getPlaylists(){
+    const placeablesPlaylists = [];
+    game.playlists.contents.forEach((playlist, key) => { 
+      placeablesPlaylists.push(playlist);
+    });
+    return placeablesPlaylists ?? [];
   }
 
 }

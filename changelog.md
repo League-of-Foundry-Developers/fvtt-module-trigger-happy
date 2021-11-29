@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.13
+
+- Bug fix on if else on the 'event' if-else for manage multiple trigger
+- Add new cofiguration with '*' on the 'trigger' e.g. `@Door["*"]` element for activate the same triger on all the placeable objects on the same scene. Support is only for placeable objects.
+- Bug fix on method `this._retrieveFromEntity(entity, label, label)` label can be undefined
+- Add @Playlist similar to @Sound of sound link module, but it randomize a sound from the playlist instead a specific one.
+
 ## 0.8.12
 
 - Added `@Tag[list of tag separate from ',']` as a filter link to interact with a specific placeable object on the canvas.

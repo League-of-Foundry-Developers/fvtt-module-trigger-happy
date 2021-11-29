@@ -89,6 +89,25 @@ Here the example structure of the line of the journal:
 
 ![tutorial](./images/imageTutorial2.png)
 
+Here the list of keys for category
+
+- **Trigger :** @Actor, @Token, @Scene, @Drawing, @Door, @JournalEntry, @Stairway
+- **Tag :** @Tag 
+- **Event :** @Trigger (read 'Advanced options' paragraph for more details)
+- **Effect :** @Actor, @Token, @Scene, @Drawing, @Door, @JournalEntry, @Stairway, @ChatMessage, @Compendium, @Sound, @Playlist
+
+From version `0.8.13` you can now use like id the character `*` for activate the same effect for all the trigger of that type
+
+Here a example:
+
+#### When open any journal on the scen open a specific one instead
+
+`@JournalEntry[*]{Missioni}@Trigger[Click]@JournalEntry[bSsq0RnNTqp3YxUR]{Scorta al Lord}`
+
+#### Every time yuo open a door on the scene put the game on pause
+
+`@Door[*]{Missioni}@Trigger[DoorOpen]@Macro[pause_the_game]`
+
 As an example, you can put this into your entry : 
 
 #### Traps in Dungeon Room 37
