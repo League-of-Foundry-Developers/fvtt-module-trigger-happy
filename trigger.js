@@ -185,9 +185,9 @@ Hooks.once('ready', () => {
   // Do something
   Hooks.on('PreStairwayTeleport', (data) => {
     const { sourceSceneId, sourceData, selectedTokenIds, targetSceneId, targetData, userId } = data;
-    // const event = { 
-    //   x: sourceData.x, 
-    //   y: sourceData.y, 
+    // const event = {
+    //   x: sourceData.x,
+    //   y: sourceData.y,
     //   sceneId: sourceSceneId,
     //   id: sourceData.name,
     //   name: sourceData.label
@@ -198,7 +198,7 @@ Hooks.once('ready', () => {
       if(sourceSceneId){
         let clickStairway = game.triggers._retrieveFromIdOrName(game.triggers._getStairways(sourceSceneId), sourceData.name);
         if(!clickStairway) game.triggers._retrieveFromIdOrName(game.triggers._getStairways(sourceSceneId), sourceData.label);
-        upStairways.push(clickStairway); 
+        upStairways.push(clickStairway);
       }
       if (upStairways.length === 0){
         return;
@@ -382,7 +382,7 @@ export class TriggerHappy {
             const triggersTmp = this._retrieveAllFromEntity(entity) ?? [];
             for(let trigger of triggersTmp){
               if(trigger != null && trigger != undefined){
-                trigger = await this._checkTagsOnTrigger(entity, trigger, filterTags);
+                trigger = this._checkTagsOnTrigger(entity, trigger, filterTags);
                 if(trigger){
                   if(trigger instanceof String){
                     trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
@@ -396,7 +396,7 @@ export class TriggerHappy {
             if(!trigger){
               break;
             }
-            trigger = await this._checkTagsOnTrigger(entity, trigger, filterTags);
+            trigger = this._checkTagsOnTrigger(entity, trigger, filterTags);
             if(!trigger){
               break;
             }
@@ -441,7 +441,7 @@ export class TriggerHappy {
     }
   }
 
-  async _checkTagsOnTrigger(entity, trigger, filterTags){
+  _checkTagsOnTrigger(entity, trigger, filterTags){
     // If is a placeable object
     if(
       this.arrayPlaceableObjects.find((el) => {
@@ -456,14 +456,14 @@ export class TriggerHappy {
         if(this.taggerModuleActive && window.Tagger && filterTags){
           // Check if the current placeable object has the specific tags from the global module settings
           // const tagsFromPlaceableObject = Tagger.getTags(trigger) || [];
-          const tagsFromSetting = 
+          const tagsFromSetting =
             game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableTaggerIntegration')?.split(',') || [];
           const filteredTagsFromSetting = tagsFromSetting.filter(function (el) {
             return el != null && el != undefined && el != '';
           });
           if (filteredTagsFromSetting.length > 0) {
             // Check if every tags on settings is included on the current placeableObject tag list
-            const isValid = await Tagger.hasTags(trigger, filteredTagsFromSetting, 
+            const isValid = Tagger.hasTags(trigger, filteredTagsFromSetting,
               { caseInsensitive: true, sceneId: game.scenes.current.id });
             if(!isValid){
               trigger = null;
@@ -472,7 +472,7 @@ export class TriggerHappy {
           // Check if the current placeable object has the specific tags from the specific placeable object settings
           if(trigger && filterTags && filterTags.length > 0){
             // Check if the current placeable object has the specific tag from the @TAG[label] annotation
-            const isValid = await Tagger.hasTags(trigger, filterTags, 
+            const isValid = Tagger.hasTags(trigger, filterTags,
               { caseInsensitive: true, sceneId: game.scenes.current.id });
             if(!isValid){
               trigger = null;
@@ -690,7 +690,7 @@ export class TriggerHappy {
   _isNoteTrigger(note, trigger, type) {
       const isTrigger =
         (trigger.trigger instanceof Note && trigger.trigger.id === note.id) ||
-        (trigger.trigger instanceof NoteDocument && trigger.trigger.id === note.id) || 
+        (trigger.trigger instanceof NoteDocument && trigger.trigger.id === note.id) ||
         (trigger.trigger.documentName === 'JournalEntry' && trigger.trigger.sceneNote?.id === note.id);
       if (!isTrigger) return false;
       if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
@@ -765,7 +765,7 @@ export class TriggerHappy {
   _isWallTrigger(wall, trigger, type) {
     const isTrigger =
       (trigger.trigger instanceof Wall && trigger.trigger.id === wall.id) ||
-      (trigger.trigger instanceof WallDocument && trigger.trigger.id === wall.id) || 
+      (trigger.trigger instanceof WallDocument && trigger.trigger.id === wall.id) ||
       (trigger.trigger instanceof DoorControl && trigger.trigger.doorControl?.id === wall.id);
     if (!isTrigger) return false;
     if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
@@ -903,7 +903,7 @@ export class TriggerHappy {
       const upJournals = this._getPlaceablesAt(journals, position);
       // TODO this not work find a better solution this work only because when click on canavs there can be only one stairways at the time
       const upStairways = this._getPlaceablesAt(stairways, position);
-      if (upTokens.length === 0 && upDrawings.length === 0 && 
+      if (upTokens.length === 0 && upDrawings.length === 0 &&
         upNotes.length === 0 && upStairways.length === 0 && upJournals.length === 0){
         return;
       }
@@ -945,7 +945,7 @@ export class TriggerHappy {
     const notes = this._getPlaceablesAt(this._getNotes(), position);
     const journals = this._getPlaceablesAt(this._getJournals(), position);
     const stairways = this._getPlaceablesAt(this._getStairways(), position);
-    if (tokens.length === 0 && drawings.length === 0 && 
+    if (tokens.length === 0 && drawings.length === 0 &&
       notes.length === 0 && journals.length === 0){
       return true;
     }
@@ -1049,7 +1049,7 @@ export class TriggerHappy {
       //if (!(trigger.trigger instanceof WallDocument)) return false;
       if (!(
         (trigger.trigger instanceof Wall) ||
-        (trigger.trigger instanceof WallDocument) || 
+        (trigger.trigger instanceof WallDocument) ||
         (trigger.trigger instanceof DoorControl)
         )
       ){
@@ -1059,7 +1059,7 @@ export class TriggerHappy {
         return false;
       }
       const onClose = trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_CLOSE);
-      const onOpen = !trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_CLOSE) || 
+      const onOpen = !trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_CLOSE) ||
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_OPEN);
       return (update.ds === 1 && onOpen) || (update.ds === 0 && onClose && wallDocument.data.ds === 1);
     });
@@ -1214,7 +1214,7 @@ export class TriggerHappy {
       return chatMessage;
     }
     else if(entity == TRIGGER_ENTITY_TYPES.COMPENDIUM){
-      // compendium links can only be effects not triggers 
+      // compendium links can only be effects not triggers
       // e.g. @Compendium[SupersHomebrewPack.classes.AH3dUnrFxZHDvY2o]{Bard}
       const parts = idOrName.split(".");
       if (parts.length !== 3){
@@ -1224,14 +1224,14 @@ export class TriggerHappy {
       return compendiumLink;
     }
     else if(entity == TRIGGER_ENTITY_TYPES.SOUND_LINK){
-      // sound links can only be effects not triggers 
+      // sound links can only be effects not triggers
       // e.g. @Sound[Test|Medieval_Fantasy City Under Attack audio atmosphere]{Attack}
       const [playlistName, soundName] = idOrName.split('|')
       let soundLink = new SoundLink(playlistName, soundName, label);
       return soundLink;
     }
     else if(entity == TRIGGER_ENTITY_TYPES.PLAYLIST){
-      // playlist can only be effects not triggers 
+      // playlist can only be effects not triggers
       const playlistTarget = this._retrieveFromIdOrName(this._getPlaylists(), idOrName);
       return playlistTarget;
     }
@@ -1514,7 +1514,7 @@ export class TriggerHappy {
   _getPlaylistSounds(){
     // game.playlists.contents[0].data.sounds
     const placeablesSounds = [];
-    game.playlists.contents.forEach((playlist, key) => { 
+    game.playlists.contents.forEach((playlist, key) => {
       placeablesSounds.push(...Object.values(playlist.sounds));
     });
     return placeablesSounds ?? [];
@@ -1522,7 +1522,7 @@ export class TriggerHappy {
 
   _getPlaylists(){
     const placeablesPlaylists = [];
-    game.playlists.contents.forEach((playlist, key) => { 
+    game.playlists.contents.forEach((playlist, key) => {
       placeablesPlaylists.push(playlist);
     });
     return placeablesPlaylists ?? [];
