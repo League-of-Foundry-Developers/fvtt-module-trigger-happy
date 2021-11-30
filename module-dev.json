@@ -15,6 +15,7 @@
     "./module.json",
     "./README.md",
     "./icons/**",
+    "./images/**",
     "./packs/**"
   ],
   "media": [
