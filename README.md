@@ -87,7 +87,7 @@ When a token that represents a trigger actor is clicked by a player, then any ot
 
 Here the example structure of the line of the journal:
 
-![tutorial](./images/imageTutorial2.png)
+![tutorial](./wiki/imageTutorial2.png)
 
 Here the list of keys for category
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.16
+
+- Add folder images to the gulp build file
+
 ## 0.8.15
 
 - Classic... after only 10 hours from the new release a incompatibility with the Tagger module version 1.2.1, now the `hasTags` is not async anymore and all the method return placeableobjets now return documents
