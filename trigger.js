@@ -305,7 +305,12 @@ export class TriggerHappy {
       TRIGGER_ENTITY_TYPES.COMPENDIUM,
       TRIGGER_ENTITY_TYPES.SCENE,
       TRIGGER_ENTITY_TYPES.SOUND_LINK,
-      TRIGGER_ENTITY_TYPES.PLAYLIST
+      TRIGGER_ENTITY_TYPES.PLAYLIST,
+      // New support key ????
+      TRIGGER_ENTITY_TYPES.OOC,
+      TRIGGER_ENTITY_TYPES.EMOTE,
+      TRIGGER_ENTITY_TYPES.WHISPER,
+      TRIGGER_ENTITY_TYPES.SELF_WHISPER,
     ]
     this.journals = [];
   }
@@ -385,12 +390,11 @@ export class TriggerHappy {
       for (let matchTag of matchAllTags) {
         if(matchTag){
           let [triggerJournal, entity, id, label] = matchTag;
+          lineTmp = lineTmp.replace(triggerJournal, '');
           // Remove prefix '@Tag[' and suffix ']'
           filterTags.push(...triggerJournal.substring(5, triggerJournal.length-1).split(','));
         }
       }
-
-      lineTmp = lineTmp.replace(rgxTagger, '');
 
       const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
       const rgx = new RegExp(entityMatchRgx, 'ig');
@@ -1472,11 +1476,19 @@ export class TriggerHappy {
       return null;// NOT SUPPORTED
     } else if(entity == TRIGGER_ENTITY_TYPES.CHAT_MESSAGE){
       return null;// NOT SUPPORTED
+    } else if(entity == TRIGGER_ENTITY_TYPES.OOC){
+      return null;// NOT SUPPORTED
+    } else if(entity == TRIGGER_ENTITY_TYPES.EMOTE){
+      return null;// NOT SUPPORTED
     } else if(entity == TRIGGER_ENTITY_TYPES.WHISPER){
+      return null;// NOT SUPPORTED
+    } else if(entity == TRIGGER_ENTITY_TYPES.SELF_WHISPER){
       return null;// NOT SUPPORTED
     } else if(entity == TRIGGER_ENTITY_TYPES.COMPENDIUM){
       return null;// NOT SUPPORTED
     } else if(entity == TRIGGER_ENTITY_TYPES.SOUND_LINK){
+      return null;// NOT SUPPORTED
+    } else if(entity == TRIGGER_ENTITY_TYPES.PLAYLIST){
       return null;// NOT SUPPORTED
     } else if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
       return this._getTokens();
