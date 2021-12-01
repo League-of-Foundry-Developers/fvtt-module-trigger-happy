@@ -41,6 +41,17 @@ class SoundLink {
   }
 }
 
+class ChatLink {
+  chatMessage;
+  type;
+  whisper;
+  constructor(chatMessage, type , whisper){
+    this.chatMessage = chatMessage;
+    this.type = type;
+    this.whisper = whisper;
+  }
+}
+
 /* ------------------------------------ */
 /* Initialize module					*/
 /* ------------------------------------ */
@@ -228,7 +239,9 @@ export const TRIGGER_ENTITY_TYPES = {
   JOURNAL_ENTRY: 'journalentry',
   STAIRWAY: 'stairway',
   SOUND_LINK: 'sound', // not the ambient sound the one from the sound link module
-  PLAYLIST: 'playlist'
+  PLAYLIST: 'playlist',
+  // New support key ????
+  WHISPER: 'whisper',
 };
 
 export const EVENT_TRIGGER_ENTITY_TYPES = {
@@ -602,6 +615,20 @@ export class TriggerHappy {
             chatData.whisper = [game.user.id];
           }
           await ChatMessage.create(chatData);
+        } else if (effect instanceof ChatLink) {
+          const chatData = duplicate(effect.chatMessage.data);
+          if (effect.type === EVENT_TRIGGER_ENTITY_TYPES.OOC) {
+            chatData.type = effect.type;
+          } else if (effect.type === EVENT_TRIGGER_ENTITY_TYPES.EMOTE) {
+            chatData.type = effect.type;
+          } else if (effect.type === EVENT_TRIGGER_ENTITY_TYPES.WHISPER) {
+            chatData.type = effect.type;
+            chatData.whisper = ChatMessage.getWhisperRecipients('GM');
+          } else if (effect.type === EVENT_TRIGGER_ENTITY_TYPES.SELF_WHISPER) {
+            chatData.type = effect.type;
+            chatData.whisper = [game.user.id];
+          }
+          await ChatMessage.create(chatData);
         } else if (effect instanceof Token || effect instanceof TokenDocument) {
           const placeablesToken = this._getTokens();
           const token = placeablesToken.find((t) => t.name === effect.name || t.id === effect.id);
@@ -873,7 +900,7 @@ export class TriggerHappy {
     const clickDrawings = this._getPlaceablesAt(this._getDrawings(), position);
     const clickNotes = this._getPlaceablesAt(this._getNotes(), position);
     const clickJournals = this._getPlaceablesAt(this._getJournals(), position);
-    // TODO this not work find a better solution this work only because when click on canavs there can be only one stairways at the time
+    // TODO this not work find a better solution this work only because when click on canvas there can be only one stairways at the time
     const clickStairways = this._getPlaceablesAt(this._getStairways(event.sceneId), position);
 
     if (clickTokens.length === 0 && clickDrawings.length == 0 &&
@@ -903,7 +930,7 @@ export class TriggerHappy {
       const upDrawings = this._getPlaceablesAt(drawings, position);
       const upNotes = this._getPlaceablesAt(notes, position);
       const upJournals = this._getPlaceablesAt(journals, position);
-      // TODO this not work find a better solution this work only because when click on canavs there can be only one stairways at the time
+      // TODO this not work find a better solution this work only because when click on canvas there can be only one stairways at the time
       const upStairways = this._getPlaceablesAt(stairways, position);
       if (upTokens.length === 0 && upDrawings.length === 0 &&
         upNotes.length === 0 && upStairways.length === 0 && upJournals.length === 0){
@@ -1215,6 +1242,12 @@ export class TriggerHappy {
       let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: label } }, {});
       return chatMessage;
     }
+    else if(entity == TRIGGER_ENTITY_TYPES.WHISPER){
+      // chat link can only be effects not triggers
+      let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: label } }, {});
+      let chatLink = new ChatLink(chatMessage, TRIGGER_ENTITY_TYPES.WHISPER, null);
+      return chatLink;
+    }
     else if(entity == TRIGGER_ENTITY_TYPES.COMPENDIUM){
       // compendium links can only be effects not triggers
       // e.g. @Compendium[SupersHomebrewPack.classes.AH3dUnrFxZHDvY2o]{Bard}
@@ -1380,6 +1413,8 @@ export class TriggerHappy {
     if(entity == TRIGGER_ENTITY_TYPES.TRIGGER){
       return null;// NOT SUPPORTED
     } else if(entity == TRIGGER_ENTITY_TYPES.CHAT_MESSAGE){
+      return null;// NOT SUPPORTED
+    } else if(entity == TRIGGER_ENTITY_TYPES.WHISPER){
       return null;// NOT SUPPORTED
     } else if(entity == TRIGGER_ENTITY_TYPES.COMPENDIUM){
       return null;// NOT SUPPORTED
