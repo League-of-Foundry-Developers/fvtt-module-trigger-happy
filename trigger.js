@@ -410,14 +410,16 @@ export class TriggerHappy {
             }
           }
         } else if(entity === TRIGGER_ENTITY_TYPES.TRIGGER){
-          let eventLink = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
-          if(!eventLink){
-            break;
+          let ids = id.split(" ");
+          for (let id1 of ids) {
+            let eventLink = this._manageTriggerEvent(triggerJournal, entity, id1, label, filterTags);
+            if(eventLink){
+              if(eventLink instanceof String){
+                eventLink = eventLink.toLowerCase(); // force lowercase for avoid miss typing from the user
+              }
+              options.push(eventLink);
+            }
           }
-          if(eventLink instanceof String){
-            eventLink = eventLink.toLowerCase(); // force lowercase for avoid miss typing from the user
-          }
-          options.push(eventLink);
         } else {
           let effect = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
           if(!effect){
