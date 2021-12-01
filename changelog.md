@@ -4,6 +4,7 @@
 
 - Add settings 'ifNoTokenIsFoundTryToUseActor' for strange feedback from the community and also for compatibility with some module like tokenmold
 - Add new effects always for strange feedback from the community, `@ooc`, `@emote`, `@whisper`, `@selfwhisper` (details on readme)
+- Update readme
 
 ## 0.8.17
 
