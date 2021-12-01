@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.17
+
+- Bug fix of  [[BUG]](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/65) ty to tposney with is pr [fix for @Trigger[capture move] etc ](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/pull/66)
+
 ## 0.8.16
 
 - Add folder images to the gulp build file
