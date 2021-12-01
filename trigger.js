@@ -45,7 +45,7 @@ class ChatLink {
   chatMessage;
   type;
   whisper;
-  constructor(chatMessage, type , whisper){
+  constructor(chatMessage, type, whisper){
     this.chatMessage = chatMessage;
     this.type = type;
     this.whisper = whisper;
@@ -178,6 +178,15 @@ Hooks.once('init', async () => {
     type: Boolean,
   });
 
+  game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'ifNoTokenIsFoundTryToUseActor', {
+    name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.ifNoTokenIsFoundTryToUseActor.name`),
+    hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.ifNoTokenIsFoundTryToUseActor.hint`),
+    scope: 'world',
+    config: true,
+    default: false,
+    type: Boolean,
+  });
+
 });
 
 /* ------------------------------------ */
@@ -241,7 +250,10 @@ export const TRIGGER_ENTITY_TYPES = {
   SOUND_LINK: 'sound', // not the ambient sound the one from the sound link module
   PLAYLIST: 'playlist',
   // New support key ????
+  OOC: 'ooc',
+  EMOTE: 'emote',
   WHISPER: 'whisper',
+  SELF_WHISPER: 'selfwhisper',
 };
 
 export const EVENT_TRIGGER_ENTITY_TYPES = {
@@ -276,6 +288,7 @@ export class TriggerHappy {
     this.taggerModuleActive = game.modules.get('tagger')?.active
     this.release = game.settings.get('core', 'leftClickRelease');
     this.enableRelease = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableAvoidDeselectOnTriggerEvent');
+    this.ifNoTokenIsFoundTryToUseActor = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'ifNoTokenIsFoundTryToUseActor');
 
     this.arrayTriggers = Object.values(TRIGGER_ENTITY_TYPES);
     this.arrayEvents = Object.values(EVENT_TRIGGER_ENTITY_TYPES);
@@ -372,11 +385,12 @@ export class TriggerHappy {
       for (let matchTag of matchAllTags) {
         if(matchTag){
           let [triggerJournal, entity, id, label] = matchTag;
-          lineTmp = lineTmp.replace(rgxTagger, '');
           // Remove prefix '@Tag[' and suffix ']'
           filterTags.push(...triggerJournal.substring(5, triggerJournal.length-1).split(','));
         }
       }
+
+      lineTmp = lineTmp.replace(rgxTagger, '');
 
       const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
       const rgx = new RegExp(entityMatchRgx, 'ig');
@@ -610,9 +624,13 @@ export class TriggerHappy {
           } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.WHISPER)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.WHISPER;
             chatData.whisper = ChatMessage.getWhisperRecipients('GM');
+            const whisperAlwaysToGM = game.users.filter(u => u.isGM).map(u => u.id) ?? [];
+            chatData.whisper.push(...whisperAlwaysToGM);
           } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.SELF_WHISPER)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.WHISPER;
             chatData.whisper = [game.user.id];
+            const whisperAlwaysToGM = game.users.filter(u => u.isGM).map(u => u.id) ?? [];
+            chatData.whisper.push(...whisperAlwaysToGM);
           }
           await ChatMessage.create(chatData);
         } else if (effect instanceof ChatLink) {
@@ -623,10 +641,14 @@ export class TriggerHappy {
             chatData.type = effect.type;
           } else if (effect.type === EVENT_TRIGGER_ENTITY_TYPES.WHISPER) {
             chatData.type = effect.type;
-            chatData.whisper = ChatMessage.getWhisperRecipients('GM');
+            chatData.whisper = (effect.whisper && effect.whisper.length > 0) ? effect.whisper : ChatMessage.getWhisperRecipients('GM');
+            const whisperAlwaysToGM = game.users.filter(u => u.isGM).map(u => u.id) ?? [];
+            chatData.whisper.push(...whisperAlwaysToGM);
           } else if (effect.type === EVENT_TRIGGER_ENTITY_TYPES.SELF_WHISPER) {
             chatData.type = effect.type;
-            chatData.whisper = [game.user.id];
+            chatData.whisper = (effect.whisper && effect.whisper.length > 0) ? effect.whisper : [game.user.id];
+            const whisperAlwaysToGM = game.users.filter(u => u.isGM).map(u => u.id) ?? [];
+            chatData.whisper.push(...whisperAlwaysToGM);
           }
           await ChatMessage.create(chatData);
         } else if (effect instanceof Token || effect instanceof TokenDocument) {
@@ -975,7 +997,8 @@ export class TriggerHappy {
     const journals = this._getPlaceablesAt(this._getJournals(), position);
     const stairways = this._getPlaceablesAt(this._getStairways(), position);
     if (tokens.length === 0 && drawings.length === 0 &&
-      notes.length === 0 && journals.length === 0){
+      notes.length === 0 && journals.length === 0 && stairways.length === 0
+    ){
       return true;
     }
     const triggers = this._getTriggersFromTokens(this.triggers, tokens, EVENT_TRIGGER_ENTITY_TYPES.MOVE);
@@ -1242,10 +1265,36 @@ export class TriggerHappy {
       let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: label } }, {});
       return chatMessage;
     }
+    else if(entity == TRIGGER_ENTITY_TYPES.OOC){
+      // chat link can only be effects not triggers
+      let [myalias, mywhisper] = idOrName.split('|');
+      if(!myalias) myalias = game.user.name;
+      let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: myalias } }, {});
+      let chatLink = new ChatLink(chatMessage, TRIGGER_ENTITY_TYPES.OOC, mywhisper);
+      return chatLink;
+    }
+    else if(entity == TRIGGER_ENTITY_TYPES.EMOTE){
+      // chat link can only be effects not triggers
+      let [myalias, mywhisper] = idOrName.split('|');
+      if(!myalias) myalias = game.user.name;
+      let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: myalias } }, {});
+      let chatLink = new ChatLink(chatMessage, TRIGGER_ENTITY_TYPES.EMOTE, mywhisper);
+      return chatLink;
+    }
     else if(entity == TRIGGER_ENTITY_TYPES.WHISPER){
       // chat link can only be effects not triggers
-      let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: label } }, {});
-      let chatLink = new ChatLink(chatMessage, TRIGGER_ENTITY_TYPES.WHISPER, null);
+      let [myalias, mywhisper] = idOrName.split('|');
+      if(!myalias) myalias = game.user.name;
+      let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: myalias } }, {});
+      let chatLink = new ChatLink(chatMessage, TRIGGER_ENTITY_TYPES.WHISPER, mywhisper);
+      return chatLink;
+    }
+    else if(entity == TRIGGER_ENTITY_TYPES.SELF_WHISPER){
+      // chat link can only be effects not triggers
+      let [myalias, mywhisper] = idOrName.split('|');
+      if(!myalias) myalias = game.user.name;
+      let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: myalias } }, {});
+      let chatLink = new ChatLink(chatMessage, TRIGGER_ENTITY_TYPES.SELF_WHISPER, mywhisper);
       return chatLink;
     }
     else if(entity == TRIGGER_ENTITY_TYPES.COMPENDIUM){
@@ -1261,7 +1310,7 @@ export class TriggerHappy {
     else if(entity == TRIGGER_ENTITY_TYPES.SOUND_LINK){
       // sound links can only be effects not triggers
       // e.g. @Sound[Test|Medieval_Fantasy City Under Attack audio atmosphere]{Attack}
-      const [playlistName, soundName] = idOrName.split('|')
+      const [playlistName, soundName] = idOrName.split('|');
       let soundLink = new SoundLink(playlistName, soundName, label);
       return soundLink;
     }
@@ -1271,7 +1320,13 @@ export class TriggerHappy {
       return playlistTarget;
     }
     else if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
-      const tokenTarget = this._retrieveFromIdOrName(this._getTokens(), idOrName);
+      let tokenTarget = this._retrieveFromIdOrName(this._getTokens(), idOrName);
+      // Some strange retrocompatibility use case or just compatibility with other modules like token mold
+      if(!tokenTarget && this.ifNoTokenIsFoundTryToUseActor){
+        tokenTarget = this._getTokens()?.find((t) => {
+          return t && t.data.actorId && this._retrieveFromIdOrName(game.actors.get(t.data.actorId));
+        });
+      }
       return tokenTarget;
     } else if (entity == TRIGGER_ENTITY_TYPES.ACTOR) {
       const actorTarget = this._retrieveFromIdOrName(this._getActors(), idOrName);
@@ -1317,6 +1372,9 @@ export class TriggerHappy {
 
   _retrieveFromIdOrName(placeables, IdOrName){
     let target;
+    if(!IdOrName){
+      return target;
+    }
     target = placeables?.find((x) => {
       return x && x.id?.toLowerCase() == IdOrName.toLowerCase();
     });

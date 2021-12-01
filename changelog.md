@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.18
+
+- Add settings 'ifNoTokenIsFoundTryToUseActor' for strange feedback from the community and also for compatibility with some module like tokenmold
+- Add new effects always for strange feedback from the community, `@ooc`, `@emote`, `@whisper`, `@selfwhisper` (details on readme)
+
 ## 0.8.17
 
 - Bug fix of  [[BUG]](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/65) ty to tposney with is pr [fix for @Trigger[capture move] etc ](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/pull/66)
