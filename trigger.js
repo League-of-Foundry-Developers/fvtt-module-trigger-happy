@@ -651,13 +651,33 @@ export class TriggerHappy {
           } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.SELF_WHISPER)) {
             chatData.whisper = (effect.whisper && effect.whisper.length > 0) ? effect.whisper : [game.user.id];
           }
-          // let myalias = effect.data.speaker.alias;
-          // If no alias is setted we take the current token selected if there is one
-          // if(!myalias && canvas?.tokens?.controlled?.length > 0){
-          //   effect.data.speaker.alias.actor = canvas.tokens.controlled[0]?.data.actor;
-          //   effect.data.speaker.alias.token = canvas.tokens.controlled[0];
-          //   effect.data.speaker.alias.alias = canvas.tokens.controlled[0].name;
-          // }
+          // strange bug fix so the chat message is like is speak from the token instead from the player ?
+          // need a selected token anyway
+          if(canvas?.tokens?.controlled?.length > 0){
+            let tokenId = effect.data.speaker.token;
+            let actorId = effect.data.speaker.actor;
+            let sceneId = effect.data.speaker.scene;
+            let token = canvas?.tokens?.controlled[0], alias = effect.data.speaker.alias, scene = canvas.scene, user = game.userId, message = new ChatMessage;
+            if(tokenId){
+              token = scene.tokens.get(tokenId)
+            }
+            if(!actorId){
+              actorId = token.actor.id
+            }
+            if(sceneId){
+              sceneId = scene.id
+            }
+            if(actorId || tokenId){
+              if(!alias){
+                if(token){
+                  alias = token.name
+                } else {
+                  alias = game.actors.get(actorId).name
+                }
+              }
+              chatData.speaker = {scene: sceneId, actor: actorId, token: tokenId, alias: alias};
+            }
+          }
           await ChatMessage.create(chatData);
         } else if (effect instanceof Token || effect instanceof TokenDocument) {
           const placeablesToken = this._getTokens();
@@ -1275,29 +1295,61 @@ export class TriggerHappy {
     }
     else if(entity == TRIGGER_ENTITY_TYPES.OOC){
       // chat link can only be effects not triggers
-      let [myalias, mywhisper] = label ? label.split('|') : '';
-      let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: myalias } }, {});
+      // {alias: alias, token: tokenId, actor: actorId, scene: scene.id, };
+      let [myalias, mywhisper, mytokenid, myactorid, mysceneid] = label ? label.split('|') : '';
+      let chatMessage = new ChatMessage({ content: idOrName,
+        speaker: {
+          alias: myalias ? myalias : undefined,
+          token: mytokenid ? mytokenid : undefined,
+          scene: mysceneid ? mysceneid : game.scenes.current.id,
+          actor: myactorid ? myactorid : (token.actor ? token.actor.id : undefined)
+        }
+      }, {});
       let chatLink = new ChatLink(chatMessage, TRIGGER_ENTITY_TYPES.OOC, mywhisper);
       return chatLink;
     }
     else if(entity == TRIGGER_ENTITY_TYPES.EMOTE){
       // chat link can only be effects not triggers
-      let [myalias, mywhisper] = label ? label.split('|') : '';
-      let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: myalias } }, {});
+      // {alias: alias, token: tokenId, actor: actorId, scene: scene.id, };
+      let [myalias, mywhisper, mytokenid, myactorid, mysceneid] = label ? label.split('|') : '';
+      let chatMessage = new ChatMessage({ content: idOrName,
+        speaker: {
+          alias: myalias ? myalias : undefined,
+          token: mytokenid ? mytokenid : undefined,
+          scene: mysceneid ? mysceneid : game.scenes.current.id,
+          actor: myactorid ? myactorid : (token.actor ? token.actor.id : undefined)
+        }
+      }, {});
       let chatLink = new ChatLink(chatMessage, TRIGGER_ENTITY_TYPES.EMOTE, mywhisper);
       return chatLink;
     }
     else if(entity == TRIGGER_ENTITY_TYPES.WHISPER){
       // chat link can only be effects not triggers
-      let [myalias, mywhisper] = label ? label.split('|') : '';
-      let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: myalias } }, {});
+      // {alias: alias, token: tokenId, actor: actorId, scene: scene.id, };
+      let [myalias, mywhisper, mytokenid, myactorid, mysceneid] = label ? label.split('|') : '';
+      let chatMessage = new ChatMessage({ content: idOrName,
+        speaker: {
+          alias: myalias ? myalias : undefined,
+          token: mytokenid ? mytokenid : undefined,
+          scene: mysceneid ? mysceneid : game.scenes.current.id,
+          actor: myactorid ? myactorid : (token.actor ? token.actor.id : undefined)
+        }
+      }, {});
       let chatLink = new ChatLink(chatMessage, TRIGGER_ENTITY_TYPES.WHISPER, mywhisper);
       return chatLink;
     }
     else if(entity == TRIGGER_ENTITY_TYPES.SELF_WHISPER){
       // chat link can only be effects not triggers
-      let [myalias, mywhisper] = label ? label.split('|') : '';
-      let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: myalias } }, {});
+      // {alias: alias, token: tokenId, actor: actorId, scene: scene.id, };
+      let [myalias, mywhisper, mytokenid, myactorid, mysceneid] = label ? label.split('|') : '';
+      let chatMessage = new ChatMessage({ content: idOrName,
+        speaker: {
+          alias: myalias ? myalias : undefined,
+          token: mytokenid ? mytokenid : undefined,
+          scene: mysceneid ? mysceneid : game.scenes.current.id,
+          actor: myactorid ? myactorid : (token.actor ? token.actor.id : undefined)
+        }
+      }, {});
       let chatLink = new ChatLink(chatMessage, TRIGGER_ENTITY_TYPES.SELF_WHISPER, mywhisper);
       return chatLink;
     }
@@ -1353,7 +1405,9 @@ export class TriggerHappy {
       // Retrocompatibility check
       if(!doorControlTarget){
         const coords = id.split(',').map((c) => Number(c));
-        doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
+        if(coords && coords.length > 0 && coords.length == 4){
+          doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
+        }
       }
       return doorControlTarget;
     } else if(entity == TRIGGER_ENTITY_TYPES.DRAWING) {
