@@ -635,8 +635,40 @@ export class TriggerHappy {
           } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.SELF_WHISPER)) {
             chatData.whisper = [game.user.id];
           }
+          // strange bug fix so the chat message is like is speak from the token instead from the player ?
+          // need a selected token anyway
+          // if(canvas?.tokens?.controlled?.length > 0){
+          //   let tokenId = chatData.speaker.token;
+          //   let actorId = chatData.speaker.actor;
+          //   let sceneId = chatData.speaker.scene;
+          //   let token = canvas?.tokens?.controlled[0]; 
+          //   let alias = effect.alias; 
+          //   let scene = canvas.scene; 
+          //   let user = game.userId;
+          //   //, message = new ChatMessage;
+          //   if(tokenId){
+          //     token = scene.tokens.get(tokenId)
+          //   }
+          //   if(!actorId){
+          //     actorId = token.actor.id
+          //   }
+          //   if(sceneId){
+          //     sceneId = scene.id
+          //   }
+          //   if(actorId || tokenId){
+          //     if(!alias){
+          //       if(token){
+          //         alias = token.name
+          //       } else {
+          //         alias = game.actors.get(actorId).name
+          //       }
+          //     }
+          //     chatData.speaker = {scene: sceneId, actor: actorId, token: tokenId, alias: alias};
+          //   }
+          // }
           await ChatMessage.create(chatData);
         } else if (effect instanceof ChatLink) {
+          const chatData = duplicate(effect.chatMessage.data);
           if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.OOC)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.OOC;
           } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.EMOTE)) {
@@ -653,31 +685,35 @@ export class TriggerHappy {
           }
           // strange bug fix so the chat message is like is speak from the token instead from the player ?
           // need a selected token anyway
-          if(canvas?.tokens?.controlled?.length > 0){
-            let tokenId = effect.data.speaker.token;
-            let actorId = effect.data.speaker.actor;
-            let sceneId = effect.data.speaker.scene;
-            let token = canvas?.tokens?.controlled[0], alias = effect.data.speaker.alias, scene = canvas.scene, user = game.userId, message = new ChatMessage;
-            if(tokenId){
-              token = scene.tokens.get(tokenId)
-            }
-            if(!actorId){
-              actorId = token.actor.id
-            }
-            if(sceneId){
-              sceneId = scene.id
-            }
-            if(actorId || tokenId){
-              if(!alias){
-                if(token){
-                  alias = token.name
-                } else {
-                  alias = game.actors.get(actorId).name
-                }
-              }
-              chatData.speaker = {scene: sceneId, actor: actorId, token: tokenId, alias: alias};
-            }
-          }
+          // if(canvas?.tokens?.controlled?.length > 0){
+          //   let tokenId = chatData.speaker.token;
+          //   let actorId = chatData.speaker.actor;
+          //   let sceneId = chatData.speaker.scene;
+          //   let token = canvas?.tokens?.controlled[0]; 
+          //   let alias = effect.alias; 
+          //   let scene = canvas.scene; 
+          //   let user = game.userId;
+          //   //, message = new ChatMessage;
+          //   if(tokenId){
+          //     token = scene.tokens.get(tokenId)
+          //   }
+          //   if(!actorId){
+          //     actorId = token.actor.id
+          //   }
+          //   if(sceneId){
+          //     sceneId = scene.id
+          //   }
+          //   if(actorId || tokenId){
+          //     if(!alias){
+          //       if(token){
+          //         alias = token.name
+          //       } else {
+          //         alias = game.actors.get(actorId).name
+          //       }
+          //     }
+          //     chatData.speaker = {scene: sceneId, actor: actorId, token: tokenId, alias: alias};
+          //   }
+          // }
           await ChatMessage.create(chatData);
         } else if (effect instanceof Token || effect instanceof TokenDocument) {
           const placeablesToken = this._getTokens();
@@ -1302,7 +1338,7 @@ export class TriggerHappy {
           alias: myalias ? myalias : undefined,
           token: mytokenid ? mytokenid : undefined,
           scene: mysceneid ? mysceneid : game.scenes.current.id,
-          actor: myactorid ? myactorid : (token.actor ? token.actor.id : undefined)
+          //actor: myactorid ? myactorid : (token.actor ? token.actor.id : undefined)
         }
       }, {});
       let chatLink = new ChatLink(chatMessage, TRIGGER_ENTITY_TYPES.OOC, mywhisper);
@@ -1317,7 +1353,7 @@ export class TriggerHappy {
           alias: myalias ? myalias : undefined,
           token: mytokenid ? mytokenid : undefined,
           scene: mysceneid ? mysceneid : game.scenes.current.id,
-          actor: myactorid ? myactorid : (token.actor ? token.actor.id : undefined)
+          // actor: myactorid ? myactorid : (token.actor ? token.actor.id : undefined)
         }
       }, {});
       let chatLink = new ChatLink(chatMessage, TRIGGER_ENTITY_TYPES.EMOTE, mywhisper);
@@ -1332,7 +1368,7 @@ export class TriggerHappy {
           alias: myalias ? myalias : undefined,
           token: mytokenid ? mytokenid : undefined,
           scene: mysceneid ? mysceneid : game.scenes.current.id,
-          actor: myactorid ? myactorid : (token.actor ? token.actor.id : undefined)
+          // actor: myactorid ? myactorid : (token.actor ? token.actor.id : undefined)
         }
       }, {});
       let chatLink = new ChatLink(chatMessage, TRIGGER_ENTITY_TYPES.WHISPER, mywhisper);
@@ -1347,7 +1383,7 @@ export class TriggerHappy {
           alias: myalias ? myalias : undefined,
           token: mytokenid ? mytokenid : undefined,
           scene: mysceneid ? mysceneid : game.scenes.current.id,
-          actor: myactorid ? myactorid : (token.actor ? token.actor.id : undefined)
+          // actor: myactorid ? myactorid : (token.actor ? token.actor.id : undefined)
         }
       }, {});
       let chatLink = new ChatLink(chatMessage, TRIGGER_ENTITY_TYPES.SELF_WHISPER, mywhisper);
@@ -1404,7 +1440,7 @@ export class TriggerHappy {
       let doorControlTarget = this._retrieveFromIdOrName(this._getDoors(), idOrName);
       // Retrocompatibility check
       if(!doorControlTarget){
-        const coords = id.split(',').map((c) => Number(c));
+        const coords = idOrName.split(',').map((c) => Number(c));
         if(coords && coords.length > 0 && coords.length == 4){
           doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
         }
