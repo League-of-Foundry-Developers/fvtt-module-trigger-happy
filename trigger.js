@@ -596,9 +596,12 @@ export class TriggerHappy {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.EMOTE;
           } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.WHISPER)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.WHISPER;
-            chatData.whisper = ChatMessage.getWhisperRecipients('GM');
           } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.SELF_WHISPER)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.WHISPER;
+          }
+          if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.WHISPER)) {
+            chatData.whisper = ChatMessage.getWhisperRecipients('GM');
+          } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.SELF_WHISPER)) {
             chatData.whisper = [game.user.id];
           }
           await ChatMessage.create(chatData);
