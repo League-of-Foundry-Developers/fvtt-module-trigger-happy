@@ -1349,7 +1349,12 @@ export class TriggerHappy {
     //   const tileTarget = this._retrieveFromIdOrName(this._getTiles(), idOrName);
     //   return tileTarget;
     } else if (entity == TRIGGER_ENTITY_TYPES.DOOR) {
-      const doorControlTarget = this._retrieveFromIdOrName(this._getDoors(), idOrName);
+      let doorControlTarget = this._retrieveFromIdOrName(this._getDoors(), idOrName);
+      // Retrocompatibility check
+      if(!doorControlTarget){
+        const coords = id.split(',').map((c) => Number(c));
+        doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
+      }
       return doorControlTarget;
     } else if(entity == TRIGGER_ENTITY_TYPES.DRAWING) {
       const drawingTarget = this._retrieveFromIdOrName(this._getDrawings(), idOrName);
