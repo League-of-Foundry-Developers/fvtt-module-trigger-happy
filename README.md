@@ -54,7 +54,7 @@ To install this module manually:
 - **Enable 'journal for every scene' integration feature :** Sometime trigger are mixed up between scene and broke something, if this feature is enabled the module will try to find and parse only the journal starting with the same name (or id) of the current scene the clients are viewing. If no journal is found is rollback to standard mechanism and parse all the journals under the trigger folder. NOTE: if more scene have the same name the trigger are activated for all these scenes, if you really want you can avoid this specific issue by using the id of the scene
 - **Enable 'only use journal for every scene' integration feature :** This setting make sense only with the setting 'journal for every scene' to true, it will disable the rollback to the standard parsing of the journals and make the parsing faster. ATTENTION: All the trigger on journals/notes that are not renamed based on a scene name/id will be ignored
 - **Enable avoid to deselect elements on the trigger event :** To remedy an incompatibility with other modules at the time of the 'mouse down' or other events together with the core setting 'Left-Click to Release Object' active, it is necessary that if a placeable object is selected on that event it remains at the event of 'mouse up' still selected. Unfortunately I have not found any other solution than to temporarily set the 'Left-Click to Release Object' setting to false (only if active) and then reset it to the original state at the 'mouse up' event. YOU NEED A REFRESH OF THE PAGE FOR APPLY THIS"
-- **If no token is found with that name try to found a token on the canvas linked to a actor with that id or name :** If no token is found with that name try to found a token on the canvas linked to a actor with that id or name, can be useful with some module like tokenmold where N tokens are linked to the same actor
+- **If no token is found with that name try to found a token on the canvas linked to a actor with that id or name :** If no token is found with that name try to found a token on the canvas linked to a actor with that id or name, can be useful with some module like token mold where N tokens are linked to the same actor WORK ONLY `@Token` TRIGGERS.
 
 # Details
 
@@ -104,7 +104,7 @@ Here a example:
 
 **NOTE:** From version `0.8.18` you can now use the triggers: `@ooc`, `@emote`, `@whisper`, `@selfwhisper` they have a specific syntax structure : `@XXX[content message]{alias|whisper}`, if alias or whisper are empty default one are used so for example `@whisper[content message]` will whisper with alias of current user (alias default) to all gm and himself (whisper default) if you want to set only the alias then `@XXX[content message]{alias}`
 
-| Key (case unsenstive) | Category  | Syntax structure | Description |
+| Key (case unsensitive) | Category  | Syntax structure (id, name, label are case unsensitive) | Description |
 |:---------------:|:---------------:|:--------------:|:-----------:|
 | `@Actor`        | Trigger,Effect  | `@Actor[id]{name}`, `@Actor[name]` | If used as a trigger, this will cause the triggers to activate on any token referenced by the actor with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to select the first token matching that name. |
 | `@Token`        | Trigger,Effect  | `@Token[id]{name}`, `@Token[name]` | If used as a trigger, this will cause the triggers to activate on any token with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to select the first token matching that name. |
@@ -119,10 +119,10 @@ Here a example:
 | `@Playlist`     | Effect          | `@Playlist[id]{name}`, `@Playlist[name]`  | |
 | `@ooc`          | Effect          | `@ooc[content message]{alias}`  | As an effect, this will send the specified message contents as a chat message of type ooc|
 | `@emote`        | Effect          | `@emote[content message]{alias}`  | As an effect, this will send the specified message contents as a chat message of type emote |
-| `@whisper`      | Effect          | `@whisper[content message]{alias|whisper}`  | As an effect, this will send the specified message contents as a chat message of type whisper |
-| `@selfwhisper`  | Effect          | `@selfwhisper[content message]{alias|whisper}`  | As an effect, this will send the specified message contents as a chat message of type selfwhisper |
+| `@whisper`      | Effect          | `@whisper[content message]{alias\|whisper}`  | As an effect, this will send the specified message contents as a chat message of type whisper |
+| `@selfwhisper`  | Effect          | `@selfwhisper[content message]{alias\|whisper}`  | As an effect, this will send the specified message contents as a chat message of type selfwhisper |
 | `@Trigger`      | Event Link      | `@Trigger[option1 option2 option3]` | This applies modifiers on the trigger line, keep reading for more information about available options, read 'Advanced options' paragraph for more details |
-| `@Tag`          | Event Link      | `@Tag[list of tags]`  | |
+| `@Tag`          | Event Link      | `@Tag[list of tags]`  | this element will activate the integration with the [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger) module, will filter the trigger with a additional checking on the tags (if presents) on the object |
 | `@<CONFIG[key]>`| Effect | `@Rolltable[id]{name}`, `@Quest[id]{name}`, `ecc.` | All keys colleciton supported from the `CONFIG` of foundry, the result maybe be differente depends on the specific use case |
 
 You can create and organize actors that would be used specifically for triggers, and drop them anywhere you want on the map. Using a transparent token has the best effect, and the players don't need to have any permissions for the token (or scene or journal to display) for the trigger to work.

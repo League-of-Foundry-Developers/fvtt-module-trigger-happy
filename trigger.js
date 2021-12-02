@@ -637,25 +637,26 @@ export class TriggerHappy {
           }
           await ChatMessage.create(chatData);
         } else if (effect instanceof ChatLink) {
-          const chatData = duplicate(effect.chatMessage.data);
-          // let myalias = effect.data.speaker.alias;
-          // if(canvas?.tokens?.controlled?.length > 0){
-          //   await canvas.tokens.controlled[0].control(); ;
-          // }
-          if (effect.type === EVENT_TRIGGER_ENTITY_TYPES.OOC) {
-            chatData.type = effect.type;
-          } else if (effect.type === EVENT_TRIGGER_ENTITY_TYPES.EMOTE) {
-            chatData.type = effect.type;
-          } else if (effect.type === EVENT_TRIGGER_ENTITY_TYPES.WHISPER) {
-            chatData.type = effect.type;
+          if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.OOC)) {
+            chatData.type = CONST.CHAT_MESSAGE_TYPES.OOC;
+          } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.EMOTE)) {
+            chatData.type = CONST.CHAT_MESSAGE_TYPES.EMOTE;
+          } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.WHISPER)) {
+            chatData.type = CONST.CHAT_MESSAGE_TYPES.WHISPER;
+          } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.SELF_WHISPER)) {
+            chatData.type = CONST.CHAT_MESSAGE_TYPES.WHISPER;
+          }
+          if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.WHISPER)) {
             chatData.whisper = (effect.whisper && effect.whisper.length > 0) ? effect.whisper : ChatMessage.getWhisperRecipients('GM');
-            // const whisperAlwaysToGM = game.users.filter(u => u.isGM).map(u => u.id) ?? [];
-            // chatData.whisper.push(...whisperAlwaysToGM);
-          } else if (effect.type === EVENT_TRIGGER_ENTITY_TYPES.SELF_WHISPER) {
-            chatData.type = effect.type;
+          } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.SELF_WHISPER)) {
             chatData.whisper = (effect.whisper && effect.whisper.length > 0) ? effect.whisper : [game.user.id];
-            // const whisperAlwaysToGM = game.users.filter(u => u.isGM).map(u => u.id) ?? [];
-            // chatData.whisper.push(...whisperAlwaysToGM);
+          }
+          let myalias = effect.data.speaker.alias;
+          // If no alias is setted we take the current token selected if there is one
+          if(!myalias && canvas?.tokens?.controlled?.length > 0){
+            effect.data.speaker.alias.actor = canvas.tokens.controlled[0]?.data.actor;
+            effect.data.speaker.alias.token = canvas.tokens.controlled[0];
+            effect.data.speaker.alias.alias = canvas.tokens.controlled[0].name;
           }
           await ChatMessage.create(chatData);
         } else if (effect instanceof Token || effect instanceof TokenDocument) {
@@ -1269,10 +1270,8 @@ export class TriggerHappy {
     }
     else if(entity == TRIGGER_ENTITY_TYPES.CHAT_MESSAGE){
       // chat messages can only be effects not triggers
-      let [myalias, mywhisper] = label ? label.split('|') : '';
-      let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: myalias } }, {});
-      // let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: label } }, {});
-      // return chatMessage;
+      let chatMessage = new ChatMessage({ content: idOrName, speaker: { alias: label } }, {});
+      return chatMessage;
     }
     else if(entity == TRIGGER_ENTITY_TYPES.OOC){
       // chat link can only be effects not triggers
