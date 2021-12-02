@@ -102,7 +102,11 @@ Here a example:
 
 `@Door[*]{Missioni}@Trigger[DoorOpen]@Macro[pause_the_game]`
 
-**NOTE:** From version `0.8.18` you can now use the triggers: `@ooc`, `@emote`, `@whisper`, `@selfwhisper` they have a specific syntax structure : `@XXX[content message]{alias|whisper}`, if alias or whisper are empty default one are used so for example `@whisper[content message]` will whisper with alias of current user (alias default) to all gm and himself (whisper default) if you want to set only the alias then `@XXX[content message]{alias}`
+**NOTE:** From version `0.8.18-20` you can now use the triggers: `@ooc`, `@emote`, `@whisper`, `@selfwhisper` they have a specific syntax structure : `@XXX[content message]{alias|whisper|tokenId|actorId|sceneId}` all the parameter between `{}` are optional, but now you can customize a very specific chat message:
+    - alias: string of the alias if undefined get the user reference who start the trigger usually the GM
+    - whisper: array of string every string is a userId
+    - tokenId: string of the token id to set like chat speaker if undefined get the user reference who start the trigger usually the GM
+    - actorId: string of the actor id to set like chat speaker if undefined get the user reference who start the trigger usually the GM
 
 | Key (case unsensitive) | Category  | Syntax structure (id, name, label are case unsensitive) | Description |
 |:---------------:|:---------------:|:--------------:|:-----------:|
@@ -117,10 +121,10 @@ Here a example:
 | `@Compendium`   | Effect          | `@Compendium[packId.idComepndium.idItem]{label}`  | only useable as an effect will display the compendium entry. |
 | `@Sound`        | Effect          | `@Sound[playlistName\|soundName]{label}`, `@Sound[playlistName\|soundName]`  | Integration with the [Sound Link](https://github.com/superseva/sound-link) module. As an effect, this will play a very specific sound. |
 | `@Playlist`     | Effect          | `@Playlist[id]{name}`, `@Playlist[name]`  | As an effect, this will play a random sound from the specific playlist |
-| `@ooc`          | Effect          | `@ooc[content message]{alias}`  | As an effect, this will send the specified message contents as a chat message of type ooc|
-| `@emote`        | Effect          | `@emote[content message]{alias}`  | As an effect, this will send the specified message contents as a chat message of type emote |
-| `@whisper`      | Effect          | `@whisper[content message]{alias\|whisper}`  | As an effect, this will send the specified message contents as a chat message of type whisper |
-| `@selfwhisper`  | Effect          | `@selfwhisper[content message]{alias\|whisper}`  | As an effect, this will send the specified message contents as a chat message of type selfwhisper |
+| `@ooc`          | Effect          | `@ooc[content message]{alias}`, `@ooc[content message]{alias\|whisper\|tokenId\|actorId\|sceneId}`  | As an effect, this will send the specified message contents as a chat message of type ooc|
+| `@emote`        | Effect          | `@emote[content message]{alias}`, `@emote[content message]{alias\|whisper\|tokenId\|actorId\|sceneId}`  | As an effect, this will send the specified message contents as a chat message of type emote |
+| `@whisper`      | Effect          | `@whisper[content message]{alias\|whisper}`, `@whisper[content message]{alias\|whisper\|tokenId\|actorId\|sceneId}`  | As an effect, this will send the specified message contents as a chat message of type whisper |
+| `@selfwhisper`  | Effect          | `@selfwhisper[content message]{alias\|whisper}`, `@selfwhisper[content message]{alias\|whisper\|tokenId\|actorId\|sceneId}`  | As an effect, this will send the specified message contents as a chat message of type selfwhisper |
 | `@Trigger`      | Event Link      | `@Trigger[option1 option2 option3]` | This applies modifiers on the trigger line, keep reading for more information about available options, read 'Advanced options' paragraph for more details |
 | `@Tag`          | Event Link      | `@Tag[list of tags]`  | this element will activate the integration with the [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger) module, will filter the trigger with a additional checking on the tags (if presents) on the object |
 | `@<CONFIG[key]>`| Effect | `@Rolltable[id]{name}`, `@Quest[id]{name}`, `ecc.` | All keys colleciton supported from the `CONFIG` of foundry, the result maybe differ form what you expected depends on the specific use case |
