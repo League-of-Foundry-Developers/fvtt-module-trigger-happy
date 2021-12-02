@@ -54,6 +54,7 @@ To install this module manually:
 - **Enable 'journal for every scene' integration feature :** Sometime trigger are mixed up between scene and broke something, if this feature is enabled the module will try to find and parse only the journal starting with the same name (or id) of the current scene the clients are viewing. If no journal is found is rollback to standard mechanism and parse all the journals under the trigger folder. NOTE: if more scene have the same name the trigger are activated for all these scenes, if you really want you can avoid this specific issue by using the id of the scene
 - **Enable 'only use journal for every scene' integration feature :** This setting make sense only with the setting 'journal for every scene' to true, it will disable the rollback to the standard parsing of the journals and make the parsing faster. ATTENTION: All the trigger on journals/notes that are not renamed based on a scene name/id will be ignored
 - **Enable avoid to deselect elements on the trigger event :** To remedy an incompatibility with other modules at the time of the 'mouse down' or other events together with the core setting 'Left-Click to Release Object' active, it is necessary that if a placeable object is selected on that event it remains at the event of 'mouse up' still selected. Unfortunately I have not found any other solution than to temporarily set the 'Left-Click to Release Object' setting to false (only if active) and then reset it to the original state at the 'mouse up' event. YOU NEED A REFRESH OF THE PAGE FOR APPLY THIS"
+- **If no token is found with that name try to found a token on the canvas linked to a actor with that id or name :** If no token is found with that name try to found a token on the canvas linked to a actor with that id or name, can be useful with some module like token mold where N tokens are linked to the same actor WORK ONLY `@Token` TRIGGERS.
 
 # Details
 
@@ -89,26 +90,77 @@ Here the example structure of the line of the journal:
 
 ![tutorial](./wiki/imageTutorial2.png)
 
-Here the list of keys for category
-
-- **Trigger :** @Actor, @Token, @Scene, @Drawing, @Door, @JournalEntry, @Stairway
-- **Tag :** @Tag 
-- **Event :** @Trigger (read 'Advanced options' paragraph for more details)
-- **Effect :** @Actor, @Token, @Scene, @Drawing, @Door, @JournalEntry, @Stairway, @ChatMessage, @Compendium, @Sound, @Playlist
-
-From version `0.8.13` you can now use like id the character `*` for activate the same effect for all the trigger of that type
+**NOTE:** From version `0.8.13` you can now use like id the character `*` for activate the same effect for all the trigger of that type
 
 Here a example:
 
-#### When open any journal on the scen open a specific one instead
+#### When open any journal on the scene open a specific one instead
 
 `@JournalEntry[*]{Missioni}@Trigger[Click]@JournalEntry[bSsq0RnNTqp3YxUR]{Scorta al Lord}`
 
-#### Every time yuo open a door on the scene put the game on pause
+#### Every time you open a door on the scene put the game on pause
 
 `@Door[*]{Missioni}@Trigger[DoorOpen]@Macro[pause_the_game]`
 
-As an example, you can put this into your entry : 
+**NOTE:** From version `0.8.18` you can now use the triggers: `@ooc`, `@emote`, `@whisper`, `@selfwhisper` they have a specific syntax structure : `@XXX[content message]{alias|whisper}`, if alias or whisper are empty default one are used so for example `@whisper[content message]` will whisper with alias of current user (alias default) to all gm and himself (whisper default) if you want to set only the alias then `@XXX[content message]{alias}`
+
+| Key (case unsensitive) | Category  | Syntax structure (id, name, label are case unsensitive) | Description |
+|:---------------:|:---------------:|:--------------:|:-----------:|
+| `@Actor`        | Trigger,Effect  | `@Actor[id]{name}`, `@Actor[name]` | If used as a trigger, this will cause the triggers to activate on any token referenced by the actor with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to select the first token matching that name. |
+| `@Token`        | Trigger,Effect  | `@Token[id]{name}`, `@Token[name]` | If used as a trigger, this will cause the triggers to activate on any token with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to select the first token matching that name. |
+| `@Scene`        | Trigger,Effect  | `@Scene[id]{name}`  | |
+| `@Drawing`      | Trigger,Effect  | `@Drawing[id]{label}`, `@Drawing[label]` | This will trigger the effects when the player clicks/moves a token within the area of a drawing which has its text set to the `label` specified. Works best with rectangles. |
+| `@Door`         | Trigger,Effect  | `@Door[coordinates]`,`@Door[*]@Tag[list pf tags]`| This will trigger the effects when a player opens or closes a door (based on options). The coordinates can be copy/pasted from the wall configuration sheet (excluding the `[` and `]`). Is best avoid coordinates and use the new tagger integration `@Door[*]@Tag[door01]` |
+| `@JournalEntry` | Trigger,Effect  | `@JournalEntry[id]{name}`, `@JournalEntry[name]`  | If used as a trigger, this will cause the triggers to activate on any journal with the specified name (you cannot set a token id in this case). As a trigger effect |
+| `@Stairway`     | Trigger,Effect  | `@Stairway[id]{name}`  | |
+| `@ChatMessage`  | Effect          | `@ChatMessage[content message]{alias}`  | As an effect, this will send the specified message contents as a chat message |
+| `@Compendium`   | Effect          | `@Compendium[packId.idComepndium.idItem]{label}`  | only useable as an effect will display the compendium entry. |
+| `@Sound`        | Effect          | `@Sound[playlistName|soundName]{label}`, `@Sound[playlistName|soundName]`  | |
+| `@Playlist`     | Effect          | `@Playlist[id]{name}`, `@Playlist[name]`  | |
+| `@ooc`          | Effect          | `@ooc[content message]{alias}`  | As an effect, this will send the specified message contents as a chat message of type ooc|
+| `@emote`        | Effect          | `@emote[content message]{alias}`  | As an effect, this will send the specified message contents as a chat message of type emote |
+| `@whisper`      | Effect          | `@whisper[content message]{alias\|whisper}`  | As an effect, this will send the specified message contents as a chat message of type whisper |
+| `@selfwhisper`  | Effect          | `@selfwhisper[content message]{alias\|whisper}`  | As an effect, this will send the specified message contents as a chat message of type selfwhisper |
+| `@Trigger`      | Event Link      | `@Trigger[option1 option2 option3]` | This applies modifiers on the trigger line, keep reading for more information about available options, read 'Advanced options' paragraph for more details |
+| `@Tag`          | Event Link      | `@Tag[list of tags]`  | this element will activate the integration with the [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger) module, will filter the trigger with a additional checking on the tags (if presents) on the object |
+| `@<CONFIG[key]>`| Effect | `@Rolltable[id]{name}`, `@Quest[id]{name}`, `ecc.` | All keys colleciton supported from the `CONFIG` of foundry, the result maybe be differente depends on the specific use case |
+
+You can create and organize actors that would be used specifically for triggers, and drop them anywhere you want on the map. Using a transparent token has the best effect, and the players don't need to have any permissions for the token (or scene or journal to display) for the trigger to work.
+The triggers on actors and tokens will work only if they click on the token in the case of visible tokens, and if the token is hidden (GM layer), then it will activate the trigger when the player moves their token within the trigger token. Note that they can always do a long move and jump over the token which would not trigger the effects.
+Don't forget that you can also use token avatars as buttons, or change their width and height to fit your need.
+
+If multiple trigger effects are in the same line, then they will be executed in sequence, waiting for the previous effect to finish before starting the next one.
+
+## Advanced options
+
+You can customize the behavior a little using the `@Trigger` pseudo link which allows you to set options.
+The following options are available : 
+- `ooc`: Will send any chat messages in that trigger as an out of character message
+- `emote`: Will send any chat messages in that trigger as an emote
+- `whisper`: Will send any chat messages in that trigger as a whisper to the GM
+- `selfWhisper`: Will send any chat messages in that trigger as a whisper to the player who activates the trigger
+- `preload`: Will cause any scene on the trigger line to be preloaded instead of switching the view to it
+- `click`: Will cause the trigger token to activate on a click
+- `move`: Will cause the trigger token to activate on a token move over it
+- `stopMovement`: Will prevent any tokens from moving on top of the trigger token
+- `capture`: Will cause the trigger token to capture any player moment that crosses it
+- `doorClose`: Will cause a `@Door` trigger to trigger when the door is closed instead of the default when it opens.
+- `doorOpen`: Will cause a `@Door` trigger to trigger when the door is open. This is the default, but it can be used along with 
+- `doorClose` option to have it trigger on both open and close
+
+If a token is hidden (GM layer), then it is automatically considered a 'move' trigger, otherwise it's a 'click' trigger. You can override it with the `@Trigger[click]` or `@Trigger[move]` options, or you can specify both options to make a token trigger on both clicks and moves.
+
+Contrarily to the `@Trigger[move]` triggers, which only activate when a token ends its movement on their, the `@Trigger[capture]` will trigger when a token crosses its path, which can be very useful to setting up a trap that the players cannot jump over. When a `capture` trigger is activated, the token movement will be stoped and the token will be moved to the center of the trigger. The token can only be moved out of the `capture` trigger if its starting position is the center of the trigger.
+
+The above example used the `@Actor[name]` format for simplicity, but when drag&dropping actors, they would appear in the journal entry as `@Actor[id]{name}`.
+
+By using a `Token` trigger, you can have a single actor for your triggers (a door, a button or a transparent image) but setting a different and unique name for your tokens would allow you to use them as different triggers, without duplicating actors all over your actors directory.
+
+By using the `ChatMessage` effect, you can send any message to chat. When used in combination with [Advanced Macros](https://github.com/League-of-Foundry-Developers/fvtt-advanced-macros), you can use it to trigger macros with arguments specific to your trigger. Previously The Furnace was suggested, but that is now out of data and Advanced Macros provides the identical functionality.
+
+You can also use the format `@ChatMessage[message contents]{speaker name alias}`
+
+## Examples from the community add your own by open a issue `^_^`
 
 #### Traps in Dungeon Room 37
 
@@ -147,61 +199,13 @@ same but starting from a stairway
 @Stairway[sw-43ayfc0q]{Vai di Sopra}@Trigger[Click]@JournalEntry[bSsq0RnNTqp3YxUR]{Scorta al Lord}@RollTable[3pzl8ZBGWf9gp8II]{Catharina Combat}@Compendium[SupersHomebrewPack.classes.AH3dUnrFxZHDvY2o]{Bard}@ChatMessage[sdgfgfgf]{Gamemaster}@Sound[Test|Medieval_Fantasy City Under Attack audio atmosphere]{Attack}@Quest[nJRQV2mtlqygfmVe]{New Quest}
 ```
 
-The above example used the `@Actor[name]` format for simplicity, but when drag&dropping actors, they would appear in the journal entry as `@Actor[id]{name}`.
-
-You can also use some non-official 'links' by using the same format : 
-- `@Token[token name]` : If used as a trigger, this will cause the triggers to activate on any token with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to select the first token matching that name.
-- `@ChatMessage[message contents]` : As an effect, this will send the specified message contents as a chat message
-- `@Trigger[option1 option2 option3]` : This applies modifiers on the trigger line, keep reading for more information about available options.
-- `@Drawing[label]` : This will trigger the effects when the player clicks/moves a token within the area of a drawing which has its text set to the `label` specified. Works best with rectangles.
-- `@Door[coordinates]` : This will trigger the effects when a player opens or closes a door (based on options). The coordinates can be copy/pasted from the wall configuration sheet (excluding the `[` and `]`).
-- `@Compendium[id]{name}` only useable as an effect will display the compendium entry.
-- `@JournalEntry[token name]` If used as a trigger, this will cause the triggers to activate on any journal with the specified name (you cannot set a token id in this case). As a trigger effect
-
-By using a `Token` trigger, you can have a single actor for your triggers (a door, a button or a transparent image) but setting a different and unique name for your tokens would allow you to use them as different triggers, without duplicating actors all over your actors directory.
-
-By using the `ChatMessage` effect, you can send any message to chat. When used in combination with [Advanced Macros](https://github.com/League-of-Foundry-Developers/fvtt-advanced-macros), you can use it to trigger macros with arguments specific to your trigger. Previously The Furnace was suggested, but that is now out of data and Advanced Macros provides the identical functionality.
-
-You can also use the format `@ChatMessage[message contents]{speaker name alias}`
-
-As an example : 
+#### As an example : 
 
 ```
 @Token[unique token name] @ChatMessage[Stop right there!]{Guard} @ChatMessage[/pan 1500 1500 0.3]
 
 @Scene[World Map] @Token[Party Marker]
 ```
-
-You can create and organize actors that would be used specifically for triggers, and drop them anywhere you want on the map. Using a transparent token has the best effect, and the players don't need to have any permissions for the token (or scene or journal to display) for the trigger to work.
-The triggers on actors and tokens will work only if they click on the token in the case of visible tokens, and if the token is hidden (GM layer), then it will activate the trigger when the player moves their token within the trigger token. Note that they can always do a long move and jump over the token which would not trigger the effects.
-Don't forget that you can also use token avatars as buttons, or change their width and height to fit your need.
-
-If multiple trigger effects are in the same line, then they will be executed in sequence, waiting for the previous effect to finish before starting the next one.
-
-## Advanced options
-
-You can customize the behavior a little using the `@Trigger` pseudo link which allows you to set options.
-The following options are available : 
-- `ooc`: Will send any chat messages in that trigger as an out of character message
-- `emote`: Will send any chat messages in that trigger as an emote
-- `whisper`: Will send any chat messages in that trigger as a whisper to the GM
-- `selfWhisper`: Will send any chat messages in that trigger as a whisper to the player who activates the trigger
-- `preload`: Will cause any scene on the trigger line to be preloaded instead of switching the view to it
-- `click`: Will cause the trigger token to activate on a click
-- `move`: Will cause the trigger token to activate on a token move over it
-- `stopMovement`: Will prevent any tokens from moving on top of the trigger token
-- `capture`: Will cause the trigger token to capture any player moment that crosses it
-- `doorClose`: Will cause a `@Door` trigger to trigger when the door is closed instead of the default when it opens.
-- `doorOpen`: Will cause a `@Door` trigger to trigger when the door is open. This is the default, but it can be used along with 
-- `doorClose` option to have it trigger on both open and close
-
-If a token is hidden (GM layer), then it is automatically considered a 'move' trigger, otherwise it's a 'click' trigger. You can override it with the `@Trigger[click]` or `@Trigger[move]` options, or you can specify both options to make a token trigger on both clicks and moves.
-
-Contrarily to the `@Trigger[move]` triggers, which only activate when a token ends its movement on their, the `@Trigger[capture]` will trigger when a token crosses its path, which can be very useful to setting up a trap that the players cannot jump over. When a `capture` trigger is activated, the token movement will be stoped and the token will be moved to the center of the trigger. The token can only be moved out of the `capture` trigger if its starting position is the center of the trigger.
-
-## Examples from the community add your own by open a issue `^_^`
-
-Here's some examples of how these trigger options can be used together :
 
 #### When the player enters the scene, preload the next one
 
