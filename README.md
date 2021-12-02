@@ -110,7 +110,7 @@ Here a example:
 | `@Token`        | Trigger,Effect  | `@Token[id]{name}`, `@Token[name]` | If used as a trigger, this will cause the triggers to activate on any token with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to select the first token matching that name. |
 | `@Scene`        | Trigger,Effect  | `@Scene[id]{name}`  | |
 | `@Drawing`      | Trigger,Effect  | `@Drawing[id]{label}`, `@Drawing[label]` | This will trigger the effects when the player clicks/moves a token within the area of a drawing which has its text set to the `label` specified. Works best with rectangles. |
-| `@Door`         | Trigger,Effect  | `@Door[coordinates]`  | This will trigger the effects when a player opens or closes a door (based on options). The coordinates can be copy/pasted from the wall configuration sheet (excluding the `[` and `]`). |
+| `@Door`         | Trigger,Effect  | `@Door[coordinates]`,`@Door[*]@Tag[list pf tags]`| This will trigger the effects when a player opens or closes a door (based on options). The coordinates can be copy/pasted from the wall configuration sheet (excluding the `[` and `]`). Is best avoid coordinates and use the new tagger integration `@Door[*]@Tag[door01]` |
 | `@JournalEntry` | Trigger,Effect  | `@JournalEntry[id]{name}`, `@JournalEntry[name]`  | If used as a trigger, this will cause the triggers to activate on any journal with the specified name (you cannot set a token id in this case). As a trigger effect |
 | `@Stairway`     | Trigger,Effect  | `@Stairway[id]{name}`  | |
 | `@ChatMessage`  | Effect          | `@ChatMessage[content message]{alias}`  | As an effect, this will send the specified message contents as a chat message |

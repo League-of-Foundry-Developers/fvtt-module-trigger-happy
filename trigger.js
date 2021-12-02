@@ -651,13 +651,13 @@ export class TriggerHappy {
           } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.SELF_WHISPER)) {
             chatData.whisper = (effect.whisper && effect.whisper.length > 0) ? effect.whisper : [game.user.id];
           }
-          let myalias = effect.data.speaker.alias;
+          // let myalias = effect.data.speaker.alias;
           // If no alias is setted we take the current token selected if there is one
-          if(!myalias && canvas?.tokens?.controlled?.length > 0){
-            effect.data.speaker.alias.actor = canvas.tokens.controlled[0]?.data.actor;
-            effect.data.speaker.alias.token = canvas.tokens.controlled[0];
-            effect.data.speaker.alias.alias = canvas.tokens.controlled[0].name;
-          }
+          // if(!myalias && canvas?.tokens?.controlled?.length > 0){
+          //   effect.data.speaker.alias.actor = canvas.tokens.controlled[0]?.data.actor;
+          //   effect.data.speaker.alias.token = canvas.tokens.controlled[0];
+          //   effect.data.speaker.alias.alias = canvas.tokens.controlled[0].name;
+          // }
           await ChatMessage.create(chatData);
         } else if (effect instanceof Token || effect instanceof TokenDocument) {
           const placeablesToken = this._getTokens();
