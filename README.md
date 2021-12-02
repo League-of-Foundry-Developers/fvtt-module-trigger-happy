@@ -94,19 +94,20 @@ Here the example structure of the line of the journal:
 
 Here a example:
 
-#### When open any journal on the scene open a specific one instead
+#### When click on any journal on the scene the trigger open a specific one instead
 
 `@JournalEntry[*]{Missioni}@Trigger[Click]@JournalEntry[bSsq0RnNTqp3YxUR]{Scorta al Lord}`
 
-#### Every time you open a door on the scene put the game on pause
+#### Every time you open a door on the scene the put the game on pause
 
 `@Door[*]{Missioni}@Trigger[DoorOpen]@Macro[pause_the_game]`
 
 **NOTE:** From version `0.8.18-20` you can now use the triggers: `@ooc`, `@emote`, `@whisper`, `@selfwhisper` they have a specific syntax structure : `@XXX[content message]{alias|whisper|tokenId|actorId|sceneId}` all the parameter between `{}` are optional, but now you can customize a very specific chat message:
-    - alias: string of the alias if undefined get the user reference who start the trigger usually the GM
-    - whisper: array of string every string is a userId
-    - tokenId: string of the token id to set like chat speaker if undefined get the user reference who start the trigger usually the GM
-    - actorId: string of the actor id to set like chat speaker if undefined get the user reference who start the trigger usually the GM
+
+- alias: string of the alias if undefined get the user reference who start the trigger usually the GM
+- whisper: array of string every string is a userId
+- tokenId: string of the token id to set like chat speaker if undefined get the user reference who start the trigger usually the GM
+- actorId: string of the actor id to set like chat speaker if undefined get the user reference who start the trigger usually the GM
 
 | Key (case unsensitive) | Category  | Syntax structure (id, name, label are case unsensitive) | Description |
 |:---------------:|:---------------:|:--------------:|:-----------:|
