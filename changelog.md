@@ -5,6 +5,7 @@
 - Add settings 'ifNoTokenIsFoundTryToUseActor' for strange feedback from the community and also for compatibility with some module like token mold
 - Add new effects always for strange feedback from the community, `@ooc`, `@emote`, `@whisper`, `@selfwhisper` (details on readme)
 - Update readme
+- Bug fix [Doors Won't Trigger](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/68)
 
 ## 0.8.18
 

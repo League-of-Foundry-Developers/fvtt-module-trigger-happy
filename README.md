@@ -112,18 +112,18 @@ Here a example:
 | `@Drawing`      | Trigger,Effect  | `@Drawing[id]{label}`, `@Drawing[label]` | This will trigger the effects when the player clicks/moves a token within the area of a drawing which has its text set to the `label` specified. Works best with rectangles. |
 | `@Door`         | Trigger,Effect  | `@Door[coordinates]`,`@Door[*]@Tag[list pf tags]`| This will trigger the effects when a player opens or closes a door (based on options). The coordinates can be copy/pasted from the wall configuration sheet (excluding the `[` and `]`). Is best avoid coordinates and use the new tagger integration `@Door[*]@Tag[door01]` |
 | `@JournalEntry` | Trigger,Effect  | `@JournalEntry[id]{name}`, `@JournalEntry[name]`  | If used as a trigger, this will cause the triggers to activate on any journal with the specified name (you cannot set a token id in this case). As a trigger effect |
-| `@Stairway`     | Trigger,Effect  | `@Stairway[id]{name}`  | |
+| `@Stairway`     | Trigger,Effect  | `@Stairway[id]{name}`  | Integration with the [Stairway](https://gitlab.com/SWW13/foundryvtt-stairways) module, but is limited only to click event :(. As an effect, this will this will run some effects before the teleport of the stairway |
 | `@ChatMessage`  | Effect          | `@ChatMessage[content message]{alias}`  | As an effect, this will send the specified message contents as a chat message |
 | `@Compendium`   | Effect          | `@Compendium[packId.idComepndium.idItem]{label}`  | only useable as an effect will display the compendium entry. |
-| `@Sound`        | Effect          | `@Sound[playlistName|soundName]{label}`, `@Sound[playlistName|soundName]`  | |
-| `@Playlist`     | Effect          | `@Playlist[id]{name}`, `@Playlist[name]`  | |
+| `@Sound`        | Effect          | `@Sound[playlistName\|soundName]{label}`, `@Sound[playlistName\|soundName]`  | Integration with the [Sound Link](https://github.com/superseva/sound-link) module. As an effect, this will play a very specific sound. |
+| `@Playlist`     | Effect          | `@Playlist[id]{name}`, `@Playlist[name]`  | As an effect, this will play a random sound from the specific playlist |
 | `@ooc`          | Effect          | `@ooc[content message]{alias}`  | As an effect, this will send the specified message contents as a chat message of type ooc|
 | `@emote`        | Effect          | `@emote[content message]{alias}`  | As an effect, this will send the specified message contents as a chat message of type emote |
 | `@whisper`      | Effect          | `@whisper[content message]{alias\|whisper}`  | As an effect, this will send the specified message contents as a chat message of type whisper |
 | `@selfwhisper`  | Effect          | `@selfwhisper[content message]{alias\|whisper}`  | As an effect, this will send the specified message contents as a chat message of type selfwhisper |
 | `@Trigger`      | Event Link      | `@Trigger[option1 option2 option3]` | This applies modifiers on the trigger line, keep reading for more information about available options, read 'Advanced options' paragraph for more details |
 | `@Tag`          | Event Link      | `@Tag[list of tags]`  | this element will activate the integration with the [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger) module, will filter the trigger with a additional checking on the tags (if presents) on the object |
-| `@<CONFIG[key]>`| Effect | `@Rolltable[id]{name}`, `@Quest[id]{name}`, `ecc.` | All keys colleciton supported from the `CONFIG` of foundry, the result maybe be differente depends on the specific use case |
+| `@<CONFIG[key]>`| Effect | `@Rolltable[id]{name}`, `@Quest[id]{name}`, `ecc.` | All keys colleciton supported from the `CONFIG` of foundry, the result maybe differ form what you expected depends on the specific use case |
 
 You can create and organize actors that would be used specifically for triggers, and drop them anywhere you want on the map. Using a transparent token has the best effect, and the players don't need to have any permissions for the token (or scene or journal to display) for the trigger to work.
 The triggers on actors and tokens will work only if they click on the token in the case of visible tokens, and if the token is hidden (GM layer), then it will activate the trigger when the player moves their token within the trigger token. Note that they can always do a long move and jump over the token which would not trigger the effects.
