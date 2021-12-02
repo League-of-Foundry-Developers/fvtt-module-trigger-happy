@@ -1,10 +1,14 @@
 # Changelog
 
-## 0.8.18
+## 0.8.19
 
-- Add settings 'ifNoTokenIsFoundTryToUseActor' for strange feedback from the community and also for compatibility with some module like tokenmold
+- Add settings 'ifNoTokenIsFoundTryToUseActor' for strange feedback from the community and also for compatibility with some module like token mold
 - Add new effects always for strange feedback from the community, `@ooc`, `@emote`, `@whisper`, `@selfwhisper` (details on readme)
 - Update readme
+
+## 0.8.18
+
+- Fix for ooc etc overriding whisper/self whishper.
 
 ## 0.8.17
 

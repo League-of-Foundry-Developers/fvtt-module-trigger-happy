@@ -249,7 +249,7 @@ export const TRIGGER_ENTITY_TYPES = {
   STAIRWAY: 'stairway',
   SOUND_LINK: 'sound', // not the ambient sound the one from the sound link module
   PLAYLIST: 'playlist',
-  // New support key ????
+  // New support key because i see people using these
   OOC: 'ooc',
   EMOTE: 'emote',
   WHISPER: 'whisper',
@@ -621,24 +621,19 @@ export class TriggerHappy {
           await effect.draw();
         } else if (effect instanceof ChatMessage) {
           const chatData = duplicate(effect.data);
-          // let myalias = effect.data.speaker.alias;
-          // if(canvas?.tokens?.controlled?.length > 0){
-          //   await canvas.tokens.controlled[0].control(); ;
-          // }
           if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.OOC)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.OOC;
           } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.EMOTE)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.EMOTE;
           } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.WHISPER)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.WHISPER;
-            chatData.whisper = ChatMessage.getWhisperRecipients('GM');
-            // const whisperAlwaysToGM = game.users.filter(u => u.isGM).map(u => u.id) ?? [];
-            // chatData.whisper.push(...whisperAlwaysToGM);
           } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.SELF_WHISPER)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.WHISPER;
+          }
+          if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.WHISPER)) {
+            chatData.whisper = ChatMessage.getWhisperRecipients('GM');
+          } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.SELF_WHISPER)) {
             chatData.whisper = [game.user.id];
-            // const whisperAlwaysToGM = game.users.filter(u => u.isGM).map(u => u.id) ?? [];
-            // chatData.whisper.push(...whisperAlwaysToGM);
           }
           await ChatMessage.create(chatData);
         } else if (effect instanceof ChatLink) {
@@ -934,7 +929,7 @@ export class TriggerHappy {
     const clickDrawings = this._getPlaceablesAt(this._getDrawings(), position);
     const clickNotes = this._getPlaceablesAt(this._getNotes(), position);
     const clickJournals = this._getPlaceablesAt(this._getJournals(), position);
-    // TODO this not work find a better solution this work only because when click on canvas there can be only one stairways at the time
+    // TODO this not work find a better solution this work only because when click on canavs there can be only one stairways at the time
     const clickStairways = this._getPlaceablesAt(this._getStairways(event.sceneId), position);
 
     if (clickTokens.length === 0 && clickDrawings.length == 0 &&
@@ -964,7 +959,7 @@ export class TriggerHappy {
       const upDrawings = this._getPlaceablesAt(drawings, position);
       const upNotes = this._getPlaceablesAt(notes, position);
       const upJournals = this._getPlaceablesAt(journals, position);
-      // TODO this not work find a better solution this work only because when click on canvas there can be only one stairways at the time
+      // TODO this not work find a better solution this work only because when click on canavs there can be only one stairways at the time
       const upStairways = this._getPlaceablesAt(stairways, position);
       if (upTokens.length === 0 && upDrawings.length === 0 &&
         upNotes.length === 0 && upStairways.length === 0 && upJournals.length === 0){
