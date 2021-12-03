@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.20
+
+- Bug fix again [Doors Won't Trigger](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/68), forgot a check
+- Add the option to customize the ChatSpeaker from the journal for the tag `@ooc`, `@emote`, `@whisper`, `@selfwhisper` (details on readme)
 ## 0.8.19
 
 - Add settings 'ifNoTokenIsFoundTryToUseActor' for strange feedback from the community and also for compatibility with some module like token mold
