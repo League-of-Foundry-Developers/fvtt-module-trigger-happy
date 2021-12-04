@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.21
+
+- Bug fix [[BUG] Adding @Tigger[] Modifier to an @Door[] Trigger Silently Fails](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/72)
+- JavaScript strings can be literals or objects ty [stackoverflow](https://stackoverflow.com/questions/203739/why-does-instanceof-return-false-for-some-literals/7772724#7772724)
+- Bug fix worn check "eventLink = effect.toLowerCase();" should be "effect = effect.toLowerCase();"
+
 ## 0.8.20
 
 - Bug fix again [Doors Won't Trigger](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/68), forgot a check

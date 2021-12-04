@@ -415,9 +415,11 @@ export class TriggerHappy {
               if(trigger != null && trigger != undefined){
                 trigger = this._checkTagsOnTrigger(entity, trigger, filterTags);
                 if(trigger){
-                  if(trigger instanceof String){
+                  if(typeof(trigger) === 'string' || trigger instanceof String){
                     trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
                   }
+                }
+                if(trigger){
                   triggers.push(trigger);
                 }
               }
@@ -432,7 +434,7 @@ export class TriggerHappy {
               break;
             }
             if(trigger){
-              if(trigger instanceof String){
+              if(typeof(trigger) === 'string' || trigger instanceof String){
                 trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
               }
             }
@@ -445,9 +447,11 @@ export class TriggerHappy {
           for (let id1 of ids) {
             let eventLink = this._manageTriggerEvent(triggerJournal, entity, id1, label, filterTags);
             if(eventLink){
-              if(eventLink instanceof String){
+              if(typeof(eventLink) === 'string' || eventLink instanceof String){
                 eventLink = eventLink.toLowerCase(); // force lowercase for avoid miss typing from the user
               }
+            }
+            if(eventLink){
               options.push(eventLink);
             }
           }
@@ -456,8 +460,10 @@ export class TriggerHappy {
           if(!effect){
             continue;
           }
-          if(effect instanceof String){
-            eventLink = effect.toLowerCase(); // force lowercase for avoid miss typing from the user
+          if(effect){
+            if(typeof(effect) === 'string' || effect  instanceof String){
+              effect = effect.toLowerCase(); // force lowercase for avoid miss typing from the user
+            }
           }
           if(effect){
             effects.push(effect);
@@ -481,6 +487,7 @@ export class TriggerHappy {
         return el.toLowerCase() === entity.toLowerCase();
       })
     ){
+      // MAnage the special case DoorControl is not a placeable object the wall is
       if(trigger instanceof DoorControl){
         trigger = trigger.wall;
       }
@@ -1440,9 +1447,21 @@ export class TriggerHappy {
       let doorControlTarget = this._retrieveFromIdOrName(this._getDoors(), idOrName);
       // Retrocompatibility check
       if(!doorControlTarget){
-        const coords = idOrName.split(',').map((c) => Number(c));
+        const coords = idOrName.split(',').map((c) => Number(c)) ?? [];
         if(coords && coords.length > 0 && coords.length == 4){
-          doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
+          doorControlTarget = this._getDoors()?.find((wall) => {
+            let mywall = wall;
+            if(wall instanceof DoorControl){
+              mywall = wall.wall.document;
+            }
+            if(wall instanceof Wall){
+              mywall = wall.document;
+            }
+            return mywall.data?.door > 0 && mywall.data?.c[0] == coords[0] && mywall.data?.c[1] == coords[1] &&
+              mywall.data?.c[2] == coords[2] && mywall.data?.c[3] == coords[3];
+          });
+          // doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
+          return doorControlTarget;
         }
       }
       return doorControlTarget;
@@ -1636,7 +1655,7 @@ export class TriggerHappy {
       canvas.controls?.doors?.children && canvas.controls?.doors?.children.length > 0
       ? canvas.controls?.doors?.children
       : game.scenes.current.walls?.contents.filter((wall) =>{
-        return wall.data.door > 0;
+        return wall.data?.door > 0;
       });
     return placeablesDoors ?? [];
   }
@@ -1733,5 +1752,4 @@ export class TriggerHappy {
     });
     return placeablesPlaylists ?? [];
   }
-
 }
