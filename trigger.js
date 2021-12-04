@@ -418,6 +418,8 @@ export class TriggerHappy {
                   if(typeof(trigger) === 'string' || trigger instanceof String){
                     trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
                   }
+                }
+                if(trigger){
                   triggers.push(trigger);
                 }
               }
