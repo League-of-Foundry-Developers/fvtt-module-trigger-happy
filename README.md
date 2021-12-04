@@ -90,6 +90,8 @@ Here the example structure of the line of the journal:
 
 ![tutorial](./wiki/imageTutorial2.png)
 
+**NOTE:** the trigger element MUST BE present on the current scene
+
 **NOTE:** From version `0.8.13` you can now use like id the character `*` for activate the same effect for all the trigger of that type
 
 Here a example:

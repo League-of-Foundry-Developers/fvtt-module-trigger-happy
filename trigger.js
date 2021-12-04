@@ -415,7 +415,7 @@ export class TriggerHappy {
               if(trigger != null && trigger != undefined){
                 trigger = this._checkTagsOnTrigger(entity, trigger, filterTags);
                 if(trigger){
-                  if(trigger instanceof String){
+                  if(typeof(trigger) === 'string' || trigger instanceof String){
                     trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
                   }
                   triggers.push(trigger);
@@ -432,7 +432,7 @@ export class TriggerHappy {
               break;
             }
             if(trigger){
-              if(trigger instanceof String){
+              if(typeof(trigger) === 'string' || trigger instanceof String){
                 trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
               }
             }
@@ -445,9 +445,11 @@ export class TriggerHappy {
           for (let id1 of ids) {
             let eventLink = this._manageTriggerEvent(triggerJournal, entity, id1, label, filterTags);
             if(eventLink){
-              if(eventLink instanceof String){
+              if(typeof(eventLink) === 'string' || eventLink instanceof String){
                 eventLink = eventLink.toLowerCase(); // force lowercase for avoid miss typing from the user
               }
+            }
+            if(eventLink){
               options.push(eventLink);
             }
           }
@@ -456,8 +458,10 @@ export class TriggerHappy {
           if(!effect){
             continue;
           }
-          if(effect instanceof String){
-            eventLink = effect.toLowerCase(); // force lowercase for avoid miss typing from the user
+          if(effect){
+            if(typeof(effect) === 'string' || effect  instanceof String){
+              effect = effect.toLowerCase(); // force lowercase for avoid miss typing from the user
+            }
           }
           if(effect){
             effects.push(effect);
@@ -1746,5 +1750,4 @@ export class TriggerHappy {
     });
     return placeablesPlaylists ?? [];
   }
-
 }
