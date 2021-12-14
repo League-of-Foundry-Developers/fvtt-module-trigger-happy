@@ -12,7 +12,7 @@
 
 [![Foundry Hub Endorsements](https://img.shields.io/endpoint?logoColor=white&url=https%3A%2F%2Fwww.foundryvtt-hub.com%2Fwp-json%2Fhubapi%2Fv1%2Fpackage%2Ftrigger-happy%2Fshield%2Fendorsements&style=for-the-badge)](https://www.foundryvtt-hub.com/package/trigger-happy/)
 
-
+![GitHub all releases](https://img.shields.io/github/downloads/League-of-Foundry-Developers/fvtt-module-trigger-happy/total?style=for-the-badge) 
 
 `Trigger Happy` is an FVTT module which adds a powerful yet simple system for creating triggers and automating things within a world.
 
@@ -57,7 +57,7 @@ To install this module manually:
 - **Enable 'only use journal for every scene' integration feature :** This setting make sense only with the setting 'journal for every scene' to true, it will disable the rollback to the standard parsing of the journals and make the parsing faster. ATTENTION: All the trigger on journals/notes that are not renamed based on a scene name/id will be ignored
 - **Enable avoid to deselect elements on the trigger event :** To remedy an incompatibility with other modules at the time of the 'mouse down' or other events together with the core setting 'Left-Click to Release Object' active, it is necessary that if a placeable object is selected on that event it remains at the event of 'mouse up' still selected. Unfortunately I have not found any other solution than to temporarily set the 'Left-Click to Release Object' setting to false (only if active) and then reset it to the original state at the 'mouse up' event. YOU NEED A REFRESH OF THE PAGE FOR APPLY THIS"
 - **If no token is found with that name try to found a token on the canvas linked to a actor with that id or name :** If no token is found with that name try to found a token on the canvas linked to a actor with that id or name, can be useful with some module like token mold where N tokens are linked to the same actor WORK ONLY `@Token` TRIGGERS.
-- **Disable warning messages:** If checked this setting will disable all the warnings generate from the loading of the triggers. Is useful to let this disabled when you are developing you trigger.
+- **Disable warning messages:** If checked this setting will disable all the warnings generate from the loading of the triggers. Is useful to let this disabled when you are developing your trigger.
 
 # Details
 
