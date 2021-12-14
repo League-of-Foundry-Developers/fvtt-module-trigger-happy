@@ -187,6 +187,15 @@ Hooks.once('init', async () => {
     type: Boolean,
   });
 
+  game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'disableWarningMessages', {
+    name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.disableWarningMessages.name`),
+    hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.disableWarningMessages.hint`),
+    scope: 'world',
+    config: true,
+    default: false,
+    type: Boolean,
+  });
+
 });
 
 /* ------------------------------------ */
@@ -473,6 +482,9 @@ export class TriggerHappy {
       }
 
       if (triggers.length > 0 && effects.length > 0){
+        if(options.length == 0){
+          options.push('click');
+        }
         triggers.forEach((trigger) => {
           this.triggers.push({ trigger, effects, options });
         });
@@ -530,7 +542,9 @@ export class TriggerHappy {
   _manageTriggerEvent(triggerJournal, entity, id, label){
     let trigger;
     if(!id && !label){
-      warn( `Can't manage the empty trigger '${entity}' on '${triggerJournal}'`);
+      if(!game.settings.get(TRIGGER_HAPPY_MODULE_NAME,'disableWarningMessages')){
+        warn( `Can't manage the empty trigger '${entity}' on '${triggerJournal}'`);
+      }
       return;
     }
     // If is a trigger event (special case)
@@ -539,7 +553,9 @@ export class TriggerHappy {
         return el.toLowerCase() === id?.toLowerCase() || el.toLowerCase() === label?.toLowerCase() ;
       });
       if (!found){
-        warn( `Can't manage the event '${entity}' on '${triggerJournal}'`);
+        if(!game.settings.get(TRIGGER_HAPPY_MODULE_NAME,'disableWarningMessages')){
+          warn( `Can't manage the event '${entity}' on '${triggerJournal}'`);
+        }
         return;
       }
       if(id){
@@ -589,11 +605,15 @@ export class TriggerHappy {
       }
       const config = CONFIG[configKey];
       if (!config){
-        warn( `Can't manage the config with entity '${entity}' and key '${configKey}' on '${triggerJournal}'`);
+        if(!game.settings.get(TRIGGER_HAPPY_MODULE_NAME,'disableWarningMessages')){
+          warn( `Can't manage the config with entity '${entity}' and key '${configKey}' on '${triggerJournal}'`);
+        }
         return;
       }
       if (!config.collection){
-        warn( `Can't manage the config collection with entity '${entity}' and key '${configKey}' on '${triggerJournal}'`);
+        if(!game.settings.get(TRIGGER_HAPPY_MODULE_NAME,'disableWarningMessages')){
+          warn( `Can't manage the config collection with entity '${entity}' and key '${configKey}' on '${triggerJournal}'`);
+        }
         return;
       }
       trigger = config.collection.instance.get(id);
@@ -648,9 +668,9 @@ export class TriggerHappy {
           //   let tokenId = chatData.speaker.token;
           //   let actorId = chatData.speaker.actor;
           //   let sceneId = chatData.speaker.scene;
-          //   let token = canvas?.tokens?.controlled[0]; 
-          //   let alias = effect.alias; 
-          //   let scene = canvas.scene; 
+          //   let token = canvas?.tokens?.controlled[0];
+          //   let alias = effect.alias;
+          //   let scene = canvas.scene;
           //   let user = game.userId;
           //   //, message = new ChatMessage;
           //   if(tokenId){
@@ -696,9 +716,9 @@ export class TriggerHappy {
           //   let tokenId = chatData.speaker.token;
           //   let actorId = chatData.speaker.actor;
           //   let sceneId = chatData.speaker.scene;
-          //   let token = canvas?.tokens?.controlled[0]; 
-          //   let alias = effect.alias; 
-          //   let scene = canvas.scene; 
+          //   let token = canvas?.tokens?.controlled[0];
+          //   let alias = effect.alias;
+          //   let scene = canvas.scene;
           //   let user = game.userId;
           //   //, message = new ChatMessage;
           //   if(tokenId){

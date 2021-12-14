@@ -12,6 +12,8 @@
 
 [![Foundry Hub Endorsements](https://img.shields.io/endpoint?logoColor=white&url=https%3A%2F%2Fwww.foundryvtt-hub.com%2Fwp-json%2Fhubapi%2Fv1%2Fpackage%2Ftrigger-happy%2Fshield%2Fendorsements&style=for-the-badge)](https://www.foundryvtt-hub.com/package/trigger-happy/)
 
+
+
 `Trigger Happy` is an FVTT module which adds a powerful yet simple system for creating triggers and automating things within a world.
 
 This was created as a way of creating the interactive FVTT Tutorial on [The Forge](https://forgevtt.com/game/demo)
@@ -55,8 +57,29 @@ To install this module manually:
 - **Enable 'only use journal for every scene' integration feature :** This setting make sense only with the setting 'journal for every scene' to true, it will disable the rollback to the standard parsing of the journals and make the parsing faster. ATTENTION: All the trigger on journals/notes that are not renamed based on a scene name/id will be ignored
 - **Enable avoid to deselect elements on the trigger event :** To remedy an incompatibility with other modules at the time of the 'mouse down' or other events together with the core setting 'Left-Click to Release Object' active, it is necessary that if a placeable object is selected on that event it remains at the event of 'mouse up' still selected. Unfortunately I have not found any other solution than to temporarily set the 'Left-Click to Release Object' setting to false (only if active) and then reset it to the original state at the 'mouse up' event. YOU NEED A REFRESH OF THE PAGE FOR APPLY THIS"
 - **If no token is found with that name try to found a token on the canvas linked to a actor with that id or name :** If no token is found with that name try to found a token on the canvas linked to a actor with that id or name, can be useful with some module like token mold where N tokens are linked to the same actor WORK ONLY `@Token` TRIGGERS.
+- **Disable warning messages:** If checked this setting will disable all the warnings generate from the loading of the triggers. Is useful to let this disabled when you are developing you trigger.
 
 # Details
+
+## Got a bunch of warnings like this '`Can't manage the config collection with entity 'XXX' and key 'YYY' on 'ZZZZ'`' and ' `Can't manage the config with entity 'XXX' and key 'YYY' on 'ZZZ'`' why ?
+
+These messages like this '`Can't manage the config collection with entity 'drawing' and key 'Drawing'`' usually mean the trigger you are try to "get" (in this case a drawing) is not on the current scene/canvas. For example on the load of the scene _A_ i have a drawing with the label '_Arena_' then with this text i load a trigger.
+
+`@drawing[Arena]@trigger[click]@scene[go to scene b]`
+
+when i click on the drawing it's go to scene _B_, During the loading of the scene _B_ i got the  warning
+
+`Can't manage the config collection with entity 'drawing' and key 'Drawing' on '@drawing[Arena]'`
+
+and it should be fine,  it just a warning for let you know on this scene it was no possible to load that trigger.
+For avoid the warning i have prepared these two additional setting :
+
+- Enable 'journal for every scene' integration feature
+- Enable 'only use journal for every scene' integration feature
+
+they should help to make the warnings disappear and avoid to parse all the journals under the 'trigger happy' folder.
+
+**NOTE: from the version 0.8.22 you can disable these warnings on the module setting 'Disable warning messages'**
 
 ## If your triggers mysteriously stop working check that you have not disabled them by mistake.
 
@@ -91,6 +114,8 @@ Here the example structure of the line of the journal:
 ![tutorial](./wiki/imageTutorial2.png)
 
 **NOTE:** the trigger element MUST BE present on the current scene
+
+**NOTE:** From version `0.8.22` the event link `@Trigger` is no more mandatory, if no event link with syntax `@Trigger` is specified the default one is `@Trigger[click]`
 
 **NOTE:** From version `0.8.13` you can now use like id the character `*` for activate the same effect for all the trigger of that type
 
