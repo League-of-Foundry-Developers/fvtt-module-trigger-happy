@@ -547,8 +547,10 @@ export class TriggerHappy {
       }
       return;
     }
+    let isAManagedTrigger = false;
     // If is a trigger event (special case)
     if (entity === TRIGGER_ENTITY_TYPES.TRIGGER) {
+      isAManagedTrigger = true;
       const found = this.arrayEvents.find((el) => {
         return el.toLowerCase() === id?.toLowerCase() || el.toLowerCase() === label?.toLowerCase() ;
       });
@@ -571,7 +573,7 @@ export class TriggerHappy {
         return el.toLowerCase() === entity.toLowerCase();
       })
     ){
-
+      isAManagedTrigger = true;
       let relevantDocument = this._retrieveFromEntity(entity, id, label);
       if(!relevantDocument && label){
         relevantDocument = this._retrieveFromEntity(entity, label, label);
@@ -588,6 +590,7 @@ export class TriggerHappy {
     else if(this.arrayNoPlaceableObjects.find((el) => {
       return el.toLowerCase() === entity.toLowerCase();
     })){
+      isAManagedTrigger = true;
       let relevantDocument = this._retrieveFromEntity(entity, id, label);
       if(!relevantDocument && label){
         relevantDocument = this._retrieveFromEntity(entity, label, label);
@@ -595,7 +598,7 @@ export class TriggerHappy {
       trigger = relevantDocument;
     }
     // Generic last standing try to find a configuration for the key
-    if(!trigger){
+    if(!trigger && !isAManagedTrigger){
       let configKey;
       for (let key of Object.keys(CONFIG)) {
         if(key.toLowerCase() === entity){
@@ -625,6 +628,12 @@ export class TriggerHappy {
       }
       if (!trigger && label){
         trigger = config.collection.instance.getName(label);
+      }
+    }else{
+      if(!trigger){
+        if(!game.settings.get(TRIGGER_HAPPY_MODULE_NAME,'disableWarningMessages')){
+          warn( `Can't retrieve the config with entity '${entity}' and key '${configKey}' on '${triggerJournal}'`);
+        }
       }
     }
     return trigger;
