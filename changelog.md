@@ -3,7 +3,7 @@
 ## 0.8.22
 
 - Add module settings for disable all the warning messages generate from the loading of the trigger
-- Add default value for @Trigger to 'click'
+- Add default value for `@Trigger` to 'click'
 - Update README
 
 ## 0.8.21
