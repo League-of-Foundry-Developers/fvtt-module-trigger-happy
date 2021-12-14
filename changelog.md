@@ -5,6 +5,7 @@
 - Add module settings for disable all the warning messages generate from the loading of the trigger
 - Add default value for @Trigger to 'click'
 - Update README
+
 ## 0.8.21
 
 - Bug fix [[BUG] Adding @Tigger[] Modifier to an @Door[] Trigger Silently Fails](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/72)

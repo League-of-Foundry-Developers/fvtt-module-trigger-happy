@@ -632,7 +632,7 @@ export class TriggerHappy {
     }else{
       if(!trigger){
         if(!game.settings.get(TRIGGER_HAPPY_MODULE_NAME,'disableWarningMessages')){
-          warn( `Can't retrieve the config with entity '${entity}' and key '${configKey}' on '${triggerJournal}'`);
+          warn( `Can't retrieve the config with entity '${entity}' and key '${id}' or '${label}' on '${triggerJournal}'`);
         }
       }
     }
