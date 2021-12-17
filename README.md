@@ -44,6 +44,7 @@ To install this module manually:
 - [Forien Quest Log version 0.7.7 and later](https://github.com/League-of-Foundry-Developers/foundryvtt-forien-quest-log)
 - [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger)
 - [Stairway](https://gitlab.com/SWW13/foundryvtt-stairways) (limited only to click event :( )
+- [Shared Vision](https://github.com/CDeenen/SharedVision) added a integration feature
 
 # Settings
 
@@ -172,13 +173,14 @@ The following options are available :
 - `whisper`: Will send any chat messages in that trigger as a whisper to the GM
 - `selfWhisper`: Will send any chat messages in that trigger as a whisper to the player who activates the trigger
 - `preload`: Will cause any scene on the trigger line to be preloaded instead of switching the view to it
-- `click`: Will cause the trigger token to activate on a click
+- `click`: Will cause the trigger token to activate on a click. **THIS IS THE DEFAULT VALUE**
 - `move`: Will cause the trigger token to activate on a token move over it
 - `stopMovement`: Will prevent any tokens from moving on top of the trigger token
 - `capture`: Will cause the trigger token to capture any player moment that crosses it
 - `doorClose`: Will cause a `@Door` trigger to trigger when the door is closed instead of the default when it opens.
 - `doorOpen`: Will cause a `@Door` trigger to trigger when the door is open. This is the default, but it can be used along with 
 - `doorClose` option to have it trigger on both open and close
+- `shareVision=true`, `shareVision=false`, `shareVision=toggle` , **this key derived from the integration with the module [Shared Vision](https://github.com/CDeenen/SharedVision)** . now you can add triggers to Foundry, for example when a token moves onto another token, or when it is clicked. Global Shared Vision can be triggered through Trigger Happy on a 'click' or 'move' trigger. You set this up like you would any other trigger, and you add 'shareVision=true', 'shareVision=false' or 'shareVision=toggle' to the '@Trigger' pseudo link. For example _To enable Global Shared Vision when a token moves unto another token called 'test'_, you use: `@Token[test] @Trigger[move shareVision=true]`,  _To enable Global Shared Vision when click on a token_ you use `@Token[test] @Trigger[click shareVision=true]`, `@Token[test] @Trigger[click shareVision=false]`, `@Token[test] @Trigger[click shareVision=toogle]`
 
 If a token is hidden (GM layer), then it is automatically considered a 'move' trigger, otherwise it's a 'click' trigger. You can override it with the `@Trigger[click]` or `@Trigger[move]` options, or you can specify both options to make a token trigger on both clicks and moves.
 
