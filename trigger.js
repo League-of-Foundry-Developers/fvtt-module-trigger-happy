@@ -1426,20 +1426,20 @@ export class TriggerHappy {
     return true;
   }
 
-  _getObjectsFromScene(scene) {
-    return [
-      ...Array.from(scene.tokens),
-      ...Array.from(scene.lights),
-      ...Array.from(scene.sounds),
-      ...Array.from(scene.templates),
-      ...Array.from(scene.tiles),
-      ...Array.from(scene.walls),
-      ...Array.from(scene.drawings),
-      ...Array.from(scene.stairways), // Add module stairways...
-    ]
-      .deepFlatten()
-      .filter(Boolean);
-  }
+  // _getObjectsFromScene(scene) {
+  //   return [
+  //     ...Array.from(scene.tokens),
+  //     ...Array.from(scene.lights),
+  //     ...Array.from(scene.sounds),
+  //     ...Array.from(scene.templates),
+  //     ...Array.from(scene.tiles),
+  //     ...Array.from(scene.walls),
+  //     ...Array.from(scene.drawings),
+  //     ...Array.from(scene.stairways), // Add module stairways...
+  //   ]
+  //     .deepFlatten()
+  //     .filter(Boolean);
+  // }
 
   _retrieveFromEntity(entity, idOrName, label) {
     if (!entity) return null;
@@ -1897,7 +1897,7 @@ export class TriggerHappy {
   }
 
   _getAmbientLights(sceneId) {
-    if (sceneId) {
+    if (!sceneId) {
       const placeablesLightings = [];
       if (canvas.lighting?.placeables && canvas.lighting?.placeables.length > 0) {
         canvas.lighting?.placeables.forEach((ambientLight, key) => {
@@ -1918,7 +1918,7 @@ export class TriggerHappy {
   }
 
   _getAmbientSounds(sceneId) {
-    if (sceneId) {
+    if (!sceneId) {
       const placeablesSounds = [];
       if (canvas.sounds?.placeables && canvas.sounds?.placeables.length > 0) {
         canvas.sounds?.placeables.forEach((ambientSound, key) => {
@@ -1939,7 +1939,7 @@ export class TriggerHappy {
   }
 
   _getTiles(sceneId) {
-    if (sceneId) {
+    if (!sceneId) {
       const placeablesTiles = [];
       if (canvas.foreground?.placeables && canvas.foreground?.placeables.length > 0) {
         canvas.foreground?.placeables.forEach((tile, key) => {
