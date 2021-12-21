@@ -40,11 +40,12 @@ To install this module manually:
 
 # Module compatibility
 
-- [Sound Link](https://github.com/superseva/sound-link)
-- [Forien Quest Log version 0.7.7 and later](https://github.com/League-of-Foundry-Developers/foundryvtt-forien-quest-log)
-- [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger)
-- [Stairway](https://gitlab.com/SWW13/foundryvtt-stairways) (limited only to click event :( )
-- [Shared Vision](https://github.com/CDeenen/SharedVision) added a integration feature
+- [Sound Link](https://github.com/superseva/sound-link) check out the examples
+- [Forien Quest Log version 0.7.7 and later](https://github.com/League-of-Foundry-Developers/foundryvtt-forien-quest-log) check out the examples
+- [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger) check out the examples
+- [Stairway](https://gitlab.com/SWW13/foundryvtt-stairways) (limited only to click event :( ) check out the examples
+- [Shared Vision](https://github.com/CDeenen/SharedVision) added a integration feature check out the examples
+- [NPC Chatter](https://github.com/cswendrowski/FoundryVtt-Npc-Chatter) check out the examples
 
 # Settings
 
@@ -342,6 +343,28 @@ here the video on the exact minute: https://youtu.be/lfSYJXVQAcE?t=586
 ```
 @JournalEntry[TEST] @Trigger[click] @Quest[xXj5KZlMvGn3pTX8]{New Quest}
 ```
+
+### Example with [NPC Chatter](https://github.com/cswendrowski/FoundryVtt-Npc-Chatter) module base on this [video](https://www.youtube.com/watch?v=W6z0pMUBAz8)
+
+Here the trigger i put on the journal:
+
+`@Token[Catharina Combat]@Trigger[Click]@Macro[eD2rpXMTXTuo7Bh2]{Catharina Merchant Chatter}`
+
+and here the macro with name 'Catharina Merchant Chatter' (you can do a better macro it' just a example):
+
+```
+var NAME = "Catharina Combat";
+var token = game.scenes.filter(x => x.active)[0].data.tokens.filter(x => {
+// console.error(x.name);
+if(x.name.toLowerCase().includes(NAME.toLowerCase().trim())){
+  return x;
+}
+})[0];
+// console.log(token.name);
+game.npcChatter.tokenChatter(token);
+```
+
+remember to create  a rolltable with name 'Catharina Combat'
 
 ## [Changelog](./changelog.md)
 
