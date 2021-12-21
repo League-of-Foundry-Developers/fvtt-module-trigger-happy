@@ -825,16 +825,22 @@ export class TriggerHappy {
       (trigger.trigger instanceof Actor && trigger.trigger.id === token.data.actorId) ||
       (trigger.trigger instanceof TokenDocument && trigger.trigger.id === token.id) ||
       (trigger.trigger instanceof Token && trigger.trigger.id === token.id);
-    if (!isTrigger) return false;
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
+    if (!isTrigger){
+      return false;
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK){
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) && !token.data.hidden)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE){
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) && token.data.hidden)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE){
+      return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
     return true;
   }
 
@@ -843,32 +849,44 @@ export class TriggerHappy {
         (trigger.trigger instanceof Note && trigger.trigger.id === note.id) ||
         (trigger.trigger instanceof NoteDocument && trigger.trigger.id === note.id) ||
         (trigger.trigger.documentName === 'JournalEntry' && trigger.trigger.sceneNote?.id === note.id);
-      if (!isTrigger) return false;
-      if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
+      if (!isTrigger){
+        return false;
+      }
+      if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK){
         return (
           trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE))
         );
-      if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE)
+      }
+      if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE){
         return (
           trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK))
         );
-      if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+      }
+      if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE){
+        return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+      }
       return true;
   }
 
   _isJournalTrigger(journal, trigger, type) {
     const isTrigger =
       (trigger.trigger.documentName === 'JournalEntry' && trigger.trigger.id === journal.id);
-    if (!isTrigger) return false;
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
+    if (!isTrigger){
+      return false;
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK){
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE))
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE){
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK))
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE){
+      return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
     return true;
   }
 
@@ -879,16 +897,22 @@ export class TriggerHappy {
     const isTrigger =
       (trigger.trigger?.document?.documentName === 'Stairway' && trigger.trigger.id === stairway.id) ||
       (trigger.trigger?.documentName  === 'Stairway' && trigger.trigger.id === stairway.id);
-    if (!isTrigger) return false;
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
+    if (!isTrigger){
+      return false;
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK){
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE))
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK))
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE){
+      return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
     return true;
   }
 
@@ -896,16 +920,22 @@ export class TriggerHappy {
     const isTrigger =
       (trigger.trigger instanceof Drawing && trigger.trigger.id === drawing.id) ||
       (trigger.trigger instanceof DrawingDocument && trigger.trigger.id === drawing.id);
-    if (!isTrigger) return false;
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
+    if (!isTrigger){
+      return false;
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK){
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) && !drawing.data.hidden)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE){
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) && drawing.data.hidden)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE){
+      return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
     return true;
   }
 
@@ -918,16 +948,22 @@ export class TriggerHappy {
       (trigger.trigger instanceof Wall && trigger.trigger.id === wall.id) ||
       (trigger.trigger instanceof WallDocument && trigger.trigger.id === wall.id) ||
       (trigger.trigger instanceof DoorControl && trigger.trigger.doorControl?.id === wall.id);
-    if (!isTrigger) return false;
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
+    if (!isTrigger){
+      return false;
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK){
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE))
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE){
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) || (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK))
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE){
+      return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
     return true;
   }
 
@@ -1666,12 +1702,25 @@ export class TriggerHappy {
     }
   }
 
-  _getTokens(){
-    const placeablesToken =
-      canvas.tokens?.placeables && canvas.tokens?.placeables.length > 0
-      ? canvas.tokens?.placeables
-      : game.scenes.current.tokens?.contents;
-    return placeablesToken ?? [];
+  _getTokens(sceneId){
+    if(!sceneId){
+      const placeablesToken = [];
+      if(canvas.tokens?.placeables && canvas.tokens?.placeables.length > 0){
+        canvas.tokens?.placeables.forEach((token, key) => {
+          placeablesToken.push(token.document);
+        });
+      }
+      game.scenes.current.tokens?.contents.forEach((token, key) => {
+        placeablesToken.push(token);
+      });
+      return placeablesToken ?? [];
+    }else{
+      const placeablesToken = [];
+      game.scenes.get(sceneId).tokens?.contents.forEach((token, key) => {
+        placeablesToken.push(token);
+      });
+      return placeablesToken ?? [];
+    }
   }
 
   _getActors(){
@@ -1679,30 +1728,73 @@ export class TriggerHappy {
     return placeablesActor ?? [];
   }
 
-  _getDoors(){
-    const placeablesDoors =
-      canvas.controls?.doors?.children && canvas.controls?.doors?.children.length > 0
-      ? canvas.controls?.doors?.children
-      : game.scenes.current.walls?.contents.filter((wall) =>{
+  _getDoors(sceneId){
+    if(!sceneId){
+      const placeablesDoors = [];
+      if(canvas.controls?.doors?.children && canvas.controls?.doors?.children.length > 0){
+        canvas.controls?.doors?.children.forEach((door, key) => {
+          placeablesDoors.push(door.document);
+        });
+      }
+      const doors = game.scenes.current.walls?.contents.filter((wall) =>{
         return wall.data?.door > 0;
       });
-    return placeablesDoors ?? [];
+      if(doors && doors.length > 0){
+        placeablesDoors.push(...doors);
+      }
+      return placeablesDoors ?? [];
+    }else{
+      const placeablesDoors = [];
+      const doors = game.scenes.get(sceneId).walls?.contents.filter((wall) =>{
+        return wall.data?.door > 0;
+      });
+      if(doors && doors.length > 0){
+        placeablesDoors.push(...doors);
+      }
+      return placeablesDoors ?? [];
+    }
   }
 
-  _getDrawings(){
-    const placeablesDrawings =
-      canvas.drawings?.placeables && canvas.drawings?.placeables.length > 0
-      ? canvas.drawings?.placeables
-      : game.scenes.current.drawings?.contents;
-    return placeablesDrawings ?? [];
+  _getDrawings(sceneId){
+    if(!sceneId){
+      const placeablesDrawings = [];
+      if(canvas.drawings?.placeables && canvas.drawings?.placeables.length > 0){
+        canvas.drawings?.placeables.forEach((drawing, key) => {
+          placeablesDrawings.push(drawing.document);
+        });
+      }
+      game.scenes.current.drawings?.contents.forEach((drawing, key) => {
+        placeablesDrawings.push(drawing);
+      });
+      return placeablesDrawings ?? [];
+    }else{
+      const placeablesDrawings = [];
+      game.scenes.get(sceneId).drawings?.contents.forEach((drawing, key) => {
+        placeablesDrawings.push(drawing);
+      });
+      return placeablesDrawings ?? [];
+    }
   }
 
-  _getNotes(){
-    const placeablesNotes =
-      canvas.notes?.placeables && canvas.notes?.placeables.length > 0
-      ? canvas.notes?.placeables
-      : game.scenes.current.notes?.contents;
-    return placeablesNotes ?? [];
+  _getNotes(sceneId){
+    if(!sceneId){
+      const placeablesNotes = [];
+      if(canvas.notes?.placeables && canvas.notes?.placeables.length > 0){
+        canvas.notes?.placeables.forEach((note, key) => {
+          placeablesNotes.push(note.document);
+        });
+      }
+      game.scenes.current.notes?.contents.forEach((note, key) => {
+        placeablesNotes.push(note);
+      });
+      return placeablesNotes ?? [];
+    }else{
+      const placeablesNotes = [];
+      game.scenes.get(sceneId).notes?.contents.forEach((note, key) => {
+        placeablesNotes.push(note);
+      });
+      return placeablesNotes ?? [];
+    }
   }
 
   _getJournals(){
@@ -1712,10 +1804,15 @@ export class TriggerHappy {
 
   _getStairways(sceneId){
     if(!sceneId){
-      const placeablesStairways =
-        canvas.stairways?.placeables && canvas.stairways?.placeables.length > 0
-        ? canvas.stairways?.placeables
-        : game.scenes.current.stairways?.contents;
+      const placeablesStairways = [];
+      if(canvas.stairways?.placeables && canvas.stairways?.placeables.length > 0){
+        canvas.stairways?.placeables.forEach((stairway, key) => {
+          placeablesStairways.push(stairway.document);
+        });
+      }
+      game.scenes.current.stairways?.contents.forEach((stairway, key) => {
+        placeablesStairways.push(stairway);
+      });
       return placeablesStairways ?? [];
     }else{
       const currentScene = game.scenes.find((x) => {
@@ -1736,28 +1833,67 @@ export class TriggerHappy {
     return placeablesCompendiums ?? [];
   }
 
-  _getAmbientLights(){
-      const placeablesLightings =
-        canvas.lighting?.placeables && canvas.lighting?.placeables.length > 0
-        ? canvas.lighting?.placeables
-        : game.scenes.current.lights.contents;
+  _getAmbientLights(sceneId){
+    if(sceneId){
+      const placeablesLightings = [];
+      if(canvas.lighting?.placeables && canvas.lighting?.placeables.length > 0){
+        canvas.lighting?.placeables.forEach((ambientLight, key) => {
+          placeablesLightings.push(ambientLight.document);
+        });
+      }
+      game.scenes.current.lights.contents.forEach((ambientLight, key) => {
+        placeablesLightings.push(ambientLight);
+      });
       return placeablesLightings ?? [];
+    }else{
+      const placeablesLightings = [];
+      game.scenes.get(sceneId).lights.contents.forEach((ambientLight, key) => {
+        placeablesLightings.push(ambientLight);
+      });
+      return placeablesLightings ?? [];
+    }
   }
 
-  _getAmbientSounds(){
-      const placeablesSounds =
-        canvas.sounds?.placeables && canvas.sounds?.placeables.length > 0
-        ? canvas.sounds?.placeables
-        : game.scenes.current.sounds.contents;
+  _getAmbientSounds(sceneId){
+    if(sceneId){
+      const placeablesSounds = [];
+      if(canvas.sounds?.placeables && canvas.sounds?.placeables.length > 0){
+        canvas.sounds?.placeables.forEach((ambientSound, key) => {
+          placeablesSounds.push(ambientSound.document);
+        });
+      }
+      game.scenes.current.sounds.contents.forEach((ambientSound, key) => {
+        placeablesSounds.push(ambientSound);
+      });
       return placeablesSounds ?? [];
+    }else{
+      const placeablesSounds = [];
+      game.scenes.get(sceneId).sounds.contents.forEach((ambientSound, key) => {
+        placeablesSounds.push(ambientSound);
+      });
+      return placeablesSounds ?? [];
+    }
   }
 
-  _getTiles(){
-      const placeablesTiles =
-        canvas.foreground?.placeables && canvas.foreground?.placeables.length > 0
-        ? canvas.foreground?.placeables
-        : game.scenes.current.tiles.contents;
+  _getTiles(sceneId){
+    if(sceneId){
+      const placeablesTiles = [];
+      if(canvas.foreground?.placeables && canvas.foreground?.placeables.length > 0){
+        canvas.foreground?.placeables.forEach((tile, key) => {
+          placeablesTiles.push(tile.document);
+        });
+      }
+      game.scenes.current.tiles.contents.forEach((tile, key) => {
+        placeablesTiles.push(tile);
+      });
       return placeablesTiles ?? [];
+    }else{
+      const placeablesTiles = [];
+      game.scenes.get(sceneId).tiles.contents.forEach((tile, key) => {
+        placeablesTiles.push(tile);
+      });
+      return placeablesTiles ?? [];
+    }
   }
 
   _getTables(){

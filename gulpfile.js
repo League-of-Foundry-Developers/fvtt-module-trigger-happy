@@ -128,7 +128,7 @@ const tsConfig = ts.createProject('tsconfig.json', {
 function buildTS() {
   return (
     gulp
-      .src(['./**/*.ts','!./node_modules/**','!gulpfile.js'])
+      .src(['./**/*.ts', '!./node_modules/**', '!gulpfile.js'])
       .pipe(tsConfig())
 
       // // eslint() attaches the lint output to the "eslint" property
@@ -151,7 +151,7 @@ function buildTS() {
 function buildJS() {
   return (
     gulp
-      .src(['./**/*.js','!./node_modules/**','!gulpfile.js'])
+      .src(['./**/*.js', '!./node_modules/**', '!gulpfile.js'])
 
       // // eslint() attaches the lint output to the "eslint" property
       // // of the file object so it can be used by other modules.
@@ -173,7 +173,7 @@ function buildJS() {
 function buildMJS() {
   return (
     gulp
-      .src(['./**/*.mjs','!./node_modules/**','!gulpfile.js'])
+      .src(['./**/*.mjs', '!./node_modules/**', '!gulpfile.js'])
 
       // // eslint() attaches the lint output to the "eslint" property
       // // of the file object so it can be used by other modules.
@@ -193,28 +193,42 @@ function buildMJS() {
  * Build Css
  */
 function buildCSS() {
-  return gulp.src(['./**/*.css','!./node_modules/**','!gulpfile.js']).pipe(gulp.dest('dist'));
+  return gulp.src(['./**/*.css', '!./node_modules/**', '!gulpfile.js']).pipe(gulp.dest('dist'));
 }
 
 /**
  * Build Less
  */
 function buildLess() {
-  return gulp.src(['./**/*.less','!./node_modules/**','!gulpfile.js']).pipe(less()).pipe(gulp.dest('dist'));
+  return gulp.src(['./**/*.less', '!./node_modules/**', '!gulpfile.js']).pipe(less()).pipe(gulp.dest('dist'));
 }
 
 /**
  * Build SASS
  */
 function buildSASS() {
-  return gulp.src(['./**/*.scss','!./node_modules/**','!gulpfile.js']).pipe(sass().on('error', sass.logError)).pipe(gulp.dest('dist'));
+  return gulp
+    .src(['./**/*.scss', '!./node_modules/**', '!gulpfile.js'])
+    .pipe(sass().on('error', sass.logError))
+    .pipe(gulp.dest('dist'));
 }
 
 /**
  * Copy static files
  */
 async function copyFiles() {
-  const statics = ['lang', 'fonts', 'assets', 'icons', 'images', 'templates', 'packs', 'module.json', 'system.json', 'template.json'];
+  const statics = [
+    'lang',
+    'fonts',
+    'assets',
+    'icons',
+    'images',
+    'templates',
+    'packs',
+    'module.json',
+    'system.json',
+    'template.json',
+  ];
   try {
     for (const file of statics) {
       if (fs.existsSync(path.join('.', file))) {
@@ -244,7 +258,7 @@ function buildWatch() {
 /*		CLEAN		*/
 /********************/
 
-gulp.task('clean', function(){
+gulp.task('clean', function () {
   clean();
 });
 /**
@@ -286,7 +300,7 @@ async function clean() {
     for (const filePath of files) {
       await fs.remove(path.join('dist', filePath));
     }
-    del('./dist/**', {force:true});
+    del('./dist/**', { force: true });
     return Promise.resolve();
   } catch (err) {
     Promise.reject(err);
@@ -477,11 +491,11 @@ function updateManifest(cb) {
 }
 
 function gitAdd() {
-  return gulp.src(['package','!./node_modules/**','!gulpfile.js']).pipe(git.add({ args: '--no-all' }));
+  return gulp.src(['package', '!./node_modules/**', '!gulpfile.js']).pipe(git.add({ args: '--no-all' }));
 }
 
 function gitCommit() {
-  return gulp.src(['./*','!./node_modules/**','!gulpfile.js']).pipe(
+  return gulp.src(['./*', '!./node_modules/**', '!gulpfile.js']).pipe(
     git.commit(`v${getManifest().file.version}`, {
       args: '-a',
       disableAppendPaths: true,
