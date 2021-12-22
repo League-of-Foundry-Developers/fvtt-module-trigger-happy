@@ -158,12 +158,35 @@ Here a example:
 | `@Trigger`      | Event Link      | `@Trigger[option1 option2 option3]` | This applies modifiers on the trigger line, keep reading for more information about available options, read 'Advanced options' paragraph for more details |
 | `@Tag`          | Event Link      | `@Tag[list of tags]`  | this element will activate the integration with the [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger) module, will filter the trigger with a additional checking on the tags (if presents) on the object. **You need to install the module [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger)** |
 | `@<CONFIG[key]>`| Effect | `@Rolltable[id]{name}`, `@Quest[id]{name}`, `ecc.` | All keys colleciton supported from the `CONFIG` of foundry, the result maybe differ form what you expected depends on the specific use case |
+| `@<CUSTOM[args]>`| Effect | `@XXX[args]`, `@YYY[args]`, `ecc.` | Read the details on 'Add a custom effect' paragraph |
 
 You can create and organize actors that would be used specifically for triggers, and drop them anywhere you want on the map. Using a transparent token has the best effect, and the players don't need to have any permissions for the token (or scene or journal to display) for the trigger to work.
 The triggers on actors and tokens will work only if they click on the token in the case of visible tokens, and if the token is hidden (GM layer), then it will activate the trigger when the player moves their token within the trigger token. Note that they can always do a long move and jump over the token which would not trigger the effects.
 Don't forget that you can also use token avatars as buttons, or change their width and height to fit your need.
 
 If multiple trigger effects are in the same line, then they will be executed in sequence, waiting for the previous effect to finish before starting the next one.
+
+## Add a custom Effect
+
+Now you can add your custom effect to the trigger, the element between `[` and `]` is a array of arguments separate form the whitespace character ` ` so you can use on your code invoked with a hook call using the key (without @) like a reference e.g. 
+
+from this trigger:
+
+`@Token[Pippo]@XXX[arg1 arg2]@YYY[arg3 arg4]`
+
+when clicked the token with name 'Pippo' the module will invoked these hooks:
+
+`Hooks.call('TriggerHappy', 'XXX', [arg1 arg2])`
+`Hooks.call('TriggerHappy', 'YYY', [arg3 arg4])`
+
+Modules and macros MUST register the custom effect with the `registerEffect` function during the setup of foundry. For example:
+
+```
+Hooks.once('setup', function () {
+  game.triggers.registerEffect('XXX');
+  game.triggers.registerEffect('YYY');
+});
+```
 
 ## Advanced options
 
@@ -181,7 +204,7 @@ The following options are available :
 - `doorClose`: Will cause a `@Door` trigger to trigger when the door is closed instead of the default when it opens.
 - `doorOpen`: Will cause a `@Door` trigger to trigger when the door is open. This is the default, but it can be used along with 
 - `doorClose` option to have it trigger on both open and close
-- `shareVision=true`, `shareVision=false`, `shareVision=toggle` , **this key derived from the integration with the module [Shared Vision](https://github.com/CDeenen/SharedVision)** . now you can add triggers to Foundry, for example when a token moves onto another token, or when it is clicked. Global Shared Vision can be triggered through Trigger Happy on a 'click' or 'move' trigger. You set this up like you would any other trigger, and you add 'shareVision=true', 'shareVision=false' or 'shareVision=toggle' to the '@Trigger' pseudo link. For example _To enable Global Shared Vision when a token moves unto another token called 'test'_, you use: `@Token[test] @Trigger[move shareVision=true]`,  _To enable Global Shared Vision when click on a token_ you use `@Token[test] @Trigger[click shareVision=true]`, `@Token[test] @Trigger[click shareVision=false]`, `@Token[test] @Trigger[click shareVision=toogle]`
+- ~~`shareVision=true`, `shareVision=false`, `shareVision=toggle` , **this key derived from the integration with the module [Shared Vision](https://github.com/CDeenen/SharedVision)** . now you can add triggers to Foundry, for example when a token moves onto another token, or when it is clicked. Global Shared Vision can be triggered through Trigger Happy on a 'click' or 'move' trigger. You set this up like you would any other trigger, and you add 'shareVision=true', 'shareVision=false' or 'shareVision=toggle' to the '@Trigger' pseudo link. For example _To enable Global Shared Vision when a token moves unto another token called 'test'_, you use: `@Token[test] @Trigger[move shareVision=true]`,  _To enable Global Shared Vision when click on a token_ you use `@Token[test] @Trigger[click shareVision=true]`, `@Token[test] @Trigger[click shareVision=false]`, `@Token[test] @Trigger[click shareVision=toogle]`~~
 
 If a token is hidden (GM layer), then it is automatically considered a 'move' trigger, otherwise it's a 'click' trigger. You can override it with the `@Trigger[click]` or `@Trigger[move]` options, or you can specify both options to make a token trigger on both clicks and moves.
 

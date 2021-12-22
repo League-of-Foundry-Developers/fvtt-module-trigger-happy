@@ -51,11 +51,21 @@ class ChatLink {
   }
 }
 
+class EffectLink {
+  key;
+  args;
+  constructor(key, args) {
+    this.key = key;
+    this.args = args;
+  }
+}
+
 /* ------------------------------------ */
 /* Initialize module					*/
 /* ------------------------------------ */
 Hooks.once('init', async () => {
   log(`Initializing ${TRIGGER_HAPPY_MODULE_NAME}`);
+  game.triggers = new TriggerHappy();
 
   // Register settings
 
@@ -200,7 +210,8 @@ Hooks.once('init', async () => {
 /* Setup module							*/
 /* ------------------------------------ */
 Hooks.once('setup', function () {
-  game.triggers = new TriggerHappy();
+  game.triggers.init();
+  game.triggers.registerEffect('SharedVision');
   Hooks.on('getSceneControlButtons', TriggerHappy.getSceneControlButtons);
 });
 
@@ -298,6 +309,10 @@ export class TriggerHappy {
     Hooks.on('preUpdateNote', this._onPreUpdateNote.bind(this));
     Hooks.on('getSceneNavigationContext', this._parseJournals.bind(this)); // parse again the journal when change scene
 
+    this.registeredEffects = [];
+  }
+
+  init(){
     this.triggers = [];
     this.taggerModuleActive = game.modules.get('tagger')?.active;
     this.release = game.settings.get('core', 'leftClickRelease');
@@ -335,6 +350,12 @@ export class TriggerHappy {
 
   get journalName() {
     return game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'journalName') || 'Trigger Happy';
+  }
+
+  registerEffect(keyName){
+    if(keyName){
+      this.registeredEffects.push(keyName);
+    }
   }
 
   _updateJournals() {
@@ -395,11 +416,16 @@ export class TriggerHappy {
     });
 
     const entityLinks = Object.keys(CONFIG).concat(this.arrayTriggers);
+    entityLinks.push(...this.registeredEffects);
+
+    const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
+    const rgx = new RegExp(entityMatchRgx, 'ig');
+
+    const entityMatchRgxTagger = `@(Tag)\\[([^\\]]+)\\]`;
+    const rgxTagger = new RegExp(entityMatchRgxTagger, 'ig');
 
     for (const line of filteredTriggerLines) {
       // We check this anyway with module tagger active or no
-      const entityMatchRgxTagger = `@(Tag)\\[([^\\]]+)\\]`;
-      const rgxTagger = new RegExp(entityMatchRgxTagger, 'ig');
       const matchAllTags = line.matchAll(rgxTagger) || [];
       let filterTags = [];
       let lineTmp = line;
@@ -412,8 +438,6 @@ export class TriggerHappy {
         }
       }
 
-      const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
-      const rgx = new RegExp(entityMatchRgx, 'ig');
       let options = [];
       let triggers = [];
       let effects = [];
@@ -473,9 +497,6 @@ export class TriggerHappy {
           }
         } else {
           let effect = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
-          if (!effect) {
-            continue;
-          }
           if (effect) {
             if (typeof effect === 'string' || effect instanceof String) {
               effect = effect.toLowerCase(); // force lowercase for avoid miss typing from the user
@@ -483,6 +504,18 @@ export class TriggerHappy {
           }
           if (effect) {
             effects.push(effect);
+          }
+          else{
+            // see if there is a custom one
+            if(this.registeredEffects.length > 0){
+              this.registeredEffects.forEach((registeredEffect) => {
+                if(registeredEffect.toLowerCase() === entity.toLowerCase()){
+                  let ids = id ? id.split(' ') : [];
+                  const effectLink = new EffectLink(registeredEffect, ids);
+                  effects.push(effectLink);
+                }
+              });
+            }
           }
         }
         index++;
@@ -771,12 +804,16 @@ export class TriggerHappy {
         } else if (effect instanceof Token || effect instanceof TokenDocument) {
           const placeablesToken = this._getTokens();
           const token = placeablesToken.find((t) => t.name === effect.name || t.id === effect.id);
-          if (token) await token.control();
+          if (token){
+            await token.control();
+          }
         } else if (effect instanceof CompendiumLink) {
           const pack = game.packs.get(effect.packId);
           if (!pack.index.length) await pack.getIndex();
           const compendium = await pack.getDocument(effect.id);
-          if (compendium) await compendium.sheet.render(true);
+          if (compendium){
+            await compendium.sheet.render(true);
+          }
         } else if (effect instanceof SoundLink) {
           let startsWith = '';
           let playlistName = effect.playlistName;
@@ -802,16 +839,22 @@ export class TriggerHappy {
         } else if (effect instanceof Note || effect instanceof NoteDocument) {
           const placeablesToken = this._getNotes();
           const note = placeablesToken.find((t) => t.name === effect.name || t.id === effect.id);
-          if (note) await note.sheet.render(true);
+          if (note){
+            await note.sheet.render(true);
+          }
         } else if (effect.documentName === 'JournalEntry') {
           const placeablesJournal = this._getJournals();
           const journal = placeablesJournal.find((t) => t.name === effect.name || t.id === effect.id);
-          if (journal) await journal.sheet.render(true);
+          if (journal){
+            await journal.sheet.render(true);
+          }
         } else if (effect instanceof WallDocument) {
           const state = effect.data.ds;
           const states = CONST.WALL_DOOR_STATES;
           // Determine whether the player can control the door at this time
-          if (!game.user.can('WALL_DOORS')) return;
+          if (!game.user.can('WALL_DOORS')){
+            return;
+          }
           if (game.paused && !game.user.isGM) {
             ui.notifications.warn('GAME.PausedWarning', { localize: true });
             return;
@@ -823,6 +866,10 @@ export class TriggerHappy {
           }
           // Toggle between OPEN and CLOSED states
           effect.document.update({ ds: state === states.CLOSED ? states.OPEN : states.CLOSED });
+        } else if (effect instanceof EffectLink) {
+          const key = effect.key;
+          const args = effect.args;
+          Hooks.call('TriggerHappy', key, args);
         } else {
           await effect.sheet.render(true);
         }
@@ -990,8 +1037,15 @@ export class TriggerHappy {
 
   _placeableContains(placeable, position) {
     // Tokens have getter (since width/height is in grid increments) but drawings use data.width/height directly
-    const w = placeable.w || placeable.data.width || placeable.width;
-    const h = placeable.h || placeable.data.height || placeable.height;
+    let w = placeable.w || placeable.data.width || placeable.width;
+    if(!w){
+      w = placeable?.object?.w || placeable?.object?.data.width || placeable?.object?.width;
+    }
+    let h = placeable.h || placeable.data.height || placeable.height;
+    if(!h){
+      h = placeable?.object?.h || placeable?.object?.data.height || placeable?.object?.height;
+    }
+
     return (
       Number.between(position.x, placeable.data.x, placeable.data.x + w) &&
       Number.between(position.y, placeable.data.y, placeable.data.y + h)

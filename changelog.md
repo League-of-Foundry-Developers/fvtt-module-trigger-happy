@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.23
+
+- NEW FEATURE: Modules and macros MUST register the custom effect with the `registerEffect` function.
+- All new getter function return document
+- Little performance on the code
+- Update README
+
 ## 0.8.22
 
 - Add module settings for disable all the warning messages generate from the loading of the trigger
