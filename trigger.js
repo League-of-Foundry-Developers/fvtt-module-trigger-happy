@@ -211,7 +211,6 @@ Hooks.once('init', async () => {
 /* ------------------------------------ */
 Hooks.once('setup', function () {
   game.triggers.init();
-  game.triggers.registerEffect('SharedVision');
   Hooks.on('getSceneControlButtons', TriggerHappy.getSceneControlButtons);
 });
 
