@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.24
+
+- Some fix on the integration of the custom effect and update readme.
 ## 0.8.23
 
 - NEW FEATURE: Modules and macros MUST register the custom effect with the `registerEffect` function.

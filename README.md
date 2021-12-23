@@ -168,23 +168,41 @@ If multiple trigger effects are in the same line, then they will be executed in 
 
 ## Add a custom Effect
 
-Now you can add your custom effect to the trigger, the element between `[` and `]` is a array of arguments separate form the whitespace character ` ` so you can use on your code invoked with a hook call using the key (without @) like a reference e.g. 
-
+Now you can add your custom effect to the trigger, the element between the characters `[` and `]` is "read" like a array of arguments separate from the whitespace character ` `, so you can customized your entry like you want. The custom effect is invoked with a hook using the key (without @) like a reference remember is case unsensitive so `@XXX` are `@xxx` are like the same custom effect during the registration.
 from this trigger:
 
 `@Token[Pippo]@XXX[arg1 arg2]@YYY[arg3 arg4]`
 
-when clicked the token with name 'Pippo' the module will invoked these hooks:
+when the token  with name 'Pippo' is clicked the module will invoked these hooks:
 
 `Hooks.call('TriggerHappy', 'XXX', [arg1 arg2])`
+
 `Hooks.call('TriggerHappy', 'YYY', [arg3 arg4])`
 
-Modules and macros MUST register the custom effect with the `registerEffect` function during the setup of foundry. For example:
+so in your code you must implement something like this:
+```
+Hooks.on('TriggerHappy', (key, args) => {
+    // 'key' is the reference name of the custom effect without the initial @
+    // 'args' is the array of string to use like arguments for your code
+})
+```
+
+**Modules and macros MUST register the custom effect with the `registerEffect` function during the setup of foundry.**
+For example:
 
 ```
 Hooks.once('setup', function () {
   game.triggers.registerEffect('XXX');
   game.triggers.registerEffect('YYY');
+});
+```
+
+**NOTE: You can override if you want  adefault effect if you want (is not advisable but you can), here a example :**
+
+```
+Hooks.once('setup', function () {
+  game.triggers.registerEffect('Quest');
+  game.triggers.registerEffect('Rolltable');
 });
 ```
 
@@ -204,7 +222,6 @@ The following options are available :
 - `doorClose`: Will cause a `@Door` trigger to trigger when the door is closed instead of the default when it opens.
 - `doorOpen`: Will cause a `@Door` trigger to trigger when the door is open. This is the default, but it can be used along with 
 - `doorClose` option to have it trigger on both open and close
-- ~~`shareVision=true`, `shareVision=false`, `shareVision=toggle` , **this key derived from the integration with the module [Shared Vision](https://github.com/CDeenen/SharedVision)** . now you can add triggers to Foundry, for example when a token moves onto another token, or when it is clicked. Global Shared Vision can be triggered through Trigger Happy on a 'click' or 'move' trigger. You set this up like you would any other trigger, and you add 'shareVision=true', 'shareVision=false' or 'shareVision=toggle' to the '@Trigger' pseudo link. For example _To enable Global Shared Vision when a token moves unto another token called 'test'_, you use: `@Token[test] @Trigger[move shareVision=true]`,  _To enable Global Shared Vision when click on a token_ you use `@Token[test] @Trigger[click shareVision=true]`, `@Token[test] @Trigger[click shareVision=false]`, `@Token[test] @Trigger[click shareVision=toogle]`~~
 
 If a token is hidden (GM layer), then it is automatically considered a 'move' trigger, otherwise it's a 'click' trigger. You can override it with the `@Trigger[click]` or `@Trigger[move]` options, or you can specify both options to make a token trigger on both clicks and moves.
 

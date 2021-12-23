@@ -495,6 +495,33 @@ export class TriggerHappy {
             }
           }
         } else {
+          // see if there is a custom one
+          let foundCustomEffect = false;
+          if(this.registeredEffects.length > 0){
+            this.registeredEffects.forEach((registeredEffect) => {
+              if(registeredEffect.toLowerCase() === entity.toLowerCase()){
+                foundCustomEffect = true;
+                if(id){
+                  let ids = id ? id.split(' ') : [];
+                  let args = [];
+                  if (typeof ids === 'string' || ids instanceof String) {
+                    args = Array.from(ids);
+                  }else{
+                    args = ids;
+                  }
+                  const effectLink = new EffectLink(registeredEffect, args);
+                  effects.push(effectLink);
+                } else {
+                  if (!game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'disableWarningMessages')) {
+                    warn(`Can't manage the event '${entity}' on '${triggerJournal}'`);
+                  }
+                }
+              }
+            });
+          }
+          if(foundCustomEffect){
+            continue;
+          }
           let effect = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
           if (effect) {
             if (typeof effect === 'string' || effect instanceof String) {
@@ -503,18 +530,6 @@ export class TriggerHappy {
           }
           if (effect) {
             effects.push(effect);
-          }
-          else{
-            // see if there is a custom one
-            if(this.registeredEffects.length > 0){
-              this.registeredEffects.forEach((registeredEffect) => {
-                if(registeredEffect.toLowerCase() === entity.toLowerCase()){
-                  let ids = id ? id.split(' ') : [];
-                  const effectLink = new EffectLink(registeredEffect, ids);
-                  effects.push(effectLink);
-                }
-              });
-            }
           }
         }
         index++;
