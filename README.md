@@ -168,7 +168,7 @@ If multiple trigger effects are in the same line, then they will be executed in 
 
 ## Add a custom Effect
 
-Now you can add your custom effect to the trigger, the element between the characters `[` and `]` is "read" like a array of arguments separate from the whitespace character ` `, so you can customized your entry like you want. The custom effect is invoked with a hook using the key (without @) like a reference remember is case unsensitive so `@XXX` are `@xxx` are like the same custom effect during the registration.
+Now you can add your custom effect to the trigger, the element between the characters `[` and `]` is "read" like a array of arguments separate from the whitespace character ` `, so you can customized your entry like you want. The custom effect is invoked with a hook using the key (without @) like a reference. Remember the check is case unsensitive so `@XXX` and `@xxx` are "read" like the same custom effect during the registration.
 from this trigger:
 
 `@Token[Pippo]@XXX[arg1 arg2]@YYY[arg3 arg4]`
