@@ -160,11 +160,12 @@ Here a example:
 | `@<CONFIG[key]>`| Effect | `@Rolltable[id]{name}`, `@Quest[id]{name}`, `ecc.` | All keys colleciton supported from the `CONFIG` of foundry, the result maybe differ form what you expected depends on the specific use case |
 | `@<CUSTOM[args]>`| Effect | `@XXX[args]`, `@YYY[args]`, `ecc.` | Read the details on 'Add a custom effect' paragraph |
 
-You can create and organize actors that would be used specifically for triggers, and drop them anywhere you want on the map. Using a transparent token has the best effect, and the players don't need to have any permissions for the token (or scene or journal to display) for the trigger to work.
-The triggers on actors and tokens will work only if they click on the token in the case of visible tokens, and if the token is hidden (GM layer), then it will activate the trigger when the player moves their token within the trigger token. Note that they can always do a long move and jump over the token which would not trigger the effects.
-Don't forget that you can also use token avatars as buttons, or change their width and height to fit your need.
+- You can create and organize actors that would be used specifically for triggers, and drop them anywhere you want on the map. Using a transparent token has the best effect, and the players don't need to have any permissions for the token (or scene or journal to display) for the trigger to work.
+- The triggers on actors and tokens will work only if they click on the token in the case of visible tokens, and if the token is hidden (GM layer), then it will activate the trigger when the player moves their token within the trigger token. Note that they can always do a long move and jump over the token which would not trigger the effects.
+- Don't forget that you can also use token avatars as buttons, or change their width and height to fit your need.
+- If multiple trigger effects are in the same line, then they will be executed in sequence, waiting for the previous effect to finish before starting the next one.
+- IMPORTANT: You can registered multiple Triggers with the same name on the same line, you can't invoke multiple effect with the same name only the first one is invoked, e.g. `@Rolltable[pippo]` will get only the first rolltable with name 'pippo', you can invoke two times the same effect anyway e.g. `@Rolltable[pippo]@Rolltable[pippo]`
 
-If multiple trigger effects are in the same line, then they will be executed in sequence, waiting for the previous effect to finish before starting the next one.
 
 ## Add a custom Effect
 

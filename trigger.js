@@ -1509,6 +1509,96 @@ export class TriggerHappy {
   //     .filter(Boolean);
   // }
 
+  _retrieveFromEntityMultiple(entity, idOrName, label) {
+    if (!entity) return null;
+    entity = entity.toLowerCase();
+    if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
+      const tokenTargetsResult = [];
+      const tokenTargets = this._retrieveFromIdOrNameMultiple(this._getTokens(), idOrName);
+      for(let tokenTarget of tokenTargets){
+        // Some strange retrocompatibility use case or just compatibility with other modules like token mold
+        if (!tokenTarget && this.ifNoTokenIsFoundTryToUseActor) {
+          tokenTarget = this._getTokens()?.find((t) => {
+            // If token is referenced to a actor
+            return t && t.data.actorId && this._retrieveFromIdOrName(this._getActors(), idOrName)?.id === t.data.actorId;
+          });
+        }
+        tokenTargetsResult.push(tokenTarget);
+      }
+      return tokenTargetsResult;
+    } else if (entity == TRIGGER_ENTITY_TYPES.ACTOR) {
+      const actorTargetsResult = [];
+      const actorTargets = this._retrieveFromIdOrNameMultiple(this._getActors(), idOrName);
+      for(let actorTarget of actorTargets){
+        actorTargetsResult.push(actorTarget);
+      }
+      // TODO ADD AMBIENT LIGHT INTEGRATION
+      // } else if (relevantDocument instanceof AmbientLightDocument) {
+      //   const ambientLightTarget = this._retrieveFromIdOrNameMultiple(this._getAmbientLights(), idOrName);
+      //   return ambientLightTarget;
+      // TODO ADD AMBIENT SOUND INTEGRATION
+      // } else if (relevantDocument instanceof AmbientSoundDocument) {
+      //   const ambientSoundTarget = this._retrieveFromIdOrNameMultiple(this._getAmbientSounds(), idOrName);
+      //   return ambientSoundTarget;
+      // TODO ADD TILE INTEGRATION
+      // } else if (relevantDocument instanceof TileDocument) {
+      //   const tileTarget = this._retrieveFromIdOrNameMultiple(this._getTiles(), idOrName);
+      //   return tileTarget;
+    } else if (entity == TRIGGER_ENTITY_TYPES.DOOR) {
+      const doorControlTargetsResult = [];
+      const doorControlTargets = this._retrieveFromIdOrNameMultiple(this._getDoors(), idOrName);
+      for(let doorControlTarget of doorControlTargets){
+        // Retrocompatibility check
+        if (!doorControlTarget) {
+          const coords = idOrName.split(',').map((c) => Number(c)) ?? [];
+          if (coords && coords.length > 0 && coords.length == 4) {
+            doorControlTarget = this._getDoors()?.find((wall) => {
+              let mywall = wall;
+              if (wall instanceof DoorControl) {
+                mywall = wall.wall.document;
+              }
+              if (wall instanceof Wall) {
+                mywall = wall.document;
+              }
+              return (
+                mywall.data?.door > 0 &&
+                mywall.data?.c[0] == coords[0] &&
+                mywall.data?.c[1] == coords[1] &&
+                mywall.data?.c[2] == coords[2] &&
+                mywall.data?.c[3] == coords[3]
+              );
+            });
+            // doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
+            doorControlTargetsResult.add(doorControlTarget);
+          }
+        }
+        doorControlTargetsResult.add(doorControlTarget);
+      }
+      return doorControlTargetsResult;
+    } else if (entity == TRIGGER_ENTITY_TYPES.DRAWING) {
+      const drawingTarget = this._retrieveFromIdOrName(this._getDrawings(), idOrName);
+      return drawingTarget;
+    } else if (entity == TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY) {
+      const noteTarget = this._retrieveFromIdOrName(this._getNotes(), idOrName);
+      if (!noteTarget) {
+        const journalTarget = this._retrieveFromIdOrName(this._getJournals(), idOrName);
+        if (journalTarget?.sceneNote) {
+          return journalTarget.sceneNote;
+        }
+        return journalTarget;
+      }
+      return noteTarget;
+    } else if (entity == TRIGGER_ENTITY_TYPES.STAIRWAY) {
+      const stairwayTarget = this._retrieveFromIdOrName(this._getStairways(), idOrName);
+      return stairwayTarget;
+    } else if (entity == TRIGGER_ENTITY_TYPES.SCENE) {
+      const sceneTarget = this._retrieveFromIdOrName(this._getScenes(), idOrName, );
+      return sceneTarget;
+    } else {
+      return null;
+    }
+  }
+
   _retrieveFromEntity(entity, idOrName, label) {
     if (!entity) return null;
     entity = entity.toLowerCase();
