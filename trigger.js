@@ -1583,7 +1583,25 @@ export class TriggerHappy {
   _retrieveFromEntityMultiple(entity, idOrName, label) {
     if (!entity) return null;
     entity = entity.toLowerCase();
-    if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
+    if (entity == TRIGGER_ENTITY_TYPES.TRIGGER) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.CHAT_MESSAGE) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.OOC) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.EMOTE) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.WHISPER) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.SELF_WHISPER) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.COMPENDIUM) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.SOUND_LINK) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.PLAYLIST) {
+      return null; // NOT SUPPORTED
+    }else if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
       const tokenTargetsResult = [];
       const tokenTargets = this._retrieveFromIdOrNameMultiple(this._getTokens(), idOrName);
       // Some strange retrocompatibility use case or just compatibility with other modules like token mold
@@ -1619,33 +1637,54 @@ export class TriggerHappy {
     } else if (entity == TRIGGER_ENTITY_TYPES.DOOR) {
       const doorControlTargetsResult = [];
       const doorControlTargets = this._retrieveFromIdOrNameMultiple(this._getDoors(), idOrName);
+      const coords = idOrName.split(',').map((c) => Number(c)) ?? [];
+      if (coords && coords.length > 0 && coords.length == 4) {
+        for(let wall of this._getDoors()){
+          let mywall = wall;
+          if (wall instanceof DoorControl) {
+            mywall = wall.wall.document;
+          }
+          if (wall instanceof Wall) {
+            mywall = wall.document;
+          }
+          if (
+            mywall.data?.door > 0 &&
+            mywall.data?.c[0] == coords[0] &&
+            mywall.data?.c[1] == coords[1] &&
+            mywall.data?.c[2] == coords[2] &&
+            mywall.data?.c[3] == coords[3]
+          ){
+            doorControlTargets.push(mywall);
+          }
+        }
+      }
       for(let doorControlTarget of doorControlTargets){
         // Retrocompatibility check
-        if (!doorControlTarget) {
-          const coords = idOrName.split(',').map((c) => Number(c)) ?? [];
-          if (coords && coords.length > 0 && coords.length == 4) {
-            doorControlTarget = this._getDoors()?.find((wall) => {
-              let mywall = wall;
-              if (wall instanceof DoorControl) {
-                mywall = wall.wall.document;
-              }
-              if (wall instanceof Wall) {
-                mywall = wall.document;
-              }
-              return (
-                mywall.data?.door > 0 &&
-                mywall.data?.c[0] == coords[0] &&
-                mywall.data?.c[1] == coords[1] &&
-                mywall.data?.c[2] == coords[2] &&
-                mywall.data?.c[3] == coords[3]
-              );
-            });
-            // doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
-            doorControlTargetsResult.push(doorControlTarget);
-          }
-        } else {
+        // if (!doorControlTarget) {
+        //   const coords = idOrName.split(',').map((c) => Number(c)) ?? [];
+        //   if (coords && coords.length > 0 && coords.length == 4) {
+        //     doorControlTarget = this._getDoors()?.find((wall) => {
+        //       let mywall = wall;
+        //       if (wall instanceof DoorControl) {
+        //         mywall = wall.wall.document;
+        //       }
+        //       if (wall instanceof Wall) {
+        //         mywall = wall.document;
+        //       }
+        //       return (
+        //         mywall.data?.door > 0 &&
+        //         mywall.data?.c[0] == coords[0] &&
+        //         mywall.data?.c[1] == coords[1] &&
+        //         mywall.data?.c[2] == coords[2] &&
+        //         mywall.data?.c[3] == coords[3]
+        //       );
+        //     });
+        //     // doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
+        //     doorControlTargetsResult.push(doorControlTarget);
+        //   }
+        // } else {
           doorControlTargetsResult.push(doorControlTarget);
-        }
+        // }
       }
       return doorControlTargetsResult;
     } else if (entity == TRIGGER_ENTITY_TYPES.DRAWING) {
@@ -2058,7 +2097,9 @@ export class TriggerHappy {
         });
       }
       game.scenes.current.tokens?.contents.forEach((token, key) => {
-        placeablesToken.push(token);
+        if (placeablesToken.filter(e => e.id === token.id).length <= 0) {
+          placeablesToken.push(token);
+        }
       });
       return placeablesToken ?? [];
     } else {
@@ -2080,14 +2121,19 @@ export class TriggerHappy {
       const placeablesDoors = [];
       if (canvas.controls?.doors?.children && canvas.controls?.doors?.children.length > 0) {
         canvas.controls?.doors?.children.forEach((door, key) => {
-          placeablesDoors.push(door.document);
+          placeablesDoors.push(door.wall.document);
         });
       }
       const doors = game.scenes.current.walls?.contents.filter((wall) => {
         return wall.data?.door > 0;
       });
       if (doors && doors.length > 0) {
-        placeablesDoors.push(...doors);
+        //placeablesDoors.push(...doors);
+        doors.forEach((door, key) => {  
+          if (placeablesDoors.filter(e => e.id === door.id).length <= 0) {
+            placeablesDoors.push(door);
+          }
+        });
       }
       return placeablesDoors ?? [];
     } else {
@@ -2096,7 +2142,12 @@ export class TriggerHappy {
         return wall.data?.door > 0;
       });
       if (doors && doors.length > 0) {
-        placeablesDoors.push(...doors);
+        // placeablesDoors.push(...doors);
+        doors.forEach((door, key) => {  
+          if (placeablesDoors.filter(e => e.id === door.id).length <= 0) {
+            placeablesDoors.push(door);
+          }
+        });
       }
       return placeablesDoors ?? [];
     }
@@ -2111,7 +2162,9 @@ export class TriggerHappy {
         });
       }
       game.scenes.current.drawings?.contents.forEach((drawing, key) => {
-        placeablesDrawings.push(drawing);
+        if (placeablesDrawings.filter(e => e.id === drawing.id).length <= 0) {
+          placeablesDrawings.push(drawing);
+        }
       });
       return placeablesDrawings ?? [];
     } else {
@@ -2132,7 +2185,9 @@ export class TriggerHappy {
         });
       }
       game.scenes.current.notes?.contents.forEach((note, key) => {
-        placeablesNotes.push(note);
+        if (placeablesNotes.filter(e => e.id === note.id).length <= 0) {
+          placeablesNotes.push(note);
+        }
       });
       return placeablesNotes ?? [];
     } else {
@@ -2158,7 +2213,9 @@ export class TriggerHappy {
         });
       }
       game.scenes.current.stairways?.contents.forEach((stairway, key) => {
-        placeablesStairways.push(stairway);
+        if (placeablesStairways.filter(e => e.id === stairway.id).length <= 0) {
+          placeablesStairways.push(stairway);
+        }
       });
       return placeablesStairways ?? [];
     } else {
@@ -2189,7 +2246,9 @@ export class TriggerHappy {
         });
       }
       game.scenes.current.lights.contents.forEach((ambientLight, key) => {
-        placeablesLightings.push(ambientLight);
+        if (placeablesLightings.filter(e => e.id === ambientLight.id).length <= 0) {
+          placeablesLightings.push(ambientLight);
+        }
       });
       return placeablesLightings ?? [];
     } else {
@@ -2210,7 +2269,9 @@ export class TriggerHappy {
         });
       }
       game.scenes.current.sounds.contents.forEach((ambientSound, key) => {
-        placeablesSounds.push(ambientSound);
+        if (placeablesSounds.filter(e => e.id === ambientSound.id).length <= 0) {
+          placeablesSounds.push(ambientSound);
+        }
       });
       return placeablesSounds ?? [];
     } else {
@@ -2231,7 +2292,9 @@ export class TriggerHappy {
         });
       }
       game.scenes.current.tiles.contents.forEach((tile, key) => {
-        placeablesTiles.push(tile);
+        if (placeablesTiles.filter(e => e.id === tile.id).length <= 0) {
+          placeablesTiles.push(tile);
+        }
       });
       return placeablesTiles ?? [];
     } else {
