@@ -1683,8 +1683,11 @@ export class TriggerHappy {
         //     doorControlTargetsResult.push(doorControlTarget);
         //   }
         // } else {
-          doorControlTargetsResult.push(doorControlTarget);
+        //    doorControlTargetsResult.push(doorControlTarget);
         // }
+        if (doorControlTargetsResult.filter(e => e.id === doorControlTarget.id).length <= 0) {
+          doorControlTargetsResult.push(doorControlTarget);
+        }
       }
       return doorControlTargetsResult;
     } else if (entity == TRIGGER_ENTITY_TYPES.DRAWING) {

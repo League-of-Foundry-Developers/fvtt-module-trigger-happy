@@ -2,17 +2,18 @@
 
 ## 0.8.25 [BREAKING CHNAGES]
 
+- Attention: So many modification possibile issues
 - When retrieve the trigger only by name we retrieve ALL the placeable object with that name on the current canvas not just the first one.
 - Finalize settings for custom effect
 
 ## 0.8.24
 
 - Some fix on the integration of the custom effect and update readme.
-  
+
 ## 0.8.23
 
 - NEW FEATURE: Modules and macros MUST register the custom effect with the `registerEffect` function.
-- All new getter function return document
+- All new getter function return document objet instead reference to placeable object
 - Little performance on the code
 - Update README
 
