@@ -204,6 +204,15 @@ Hooks.once('init', async () => {
     default: false,
     type: Boolean,
   });
+
+  game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'enableMultipleTriggerSearch', {
+    name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableMultipleTriggerSearch.name`),
+    hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableMultipleTriggerSearch.hint`),
+    scope: 'world',
+    config: true,
+    default: true,
+    type: Boolean,
+  });
 });
 
 /* ------------------------------------ */
@@ -464,6 +473,7 @@ export class TriggerHappy {
               }
             }
           } else {
+            if(!game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableMultipleTriggerSearch')){
             let trigger = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
             if (!trigger) {
               break;
@@ -479,6 +489,22 @@ export class TriggerHappy {
             }
             if (trigger) {
               triggers.push(trigger);
+            }
+            } else {
+              const triggersTmp = this._manageTriggerEventMultiple(triggerJournal, entity, id, label, filterTags) ?? [];
+              for (let trigger of triggersTmp) {
+                if (trigger != null && trigger != undefined) {
+                  trigger = this._checkTagsOnTrigger(entity, trigger, filterTags);
+                  if (trigger) {
+                    if (typeof trigger === 'string' || trigger instanceof String) {
+                      trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
+                    }
+                  }
+                  if (trigger) {
+                    triggers.push(trigger);
+                  }
+                }
+              }
             }
           }
         } else if (entity === TRIGGER_ENTITY_TYPES.TRIGGER) {
@@ -701,6 +727,51 @@ export class TriggerHappy {
       }
     }
     return trigger;
+  }
+
+  _manageTriggerEventMultiple(triggerJournal, entity, id, label) {
+    let triggers = [];
+    if (!id && !label) {
+      if (!game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'disableWarningMessages')) {
+        warn(`Can't manage the empty trigger '${entity}' on '${triggerJournal}'`);
+      }
+      return;
+    }
+    // let isAManagedTrigger = false;
+    // If is a placeable object
+    if (
+      this.arrayPlaceableObjects.find((el) => {
+        return el.toLowerCase() === entity.toLowerCase();
+      })
+    ) {
+      // isAManagedTrigger = true;
+      let relevantDocuments = this._retrieveFromEntityMultiple(entity, id, label);
+      if ((!relevantDocuments || relevantDocuments.length == 0) && label) {
+        relevantDocuments = this._retrieveFromEntityMultiple(entity, label, label);
+      }
+      triggers = relevantDocuments;
+    }
+    // If is not a placeable object
+    else if (
+      this.arrayNoPlaceableObjects.find((el) => {
+        return el.toLowerCase() === entity.toLowerCase();
+      })
+    ) {
+      // isAManagedTrigger = true;
+      let relevantDocuments = this._retrieveFromEntityMultiple(entity, id, label);
+      if ((!relevantDocuments || relevantDocuments.length == 0) && label) {
+        relevantDocuments = this._retrieveFromEntityMultiple(entity, label, label);
+      }
+      triggers = relevantDocuments;
+    }
+    if (!triggers || triggers.length == 0) {
+      if (!game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'disableWarningMessages')) {
+        warn(
+          `Can't retrieve the config with entity '${entity}' and key '${id}' or '${label}' on '${triggerJournal}'`,
+        );
+      }
+    }
+    return triggers;
   }
 
   async _executeTriggers(triggers) {
@@ -1515,14 +1586,14 @@ export class TriggerHappy {
     if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
       const tokenTargetsResult = [];
       const tokenTargets = this._retrieveFromIdOrNameMultiple(this._getTokens(), idOrName);
+      // Some strange retrocompatibility use case or just compatibility with other modules like token mold
+      if ((!tokenTargets || tokenTargets.length == 0) && this.ifNoTokenIsFoundTryToUseActor) {
+        tokenTargets = this._getTokens()?.filter((t) => {
+          // If token is referenced to a actor
+          return t && t.data.actorId && this._retrieveFromIdOrName(this._getActors(), idOrName)?.id === t.data.actorId;
+        });
+      }
       for(let tokenTarget of tokenTargets){
-        // Some strange retrocompatibility use case or just compatibility with other modules like token mold
-        if (!tokenTarget && this.ifNoTokenIsFoundTryToUseActor) {
-          tokenTarget = this._getTokens()?.find((t) => {
-            // If token is referenced to a actor
-            return t && t.data.actorId && this._retrieveFromIdOrName(this._getActors(), idOrName)?.id === t.data.actorId;
-          });
-        }
         tokenTargetsResult.push(tokenTarget);
       }
       return tokenTargetsResult;
@@ -1544,6 +1615,7 @@ export class TriggerHappy {
       // } else if (relevantDocument instanceof TileDocument) {
       //   const tileTarget = this._retrieveFromIdOrNameMultiple(this._getTiles(), idOrName);
       //   return tileTarget;
+      return actorTargetsResult;
     } else if (entity == TRIGGER_ENTITY_TYPES.DOOR) {
       const doorControlTargetsResult = [];
       const doorControlTargets = this._retrieveFromIdOrNameMultiple(this._getDoors(), idOrName);
@@ -1569,31 +1641,49 @@ export class TriggerHappy {
               );
             });
             // doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
-            doorControlTargetsResult.add(doorControlTarget);
+            doorControlTargetsResult.push(doorControlTarget);
           }
+        } else {
+          doorControlTargetsResult.push(doorControlTarget);
         }
-        doorControlTargetsResult.add(doorControlTarget);
       }
       return doorControlTargetsResult;
     } else if (entity == TRIGGER_ENTITY_TYPES.DRAWING) {
-      const drawingTarget = this._retrieveFromIdOrName(this._getDrawings(), idOrName);
-      return drawingTarget;
-    } else if (entity == TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY) {
-      const noteTarget = this._retrieveFromIdOrName(this._getNotes(), idOrName);
-      if (!noteTarget) {
-        const journalTarget = this._retrieveFromIdOrName(this._getJournals(), idOrName);
-        if (journalTarget?.sceneNote) {
-          return journalTarget.sceneNote;
-        }
-        return journalTarget;
+      const drawingTargetsResult = [];
+      const drawingTargets = this._retrieveFromIdOrNameMultiple(this._getDrawings(), idOrName);
+      for(let drawingTarget of drawingTargets){
+        drawingTargetsResult.push(drawingTarget);
       }
-      return noteTarget;
+      return drawingTargetsResult;
+    } else if (entity == TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY) {
+      const noteTargetsResult = [];
+      const noteTargets = this._retrieveFromIdOrNameMultiple(this._getNotes(), idOrName);
+      for(let noteTarget of noteTargets){
+        if (!noteTarget) {
+          const journalTarget = this._retrieveFromIdOrNameMultiple(this._getJournals(), idOrName);
+          if (journalTarget?.sceneNote) {
+            noteTargetsResult.push(journalTarget.sceneNote);
+          }else{
+            noteTargetsResult.push(journalTarget);
+          }
+        }
+        noteTargetsResult.push(noteTarget);
+      }
+      return noteTargetsResult;
     } else if (entity == TRIGGER_ENTITY_TYPES.STAIRWAY) {
-      const stairwayTarget = this._retrieveFromIdOrName(this._getStairways(), idOrName);
-      return stairwayTarget;
+      const stairwayTargetsResult = [];
+      const stairwayTargets = this._retrieveFromIdOrNameMultiple(this._getStairways(), idOrName);
+      for(let stairwayTarget of stairwayTargets){
+        stairwayTargetsResult.push(stairwayTarget);
+      }
+      return stairwayTargetsResult;
     } else if (entity == TRIGGER_ENTITY_TYPES.SCENE) {
-      const sceneTarget = this._retrieveFromIdOrName(this._getScenes(), idOrName, );
-      return sceneTarget;
+      const sceneTargetsResult = [];
+      const sceneTargets = this._retrieveFromIdOrNameMultiple(this._getScenes(), idOrName, );
+      for(let sceneTarget of sceneTargets){
+        sceneTargetsResult.push(sceneTarget);
+      }
+      return sceneTargetsResult;
     } else {
       return null;
     }
@@ -1749,8 +1839,9 @@ export class TriggerHappy {
           // doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
           return doorControlTarget;
         }
+      } else {
+        return doorControlTarget;
       }
-      return doorControlTarget;
     } else if (entity == TRIGGER_ENTITY_TYPES.DRAWING) {
       const drawingTarget = this._retrieveFromIdOrName(this._getDrawings(), idOrName);
       return drawingTarget;
@@ -1760,8 +1851,9 @@ export class TriggerHappy {
         const journalTarget = this._retrieveFromIdOrName(this._getJournals(), idOrName);
         if (journalTarget?.sceneNote) {
           return journalTarget.sceneNote;
+        } else {
+          return journalTarget;
         }
-        return journalTarget;
       }
       return noteTarget;
     } else if (entity == TRIGGER_ENTITY_TYPES.STAIRWAY) {
@@ -1807,6 +1899,40 @@ export class TriggerHappy {
       });
     }
     return target;
+  }
+
+  _retrieveFromIdOrNameMultiple(placeables, IdOrName) {
+    let target = [];
+    if (!placeables || placeables.length == 0) {
+      return target;
+    }
+    if (!IdOrName) {
+      return target;
+    }
+    target = placeables?.filter((x) => {
+      return x && x.id?.toLowerCase() == IdOrName.toLowerCase();
+    });
+    if (!target || target.length == 0) {
+      target = placeables?.filter((x) => {
+        return x && x.name?.toLowerCase() == IdOrName.toLowerCase();
+      });
+    }
+    if (!target || target.length == 0) {
+      target = placeables?.filter((x) => {
+        return x && x.data?.name?.toLowerCase() == IdOrName.toLowerCase();
+      });
+    }
+    if (!target || target.length == 0) {
+      target = placeables?.filter((x) => {
+        return x && x.data?.text?.toLowerCase() == IdOrName.toLowerCase();
+      });
+    }
+    if (!target || target.length == 0) {
+      target = placeables?.filter((x) => {
+        return x && x.data?.label?.toLowerCase() == IdOrName.toLowerCase();
+      });
+    }
+    return target ?? [];
   }
 
   // getPlaceableObjectCenter(placeableObject) {

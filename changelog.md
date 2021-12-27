@@ -1,8 +1,9 @@
 # Changelog
 
-## 0.8.25
+## 0.8.25 [BREAKING CHNAGES]
 
 - When retrieve the trigger only by name we retrieve ALL the placeable object with that name on the current canvas not just the first one.
+
 ## 0.8.24
 
 - Some fix on the integration of the custom effect and update readme.
