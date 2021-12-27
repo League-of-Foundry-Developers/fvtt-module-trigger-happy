@@ -40,11 +40,12 @@ To install this module manually:
 
 # Module compatibility
 
-- [Sound Link](https://github.com/superseva/sound-link)
-- [Forien Quest Log version 0.7.7 and later](https://github.com/League-of-Foundry-Developers/foundryvtt-forien-quest-log)
-- [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger)
-- [Stairway](https://gitlab.com/SWW13/foundryvtt-stairways) (limited only to click event :( )
-- [Shared Vision](https://github.com/CDeenen/SharedVision) added a integration feature
+- [Sound Link](https://github.com/superseva/sound-link) check out the examples
+- [Forien Quest Log version 0.7.7 and later](https://github.com/League-of-Foundry-Developers/foundryvtt-forien-quest-log) check out the examples
+- [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger) check out the examples
+- [Stairway](https://gitlab.com/SWW13/foundryvtt-stairways) (limited only to click event :( ) check out the examples
+- [Shared Vision](https://github.com/CDeenen/SharedVision) added a integration feature check out the examples
+- [NPC Chatter](https://github.com/cswendrowski/FoundryVtt-Npc-Chatter) check out the examples
 
 # Settings
 
@@ -157,14 +158,58 @@ Here a example:
 | `@Trigger`      | Event Link      | `@Trigger[option1 option2 option3]` | This applies modifiers on the trigger line, keep reading for more information about available options, read 'Advanced options' paragraph for more details |
 | `@Tag`          | Event Link      | `@Tag[list of tags]`  | this element will activate the integration with the [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger) module, will filter the trigger with a additional checking on the tags (if presents) on the object. **You need to install the module [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger)** |
 | `@<CONFIG[key]>`| Effect | `@Rolltable[id]{name}`, `@Quest[id]{name}`, `ecc.` | All keys colleciton supported from the `CONFIG` of foundry, the result maybe differ form what you expected depends on the specific use case |
+| `@<CUSTOM[args]>`| Effect | `@XXX[args]`, `@YYY[args]`, `ecc.` | Read the details on 'Add a custom effect' paragraph |
 
-You can create and organize actors that would be used specifically for triggers, and drop them anywhere you want on the map. Using a transparent token has the best effect, and the players don't need to have any permissions for the token (or scene or journal to display) for the trigger to work.
-The triggers on actors and tokens will work only if they click on the token in the case of visible tokens, and if the token is hidden (GM layer), then it will activate the trigger when the player moves their token within the trigger token. Note that they can always do a long move and jump over the token which would not trigger the effects.
-Don't forget that you can also use token avatars as buttons, or change their width and height to fit your need.
+## Details
 
-If multiple trigger effects are in the same line, then they will be executed in sequence, waiting for the previous effect to finish before starting the next one.
+- You can create and organize actors that would be used specifically for triggers, and drop them anywhere you want on the map. Using a transparent token has the best effect, and the players don't need to have any permissions for the token (or scene or journal to display) for the trigger to work.
+- The triggers on actors and tokens will work only if they click on the token in the case of visible tokens, and if the token is hidden (GM layer), then it will activate the trigger when the player moves their token within the trigger token. Note that they can always do a long move and jump over the token which would not trigger the effects.
+- Don't forget that you can also use token avatars as buttons, or change their width and height to fit your need.
+- If multiple trigger effects are in the same line, then they will be executed in sequence, waiting for the previous effect to finish before starting the next one.
+- IMPORTANT: if the module setting 'Enable multiple trigger search' is checked you can registered multiple Triggers with the same name on the same line, usually is not advaisable becuase you can encounter strange behavior and don't know why the solution integration with the Tagger module is prederable. You can't invoke multiple effect with the same name only the first one is invoked, e.g. `@Rolltable[pippo]` will get only the first rolltable with name 'pippo', you can invoke two times the same effect anyway e.g. `@Rolltable[pippo]@Rolltable[pippo]`
 
-## Advanced options
+
+## Add a custom Effect
+
+Now you can add your custom effect to the trigger, the element between the characters `[` and `]` is "read" like a array of arguments separate from the whitespace character ` `, so you can customized your entry like you want. The custom effect is invoked with a hook using the key (without @) like a reference. Remember the check is case unsensitive so `@XXX` and `@xxx` are "read" like the same custom effect during the registration.
+from this trigger:
+
+`@Token[Pippo]@XXX[arg1 arg2]@YYY[arg3 arg4]`
+
+when the token  with name 'Pippo' is clicked the module will invoked these hooks:
+
+`Hooks.call('TriggerHappy', 'XXX', [arg1 arg2])`
+
+`Hooks.call('TriggerHappy', 'YYY', [arg3 arg4])`
+
+so in your code you must implement something like this:
+```
+Hooks.on('TriggerHappy', (key, args) => {
+    // 'key' is the reference name of the custom effect without the initial @
+    // 'args' is the array of string to use like arguments for your code
+})
+```
+
+**Modules and macros MUST register the custom effect with the `registerEffect` function during the setup of foundry.**
+For example:
+
+```
+Hooks.once('setup', function () {
+  game.triggers.registerEffect('XXX');
+  game.triggers.registerEffect('YYY');
+});
+```
+
+**NOTE: You can override if you want  adefault effect if you want (is not advisable but you can), here a example :**
+
+```
+Hooks.once('setup', function () {
+  game.triggers.registerEffect('Quest');
+  game.triggers.registerEffect('Rolltable');
+});
+```
+
+## Advanced options for Event Link
 
 You can customize the behavior a little using the `@Trigger` pseudo link which allows you to set options.
 The following options are available : 
@@ -180,7 +225,6 @@ The following options are available :
 - `doorClose`: Will cause a `@Door` trigger to trigger when the door is closed instead of the default when it opens.
 - `doorOpen`: Will cause a `@Door` trigger to trigger when the door is open. This is the default, but it can be used along with 
 - `doorClose` option to have it trigger on both open and close
-- `shareVision=true`, `shareVision=false`, `shareVision=toggle` , **this key derived from the integration with the module [Shared Vision](https://github.com/CDeenen/SharedVision)** . now you can add triggers to Foundry, for example when a token moves onto another token, or when it is clicked. Global Shared Vision can be triggered through Trigger Happy on a 'click' or 'move' trigger. You set this up like you would any other trigger, and you add 'shareVision=true', 'shareVision=false' or 'shareVision=toggle' to the '@Trigger' pseudo link. For example _To enable Global Shared Vision when a token moves unto another token called 'test'_, you use: `@Token[test] @Trigger[move shareVision=true]`,  _To enable Global Shared Vision when click on a token_ you use `@Token[test] @Trigger[click shareVision=true]`, `@Token[test] @Trigger[click shareVision=false]`, `@Token[test] @Trigger[click shareVision=toogle]`
 
 If a token is hidden (GM layer), then it is automatically considered a 'move' trigger, otherwise it's a 'click' trigger. You can override it with the `@Trigger[click]` or `@Trigger[move]` options, or you can specify both options to make a token trigger on both clicks and moves.
 
@@ -342,6 +386,28 @@ here the video on the exact minute: https://youtu.be/lfSYJXVQAcE?t=586
 ```
 @JournalEntry[TEST] @Trigger[click] @Quest[xXj5KZlMvGn3pTX8]{New Quest}
 ```
+
+### Example with [NPC Chatter](https://github.com/cswendrowski/FoundryVtt-Npc-Chatter) module base on this [video](https://www.youtube.com/watch?v=W6z0pMUBAz8)
+
+Here the trigger i put on the journal:
+
+`@Token[Catharina Combat]@Trigger[Click]@Macro[eD2rpXMTXTuo7Bh2]{Catharina Merchant Chatter}`
+
+and here the macro with name 'Catharina Merchant Chatter' (you can do a better macro it' just a example):
+
+```
+var NAME = "Catharina Combat";
+var token = game.scenes.filter(x => x.active)[0].data.tokens.filter(x => {
+// console.error(x.name);
+if(x.name.toLowerCase().includes(NAME.toLowerCase().trim())){
+  return x;
+}
+})[0];
+// console.log(token.name);
+game.npcChatter.tokenChatter(token);
+```
+
+remember to create  a rolltable with name 'Catharina Combat'
 
 ## [Changelog](./changelog.md)
 
