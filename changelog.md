@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.26
+
+- Downgrade to version 0.8.22 for bad feedback from the community
 ## 0.8.25 [BREAKING CHNAGES]
 
 - Attention: So many modification possibile issues
