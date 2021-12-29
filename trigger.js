@@ -1368,10 +1368,31 @@ export class TriggerHappy {
     );
 
     for (let target of targets) {
-      const tx = target.data.x;
-      const ty = target.data.y;
-      const tw = target.w || target.data.width;
-      const th = target.h || target.data.height;
+      // TODO I REALLY NEED THIS THEY ARE JUST DOCUMENTS...
+      let w = target.w || target?.data?.width || target.width;
+      if (!w) {
+        w = target?.object?.w || target?.object?.data?.width || target?.object?.width;
+      }
+      let h = target?.h || target?.data?.height || target?.height;
+      if (!h) {
+        h = target?.object?.h || target?.object?.data?.height || target?.object?.height;
+      }
+      let x = target.x || target?.data?.x;
+      if (!x) {
+        x = target?.object?.x || target?.object?.data?.x;
+      }
+      let y = target?.y || target?.data?.y;
+      if (!y) {
+        y = target?.object?.y || target?.object?.data?.y || target?.object?.y;
+      }
+      const tx = x;
+      const ty = y;
+      const tw = w;
+      const th = h;
+      // const tx = target.data.x;
+      // const ty = target.data.y;
+      // const tw = target.w || target.data.width;
+      // const th = target.h || target.data.height;
 
       let intersects;
       // test motion vs token diagonals
@@ -1398,8 +1419,12 @@ export class TriggerHappy {
 
   // Arguments match the new prototype of FVTT 0.8.x
   _onPreUpdateToken(tokenDocument, update, options, userId) {
-    if (!tokenDocument.object?.scene?.isView) return true;
-    if (update.x === undefined && update.y === undefined) return true;
+    if (!tokenDocument.object?.scene?.isView){
+    return true;
+    }
+    if (update.x === undefined && update.y === undefined){
+    return true;
+    }
     let stop;
     if (game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'edgeCollision')) {
       stop = this._doCaptureTriggersEdge(tokenDocument, tokenDocument.object.scene, update);
