@@ -1616,11 +1616,21 @@ export class TriggerHappy {
       }
       return tokenTargetsResult;
     } else if (entity == TRIGGER_ENTITY_TYPES.ACTOR) {
+      // NOTE THIS WORK BECAUSE THE MULTIPLE FUNCTION
+      // MUST BE CALLED ONLY FROM TRIGGER
       const actorTargetsResult = [];
       const actorTargets = this._retrieveFromIdOrNameMultiple(this._getActors(), idOrName);
-      for(let actorTarget of actorTargets){
-        actorTargetsResult.push(actorTarget);
+      if(actorTargets && actorTargets.length > 0){
+        actorTargetsResult = this._getTokens()?.filter((t) => {
+          if (actorTargets.filter(e => e.id === t.data.actorId).length > 0) {
+            // If token is referenced to the specific actor
+            return t;
+          }
+        });
       }
+      // for(let actorTarget of actorTargets){
+      //   actorTargetsResult.push(actorTarget);
+      // }
       // TODO ADD AMBIENT LIGHT INTEGRATION
       // } else if (relevantDocument instanceof AmbientLightDocument) {
       //   const ambientLightTarget = this._retrieveFromIdOrNameMultiple(this._getAmbientLights(), idOrName);
@@ -2132,7 +2142,7 @@ export class TriggerHappy {
       });
       if (doors && doors.length > 0) {
         //placeablesDoors.push(...doors);
-        doors.forEach((door, key) => {  
+        doors.forEach((door, key) => {
           if (placeablesDoors.filter(e => e.id === door.id).length <= 0) {
             placeablesDoors.push(door);
           }
@@ -2146,7 +2156,7 @@ export class TriggerHappy {
       });
       if (doors && doors.length > 0) {
         // placeablesDoors.push(...doors);
-        doors.forEach((door, key) => {  
+        doors.forEach((door, key) => {
           if (placeablesDoors.filter(e => e.id === door.id).length <= 0) {
             placeablesDoors.push(door);
           }
