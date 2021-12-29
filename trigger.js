@@ -320,7 +320,7 @@ export class TriggerHappy {
     this.registeredEffects = [];
   }
 
-  init(){
+  init() {
     this.triggers = [];
     this.taggerModuleActive = game.modules.get('tagger')?.active;
     this.release = game.settings.get('core', 'leftClickRelease');
@@ -360,8 +360,8 @@ export class TriggerHappy {
     return game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'journalName') || 'Trigger Happy';
   }
 
-  registerEffect(keyName){
-    if(keyName){
+  registerEffect(keyName) {
+    if (keyName) {
       this.registeredEffects.push(keyName);
     }
   }
@@ -473,23 +473,23 @@ export class TriggerHappy {
               }
             }
           } else {
-            if(!game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableMultipleTriggerSearch')){
-            let trigger = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
-            if (!trigger) {
-              break;
-            }
-            trigger = this._checkTagsOnTrigger(entity, trigger, filterTags);
-            if (!trigger) {
-              break;
-            }
-            if (trigger) {
-              if (typeof trigger === 'string' || trigger instanceof String) {
-                trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
+            if (!game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableMultipleTriggerSearch')) {
+              let trigger = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
+              if (!trigger) {
+                break;
               }
-            }
-            if (trigger) {
-              triggers.push(trigger);
-            }
+              trigger = this._checkTagsOnTrigger(entity, trigger, filterTags);
+              if (!trigger) {
+                break;
+              }
+              if (trigger) {
+                if (typeof trigger === 'string' || trigger instanceof String) {
+                  trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
+                }
+              }
+              if (trigger) {
+                triggers.push(trigger);
+              }
             } else {
               const triggersTmp = this._manageTriggerEventMultiple(triggerJournal, entity, id, label, filterTags) ?? [];
               for (let trigger of triggersTmp) {
@@ -523,16 +523,16 @@ export class TriggerHappy {
         } else {
           // see if there is a custom one
           let foundCustomEffect = false;
-          if(this.registeredEffects.length > 0){
+          if (this.registeredEffects.length > 0) {
             this.registeredEffects.forEach((registeredEffect) => {
-              if(registeredEffect.toLowerCase() === entity.toLowerCase()){
+              if (registeredEffect.toLowerCase() === entity.toLowerCase()) {
                 foundCustomEffect = true;
-                if(id){
+                if (id) {
                   let ids = id ? id.split(' ') : [];
                   let args = [];
                   if (typeof ids === 'string' || ids instanceof String) {
                     args = Array.from(ids);
-                  }else{
+                  } else {
                     args = ids;
                   }
                   const effectLink = new EffectLink(registeredEffect, args);
@@ -545,7 +545,7 @@ export class TriggerHappy {
               }
             });
           }
-          if(foundCustomEffect){
+          if (foundCustomEffect) {
             continue;
           }
           let effect = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
@@ -766,9 +766,7 @@ export class TriggerHappy {
     }
     if (!triggers || triggers.length == 0) {
       if (!game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'disableWarningMessages')) {
-        warn(
-          `Can't retrieve the config with entity '${entity}' and key '${id}' or '${label}' on '${triggerJournal}'`,
-        );
+        warn(`Can't retrieve the config with entity '${entity}' and key '${id}' or '${label}' on '${triggerJournal}'`);
       }
     }
     return triggers;
@@ -889,14 +887,14 @@ export class TriggerHappy {
         } else if (effect instanceof Token || effect instanceof TokenDocument) {
           const placeablesToken = this._getTokens();
           const token = placeablesToken.find((t) => t.name === effect.name || t.id === effect.id);
-          if (token){
+          if (token) {
             await token.control();
           }
         } else if (effect instanceof CompendiumLink) {
           const pack = game.packs.get(effect.packId);
           if (!pack.index.length) await pack.getIndex();
           const compendium = await pack.getDocument(effect.id);
-          if (compendium){
+          if (compendium) {
             await compendium.sheet.render(true);
           }
         } else if (effect instanceof SoundLink) {
@@ -924,20 +922,20 @@ export class TriggerHappy {
         } else if (effect instanceof Note || effect instanceof NoteDocument) {
           const placeablesToken = this._getNotes();
           const note = placeablesToken.find((t) => t.name === effect.name || t.id === effect.id);
-          if (note){
+          if (note) {
             await note.sheet.render(true);
           }
         } else if (effect.documentName === 'JournalEntry') {
           const placeablesJournal = this._getJournals();
           const journal = placeablesJournal.find((t) => t.name === effect.name || t.id === effect.id);
-          if (journal){
+          if (journal) {
             await journal.sheet.render(true);
           }
         } else if (effect instanceof WallDocument) {
           const state = effect.data.ds;
           const states = CONST.WALL_DOOR_STATES;
           // Determine whether the player can control the door at this time
-          if (!game.user.can('WALL_DOORS')){
+          if (!game.user.can('WALL_DOORS')) {
             return;
           }
           if (game.paused && !game.user.isGM) {
@@ -1123,11 +1121,11 @@ export class TriggerHappy {
   _placeableContains(placeable, position) {
     // Tokens have getter (since width/height is in grid increments) but drawings use data.width/height directly
     let w = placeable.w || placeable.data.width || placeable.width;
-    if(!w){
+    if (!w) {
       w = placeable?.object?.w || placeable?.object?.data.width || placeable?.object?.width;
     }
     let h = placeable.h || placeable.data.height || placeable.height;
-    if(!h){
+    if (!h) {
       h = placeable?.object?.h || placeable?.object?.data.height || placeable?.object?.height;
     }
 
@@ -1601,7 +1599,7 @@ export class TriggerHappy {
       return null; // NOT SUPPORTED
     } else if (entity == TRIGGER_ENTITY_TYPES.PLAYLIST) {
       return null; // NOT SUPPORTED
-    }else if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
+    } else if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
       const tokenTargetsResult = [];
       const tokenTargets = this._retrieveFromIdOrNameMultiple(this._getTokens(), idOrName);
       // Some strange retrocompatibility use case or just compatibility with other modules like token mold
@@ -1611,7 +1609,7 @@ export class TriggerHappy {
           return t && t.data.actorId && this._retrieveFromIdOrName(this._getActors(), idOrName)?.id === t.data.actorId;
         });
       }
-      for(let tokenTarget of tokenTargets){
+      for (let tokenTarget of tokenTargets) {
         tokenTargetsResult.push(tokenTarget);
       }
       return tokenTargetsResult;
@@ -1620,9 +1618,9 @@ export class TriggerHappy {
       // MUST BE CALLED ONLY FROM TRIGGER
       const actorTargetsResult = [];
       const actorTargets = this._retrieveFromIdOrNameMultiple(this._getActors(), idOrName);
-      if(actorTargets && actorTargets.length > 0){
+      if (actorTargets && actorTargets.length > 0) {
         actorTargetsResult = this._getTokens()?.filter((t) => {
-          if (actorTargets.filter(e => e.id === t.data.actorId).length > 0) {
+          if (actorTargets.filter((e) => e.id === t.data.actorId).length > 0) {
             // If token is referenced to the specific actor
             return t;
           }
@@ -1649,7 +1647,7 @@ export class TriggerHappy {
       const doorControlTargets = this._retrieveFromIdOrNameMultiple(this._getDoors(), idOrName);
       const coords = idOrName.split(',').map((c) => Number(c)) ?? [];
       if (coords && coords.length > 0 && coords.length == 4) {
-        for(let wall of this._getDoors()){
+        for (let wall of this._getDoors()) {
           let mywall = wall;
           if (wall instanceof DoorControl) {
             mywall = wall.wall.document;
@@ -1663,12 +1661,12 @@ export class TriggerHappy {
             mywall.data?.c[1] == coords[1] &&
             mywall.data?.c[2] == coords[2] &&
             mywall.data?.c[3] == coords[3]
-          ){
+          ) {
             doorControlTargets.push(mywall);
           }
         }
       }
-      for(let doorControlTarget of doorControlTargets){
+      for (let doorControlTarget of doorControlTargets) {
         // Retrocompatibility check
         // if (!doorControlTarget) {
         //   const coords = idOrName.split(',').map((c) => Number(c)) ?? [];
@@ -1695,7 +1693,7 @@ export class TriggerHappy {
         // } else {
         //    doorControlTargetsResult.push(doorControlTarget);
         // }
-        if (doorControlTargetsResult.filter(e => e.id === doorControlTarget.id).length <= 0) {
+        if (doorControlTargetsResult.filter((e) => e.id === doorControlTarget.id).length <= 0) {
           doorControlTargetsResult.push(doorControlTarget);
         }
       }
@@ -1703,19 +1701,19 @@ export class TriggerHappy {
     } else if (entity == TRIGGER_ENTITY_TYPES.DRAWING) {
       const drawingTargetsResult = [];
       const drawingTargets = this._retrieveFromIdOrNameMultiple(this._getDrawings(), idOrName);
-      for(let drawingTarget of drawingTargets){
+      for (let drawingTarget of drawingTargets) {
         drawingTargetsResult.push(drawingTarget);
       }
       return drawingTargetsResult;
     } else if (entity == TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY) {
       const noteTargetsResult = [];
       const noteTargets = this._retrieveFromIdOrNameMultiple(this._getNotes(), idOrName);
-      for(let noteTarget of noteTargets){
+      for (let noteTarget of noteTargets) {
         if (!noteTarget) {
           const journalTarget = this._retrieveFromIdOrNameMultiple(this._getJournals(), idOrName);
           if (journalTarget?.sceneNote) {
             noteTargetsResult.push(journalTarget.sceneNote);
-          }else{
+          } else {
             noteTargetsResult.push(journalTarget);
           }
         }
@@ -1725,14 +1723,14 @@ export class TriggerHappy {
     } else if (entity == TRIGGER_ENTITY_TYPES.STAIRWAY) {
       const stairwayTargetsResult = [];
       const stairwayTargets = this._retrieveFromIdOrNameMultiple(this._getStairways(), idOrName);
-      for(let stairwayTarget of stairwayTargets){
+      for (let stairwayTarget of stairwayTargets) {
         stairwayTargetsResult.push(stairwayTarget);
       }
       return stairwayTargetsResult;
     } else if (entity == TRIGGER_ENTITY_TYPES.SCENE) {
       const sceneTargetsResult = [];
-      const sceneTargets = this._retrieveFromIdOrNameMultiple(this._getScenes(), idOrName, );
-      for(let sceneTarget of sceneTargets){
+      const sceneTargets = this._retrieveFromIdOrNameMultiple(this._getScenes(), idOrName);
+      for (let sceneTarget of sceneTargets) {
         sceneTargetsResult.push(sceneTarget);
       }
       return sceneTargetsResult;
@@ -2110,7 +2108,7 @@ export class TriggerHappy {
         });
       }
       game.scenes.current.tokens?.contents.forEach((token, key) => {
-        if (placeablesToken.filter(e => e.id === token.id).length <= 0) {
+        if (placeablesToken.filter((e) => e.id === token.id).length <= 0) {
           placeablesToken.push(token);
         }
       });
@@ -2143,7 +2141,7 @@ export class TriggerHappy {
       if (doors && doors.length > 0) {
         //placeablesDoors.push(...doors);
         doors.forEach((door, key) => {
-          if (placeablesDoors.filter(e => e.id === door.id).length <= 0) {
+          if (placeablesDoors.filter((e) => e.id === door.id).length <= 0) {
             placeablesDoors.push(door);
           }
         });
@@ -2157,7 +2155,7 @@ export class TriggerHappy {
       if (doors && doors.length > 0) {
         // placeablesDoors.push(...doors);
         doors.forEach((door, key) => {
-          if (placeablesDoors.filter(e => e.id === door.id).length <= 0) {
+          if (placeablesDoors.filter((e) => e.id === door.id).length <= 0) {
             placeablesDoors.push(door);
           }
         });
@@ -2175,7 +2173,7 @@ export class TriggerHappy {
         });
       }
       game.scenes.current.drawings?.contents.forEach((drawing, key) => {
-        if (placeablesDrawings.filter(e => e.id === drawing.id).length <= 0) {
+        if (placeablesDrawings.filter((e) => e.id === drawing.id).length <= 0) {
           placeablesDrawings.push(drawing);
         }
       });
@@ -2198,7 +2196,7 @@ export class TriggerHappy {
         });
       }
       game.scenes.current.notes?.contents.forEach((note, key) => {
-        if (placeablesNotes.filter(e => e.id === note.id).length <= 0) {
+        if (placeablesNotes.filter((e) => e.id === note.id).length <= 0) {
           placeablesNotes.push(note);
         }
       });
@@ -2226,7 +2224,7 @@ export class TriggerHappy {
         });
       }
       game.scenes.current.stairways?.contents.forEach((stairway, key) => {
-        if (placeablesStairways.filter(e => e.id === stairway.id).length <= 0) {
+        if (placeablesStairways.filter((e) => e.id === stairway.id).length <= 0) {
           placeablesStairways.push(stairway);
         }
       });
@@ -2259,7 +2257,7 @@ export class TriggerHappy {
         });
       }
       game.scenes.current.lights.contents.forEach((ambientLight, key) => {
-        if (placeablesLightings.filter(e => e.id === ambientLight.id).length <= 0) {
+        if (placeablesLightings.filter((e) => e.id === ambientLight.id).length <= 0) {
           placeablesLightings.push(ambientLight);
         }
       });
@@ -2282,7 +2280,7 @@ export class TriggerHappy {
         });
       }
       game.scenes.current.sounds.contents.forEach((ambientSound, key) => {
-        if (placeablesSounds.filter(e => e.id === ambientSound.id).length <= 0) {
+        if (placeablesSounds.filter((e) => e.id === ambientSound.id).length <= 0) {
           placeablesSounds.push(ambientSound);
         }
       });
@@ -2305,7 +2303,7 @@ export class TriggerHappy {
         });
       }
       game.scenes.current.tiles.contents.forEach((tile, key) => {
-        if (placeablesTiles.filter(e => e.id === tile.id).length <= 0) {
+        if (placeablesTiles.filter((e) => e.id === tile.id).length <= 0) {
           placeablesTiles.push(tile);
         }
       });
