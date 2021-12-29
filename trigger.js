@@ -1616,7 +1616,7 @@ export class TriggerHappy {
     } else if (entity == TRIGGER_ENTITY_TYPES.ACTOR) {
       // NOTE THIS WORK BECAUSE THE MULTIPLE FUNCTION
       // MUST BE CALLED ONLY FROM TRIGGER
-      const actorTargetsResult = [];
+      let actorTargetsResult = [];
       const actorTargets = this._retrieveFromIdOrNameMultiple(this._getActors(), idOrName);
       if (actorTargets && actorTargets.length > 0) {
         actorTargetsResult = this._getTokens()?.filter((t) => {
