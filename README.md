@@ -140,8 +140,8 @@ Here a example:
 
 | Key (case unsensitive) | Category  | Syntax structure (id, name, label are case unsensitive) | Description |
 |:---------------:|:---------------:|:--------------:|:-----------:|
-| `@Actor`        | Trigger,Effect  | `@Actor[id]{name}`, `@Actor[name]` | If used as a trigger, this will cause the triggers to activate on any token referenced by the actor with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to select the first token matching that name. |
-| `@Token`        | Trigger,Effect  | `@Token[id]{name}`, `@Token[name]` | If used as a trigger, this will cause the triggers to activate on any token with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to select the first token matching that name. |
+| `@Actor`        | Trigger,Effect  | `@Actor[id]{name}`, `@Actor[name]` | If used as a trigger, this will cause the triggers to activate on any token referenced by the actor with the specified name (you cannot set a token id in this case).  As a trigger effect, it will cause the player to render the sheet of the actor. |
+| `@Token`        | Trigger,Effect  | `@Token[id]{name}`, `@Token[name]` | If used as a trigger, this will cause the triggers to activate on any token with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to render the sheet of the actor linked to the token. |
 | `@Scene`        | Trigger,Effect  | `@Scene[id]{name}`  | |
 | `@Drawing`      | Trigger,Effect  | `@Drawing[id]{label}`, `@Drawing[label]` | This will trigger the effects when the player clicks/moves a token within the area of a drawing which has its text set to the `label` specified. Works best with rectangles. |
 | `@Door`         | Trigger,Effect  | `@Door[coordinates]`,`@Door[*]@Tag[list pf tags]`| This will trigger the effects when a player opens or closes a door (based on options). The coordinates can be copy/pasted from the wall configuration sheet (excluding the `[` and `]`). Is best avoid coordinates and use the new tagger integration `@Door[*]@Tag[door01]` |
