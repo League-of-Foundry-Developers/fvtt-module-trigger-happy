@@ -119,7 +119,7 @@ Here the example structure of the line of the journal:
 
 **NOTE:** From version `0.8.22` the event link `@Trigger` is no more mandatory, if no event link with syntax `@Trigger` is specified the default one is `@Trigger[click]`
 
-**NOTE:** From version `0.8.13` you can now use like id the character `*` for activate the same effect for all the trigger of that type
+**NOTE:** From version `0.8.13` you can now use like id the character `*` for activate the same effect for all the trigger of that type the `{xxx}` label is just for you is not used form the general trigger.
 
 Here a example:
 
@@ -129,7 +129,7 @@ Here a example:
 
 #### Every time you open a door on the scene the put the game on pause
 
-`@Door[*]{Missioni}@Trigger[DoorOpen]@Macro[pause_the_game]`
+`@Door[*]{Any string}@Trigger[DoorOpen]@Macro[pause_the_game]`
 
 **NOTE:** From version `0.8.18-20` you can now use the triggers: `@ooc`, `@emote`, `@whisper`, `@selfwhisper` they have a specific syntax structure : `@XXX[content message]{alias|whisper|tokenId|actorId|sceneId}` all the parameter between `{}` are optional, but now you can customize a very specific chat message:
 

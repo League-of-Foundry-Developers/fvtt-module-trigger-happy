@@ -1368,7 +1368,7 @@ export class TriggerHappy {
     );
 
     for (let target of targets) {
-      // TODO I REALLY NEED THIS THEY ARE JUST DOCUMENTS...
+      // TODO I REALLY NEED THIS ? THEY ARE JUST DOCUMENTS...
       let w = target.w || target?.data?.width || target.width;
       if (!w) {
         w = target?.object?.w || target?.object?.data?.width || target?.object?.width;
@@ -1389,6 +1389,8 @@ export class TriggerHappy {
       const ty = y;
       const tw = w;
       const th = h;
+      // const tcenterx = target?.center?.x || tx;
+      // const tcentery = target?.center?.y || ty;
       // const tx = target.data.x;
       // const ty = target.data.y;
       // const tw = target.w || target.data.width;
@@ -1409,8 +1411,10 @@ export class TriggerHappy {
           motion.intersectSegment([tx, ty, tx + tw, ty + th]) || motion.intersectSegment([tx, ty + th, tx + tw, ty]);
       }
       if (intersects) {
-        update.x = target.center.x - tokenWidth;
-        update.y = target.center.y - tokenHeight;
+        if (target.center) {
+          update.x = target.center.x - tokenWidth;
+          update.y = target.center.y - tokenHeight;
+        }
         return true;
       }
     }
@@ -1419,11 +1423,11 @@ export class TriggerHappy {
 
   // Arguments match the new prototype of FVTT 0.8.x
   _onPreUpdateToken(tokenDocument, update, options, userId) {
-    if (!tokenDocument.object?.scene?.isView){
-    return true;
+    if (!tokenDocument.object?.scene?.isView) {
+      return true;
     }
-    if (update.x === undefined && update.y === undefined){
-    return true;
+    if (update.x === undefined && update.y === undefined) {
+      return true;
     }
     let stop;
     if (game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'edgeCollision')) {
@@ -1528,10 +1532,33 @@ export class TriggerHappy {
     const gridSize = canvas.grid.size;
 
     for (let target of targets) {
-      const tx = target.x;
-      const ty = target.y;
-      const tw = target.w || target.data.width;
-      const th = target.h || target.data.height;
+      // TODO I REALLY NEED THIS ? THEY ARE JUST DOCUMENTS...
+      let w = target.w || target?.data?.width || target.width;
+      if (!w) {
+        w = target?.object?.w || target?.object?.data?.width || target?.object?.width;
+      }
+      let h = target?.h || target?.data?.height || target?.height;
+      if (!h) {
+        h = target?.object?.h || target?.object?.data?.height || target?.object?.height;
+      }
+      let x = target.x || target?.data?.x;
+      if (!x) {
+        x = target?.object?.x || target?.object?.data?.x;
+      }
+      let y = target?.y || target?.data?.y;
+      if (!y) {
+        y = target?.object?.y || target?.object?.data?.y || target?.object?.y;
+      }
+      const tx = x;
+      const ty = y;
+      const tw = w;
+      const th = h;
+      // const tcenterx = target?.center?.x || tx;
+      // const tcentery = target?.center?.y || ty;
+      // const tx = target.x;
+      // const ty = target.y;
+      // const tw = target.w || target.data.width;
+      // const th = target.h || target.data.height;
       const tgw = Math.ceil(target.data.width / gridSize); // target token width in grid units
       const tgh = Math.ceil(target.data.height / gridSize); // target token height in grid units
 
@@ -1552,8 +1579,10 @@ export class TriggerHappy {
       if (intersects) {
         if (tgw === 1 && tgh === 1) {
           // simple case size 1 target, return straight away.
-          update.x = target.center.x - tokenWidth;
-          update.y = target.center.y - tokenHeight;
+          if (target.center) {
+            update.x = target.center.x - tokenWidth;
+            update.y = target.center.y - tokenHeight;
+          }
           return true;
         }
         // Create a grid of the squares covered by the target token
