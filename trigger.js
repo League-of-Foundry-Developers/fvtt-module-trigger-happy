@@ -51,11 +51,21 @@ class ChatLink {
   }
 }
 
+class EffectLink {
+  key;
+  args;
+  constructor(key, args) {
+    this.key = key;
+    this.args = args;
+  }
+}
+
 /* ------------------------------------ */
 /* Initialize module					*/
 /* ------------------------------------ */
 Hooks.once('init', async () => {
   log(`Initializing ${TRIGGER_HAPPY_MODULE_NAME}`);
+  game.triggers = new TriggerHappy();
 
   // Register settings
 
@@ -194,13 +204,22 @@ Hooks.once('init', async () => {
     default: false,
     type: Boolean,
   });
+
+  game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'enableMultipleTriggerSearch', {
+    name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableMultipleTriggerSearch.name`),
+    hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableMultipleTriggerSearch.hint`),
+    scope: 'world',
+    config: true,
+    default: true,
+    type: Boolean,
+  });
 });
 
 /* ------------------------------------ */
 /* Setup module							*/
 /* ------------------------------------ */
 Hooks.once('setup', function () {
-  game.triggers = new TriggerHappy();
+  game.triggers.init();
   Hooks.on('getSceneControlButtons', TriggerHappy.getSceneControlButtons);
 });
 
@@ -298,6 +317,10 @@ export class TriggerHappy {
     Hooks.on('preUpdateNote', this._onPreUpdateNote.bind(this));
     Hooks.on('getSceneNavigationContext', this._parseJournals.bind(this)); // parse again the journal when change scene
 
+    this.registeredEffects = [];
+  }
+
+  init() {
     this.triggers = [];
     this.taggerModuleActive = game.modules.get('tagger')?.active;
     this.release = game.settings.get('core', 'leftClickRelease');
@@ -335,6 +358,12 @@ export class TriggerHappy {
 
   get journalName() {
     return game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'journalName') || 'Trigger Happy';
+  }
+
+  registerEffect(keyName) {
+    if (keyName) {
+      this.registeredEffects.push(keyName);
+    }
   }
 
   _updateJournals() {
@@ -395,11 +424,16 @@ export class TriggerHappy {
     });
 
     const entityLinks = Object.keys(CONFIG).concat(this.arrayTriggers);
+    entityLinks.push(...this.registeredEffects);
+
+    const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
+    const rgx = new RegExp(entityMatchRgx, 'ig');
+
+    const entityMatchRgxTagger = `@(Tag)\\[([^\\]]+)\\]`;
+    const rgxTagger = new RegExp(entityMatchRgxTagger, 'ig');
 
     for (const line of filteredTriggerLines) {
       // We check this anyway with module tagger active or no
-      const entityMatchRgxTagger = `@(Tag)\\[([^\\]]+)\\]`;
-      const rgxTagger = new RegExp(entityMatchRgxTagger, 'ig');
       const matchAllTags = line.matchAll(rgxTagger) || [];
       let filterTags = [];
       let lineTmp = line;
@@ -412,8 +446,6 @@ export class TriggerHappy {
         }
       }
 
-      const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
-      const rgx = new RegExp(entityMatchRgx, 'ig');
       let options = [];
       let triggers = [];
       let effects = [];
@@ -441,21 +473,38 @@ export class TriggerHappy {
               }
             }
           } else {
-            let trigger = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
-            if (!trigger) {
-              break;
-            }
-            trigger = this._checkTagsOnTrigger(entity, trigger, filterTags);
-            if (!trigger) {
-              break;
-            }
-            if (trigger) {
-              if (typeof trigger === 'string' || trigger instanceof String) {
-                trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
+            if (!game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableMultipleTriggerSearch')) {
+              let trigger = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
+              if (!trigger) {
+                break;
               }
-            }
-            if (trigger) {
-              triggers.push(trigger);
+              trigger = this._checkTagsOnTrigger(entity, trigger, filterTags);
+              if (!trigger) {
+                break;
+              }
+              if (trigger) {
+                if (typeof trigger === 'string' || trigger instanceof String) {
+                  trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
+                }
+              }
+              if (trigger) {
+                triggers.push(trigger);
+              }
+            } else {
+              const triggersTmp = this._manageTriggerEventMultiple(triggerJournal, entity, id, label, filterTags) ?? [];
+              for (let trigger of triggersTmp) {
+                if (trigger != null && trigger != undefined) {
+                  trigger = this._checkTagsOnTrigger(entity, trigger, filterTags);
+                  if (trigger) {
+                    if (typeof trigger === 'string' || trigger instanceof String) {
+                      trigger = trigger.toLowerCase(); // force lowercase for avoid miss typing from the user
+                    }
+                  }
+                  if (trigger) {
+                    triggers.push(trigger);
+                  }
+                }
+              }
             }
           }
         } else if (entity === TRIGGER_ENTITY_TYPES.TRIGGER) {
@@ -472,10 +521,34 @@ export class TriggerHappy {
             }
           }
         } else {
-          let effect = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
-          if (!effect) {
+          // see if there is a custom one
+          let foundCustomEffect = false;
+          if (this.registeredEffects.length > 0) {
+            this.registeredEffects.forEach((registeredEffect) => {
+              if (registeredEffect.toLowerCase() === entity.toLowerCase()) {
+                foundCustomEffect = true;
+                if (id) {
+                  let ids = id ? id.split(' ') : [];
+                  let args = [];
+                  if (typeof ids === 'string' || ids instanceof String) {
+                    args = Array.from(ids);
+                  } else {
+                    args = ids;
+                  }
+                  const effectLink = new EffectLink(registeredEffect, args);
+                  effects.push(effectLink);
+                } else {
+                  if (!game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'disableWarningMessages')) {
+                    warn(`Can't manage the event '${entity}' on '${triggerJournal}'`);
+                  }
+                }
+              }
+            });
+          }
+          if (foundCustomEffect) {
             continue;
           }
+          let effect = this._manageTriggerEvent(triggerJournal, entity, id, label, filterTags);
           if (effect) {
             if (typeof effect === 'string' || effect instanceof String) {
               effect = effect.toLowerCase(); // force lowercase for avoid miss typing from the user
@@ -656,6 +729,49 @@ export class TriggerHappy {
     return trigger;
   }
 
+  _manageTriggerEventMultiple(triggerJournal, entity, id, label) {
+    let triggers = [];
+    if (!id && !label) {
+      if (!game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'disableWarningMessages')) {
+        warn(`Can't manage the empty trigger '${entity}' on '${triggerJournal}'`);
+      }
+      return;
+    }
+    // let isAManagedTrigger = false;
+    // If is a placeable object
+    if (
+      this.arrayPlaceableObjects.find((el) => {
+        return el.toLowerCase() === entity.toLowerCase();
+      })
+    ) {
+      // isAManagedTrigger = true;
+      let relevantDocuments = this._retrieveFromEntityMultiple(entity, id, label);
+      if ((!relevantDocuments || relevantDocuments.length == 0) && label) {
+        relevantDocuments = this._retrieveFromEntityMultiple(entity, label, label);
+      }
+      triggers = relevantDocuments;
+    }
+    // If is not a placeable object
+    else if (
+      this.arrayNoPlaceableObjects.find((el) => {
+        return el.toLowerCase() === entity.toLowerCase();
+      })
+    ) {
+      // isAManagedTrigger = true;
+      let relevantDocuments = this._retrieveFromEntityMultiple(entity, id, label);
+      if ((!relevantDocuments || relevantDocuments.length == 0) && label) {
+        relevantDocuments = this._retrieveFromEntityMultiple(entity, label, label);
+      }
+      triggers = relevantDocuments;
+    }
+    if (!triggers || triggers.length == 0) {
+      if (!game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'disableWarningMessages')) {
+        warn(`Can't retrieve the config with entity '${entity}' and key '${id}' or '${label}' on '${triggerJournal}'`);
+      }
+    }
+    return triggers;
+  }
+
   async _executeTriggers(triggers) {
     if (!triggers.length) return;
     for (const trigger of triggers) {
@@ -771,12 +887,16 @@ export class TriggerHappy {
         } else if (effect instanceof Token || effect instanceof TokenDocument) {
           const placeablesToken = this._getTokens();
           const token = placeablesToken.find((t) => t.name === effect.name || t.id === effect.id);
-          if (token) await token.control();
+          if (token) {
+            await token.control();
+          }
         } else if (effect instanceof CompendiumLink) {
           const pack = game.packs.get(effect.packId);
           if (!pack.index.length) await pack.getIndex();
           const compendium = await pack.getDocument(effect.id);
-          if (compendium) await compendium.sheet.render(true);
+          if (compendium) {
+            await compendium.sheet.render(true);
+          }
         } else if (effect instanceof SoundLink) {
           let startsWith = '';
           let playlistName = effect.playlistName;
@@ -802,16 +922,22 @@ export class TriggerHappy {
         } else if (effect instanceof Note || effect instanceof NoteDocument) {
           const placeablesToken = this._getNotes();
           const note = placeablesToken.find((t) => t.name === effect.name || t.id === effect.id);
-          if (note) await note.sheet.render(true);
+          if (note) {
+            await note.sheet.render(true);
+          }
         } else if (effect.documentName === 'JournalEntry') {
           const placeablesJournal = this._getJournals();
           const journal = placeablesJournal.find((t) => t.name === effect.name || t.id === effect.id);
-          if (journal) await journal.sheet.render(true);
+          if (journal) {
+            await journal.sheet.render(true);
+          }
         } else if (effect instanceof WallDocument) {
           const state = effect.data.ds;
           const states = CONST.WALL_DOOR_STATES;
           // Determine whether the player can control the door at this time
-          if (!game.user.can('WALL_DOORS')) return;
+          if (!game.user.can('WALL_DOORS')) {
+            return;
+          }
           if (game.paused && !game.user.isGM) {
             ui.notifications.warn('GAME.PausedWarning', { localize: true });
             return;
@@ -823,6 +949,10 @@ export class TriggerHappy {
           }
           // Toggle between OPEN and CLOSED states
           effect.document.update({ ds: state === states.CLOSED ? states.OPEN : states.CLOSED });
+        } else if (effect instanceof EffectLink) {
+          const key = effect.key;
+          const args = effect.args;
+          Hooks.call('TriggerHappy', key, args);
         } else {
           await effect.sheet.render(true);
         }
@@ -835,19 +965,24 @@ export class TriggerHappy {
       (trigger.trigger instanceof Actor && trigger.trigger.id === token.data.actorId) ||
       (trigger.trigger instanceof TokenDocument && trigger.trigger.id === token.id) ||
       (trigger.trigger instanceof Token && trigger.trigger.id === token.id);
-    if (!isTrigger) return false;
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
+    if (!isTrigger) {
+      return false;
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) ||
         (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) && !token.data.hidden)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) ||
         (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) && token.data.hidden)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) {
       return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
     return true;
   }
 
@@ -856,37 +991,47 @@ export class TriggerHappy {
       (trigger.trigger instanceof Note && trigger.trigger.id === note.id) ||
       (trigger.trigger instanceof NoteDocument && trigger.trigger.id === note.id) ||
       (trigger.trigger.documentName === 'JournalEntry' && trigger.trigger.sceneNote?.id === note.id);
-    if (!isTrigger) return false;
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
+    if (!isTrigger) {
+      return false;
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) ||
         !trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) ||
         !trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) {
       return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
     return true;
   }
 
   _isJournalTrigger(journal, trigger, type) {
     const isTrigger = trigger.trigger.documentName === 'JournalEntry' && trigger.trigger.id === journal.id;
-    if (!isTrigger) return false;
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
+    if (!isTrigger) {
+      return false;
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) ||
         !trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) ||
         !trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) {
       return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
     return true;
   }
 
@@ -897,19 +1042,24 @@ export class TriggerHappy {
     const isTrigger =
       (trigger.trigger?.document?.documentName === 'Stairway' && trigger.trigger.id === stairway.id) ||
       (trigger.trigger?.documentName === 'Stairway' && trigger.trigger.id === stairway.id);
-    if (!isTrigger) return false;
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
+    if (!isTrigger) {
+      return false;
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) ||
         !trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) ||
         !trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) {
       return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
     return true;
   }
 
@@ -917,19 +1067,24 @@ export class TriggerHappy {
     const isTrigger =
       (trigger.trigger instanceof Drawing && trigger.trigger.id === drawing.id) ||
       (trigger.trigger instanceof DrawingDocument && trigger.trigger.id === drawing.id);
-    if (!isTrigger) return false;
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
+    if (!isTrigger) {
+      return false;
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) ||
         (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) && !drawing.data.hidden)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) ||
         (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) && drawing.data.hidden)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) {
       return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
     return true;
   }
 
@@ -942,26 +1097,38 @@ export class TriggerHappy {
       (trigger.trigger instanceof Wall && trigger.trigger.id === wall.id) ||
       (trigger.trigger instanceof WallDocument && trigger.trigger.id === wall.id) ||
       (trigger.trigger instanceof DoorControl && trigger.trigger.doorControl?.id === wall.id);
-    if (!isTrigger) return false;
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK)
+    if (!isTrigger) {
+      return false;
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) ||
         !trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) ||
         !trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK)
       );
-    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE)
+    }
+    if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) {
       return trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    }
     return true;
   }
 
   _placeableContains(placeable, position) {
     // Tokens have getter (since width/height is in grid increments) but drawings use data.width/height directly
-    const w = placeable.w || placeable.data.width || placeable.width;
-    const h = placeable.h || placeable.data.height || placeable.height;
+    let w = placeable.w || placeable.data.width || placeable.width;
+    if (!w) {
+      w = placeable?.object?.w || placeable?.object?.data.width || placeable?.object?.width;
+    }
+    let h = placeable.h || placeable.data.height || placeable.height;
+    if (!h) {
+      h = placeable?.object?.h || placeable?.object?.data.height || placeable?.object?.height;
+    }
+
     return (
       Number.between(position.x, placeable.data.x, placeable.data.x + w) &&
       Number.between(position.y, placeable.data.y, placeable.data.y + h)
@@ -1201,10 +1368,33 @@ export class TriggerHappy {
     );
 
     for (let target of targets) {
-      const tx = target.data.x;
-      const ty = target.data.y;
-      const tw = target.w || target.data.width;
-      const th = target.h || target.data.height;
+      // TODO I REALLY NEED THIS ? THEY ARE JUST DOCUMENTS...
+      let w = target.w || target?.data?.width || target.width;
+      if (!w) {
+        w = target?.object?.w || target?.object?.data?.width || target?.object?.width;
+      }
+      let h = target?.h || target?.data?.height || target?.height;
+      if (!h) {
+        h = target?.object?.h || target?.object?.data?.height || target?.object?.height;
+      }
+      let x = target.x || target?.data?.x;
+      if (!x) {
+        x = target?.object?.x || target?.object?.data?.x;
+      }
+      let y = target?.y || target?.data?.y;
+      if (!y) {
+        y = target?.object?.y || target?.object?.data?.y || target?.object?.y;
+      }
+      const tx = x;
+      const ty = y;
+      const tw = w;
+      const th = h;
+      // const tcenterx = target?.center?.x || tx;
+      // const tcentery = target?.center?.y || ty;
+      // const tx = target.data.x;
+      // const ty = target.data.y;
+      // const tw = target.w || target.data.width;
+      // const th = target.h || target.data.height;
 
       let intersects;
       // test motion vs token diagonals
@@ -1221,8 +1411,10 @@ export class TriggerHappy {
           motion.intersectSegment([tx, ty, tx + tw, ty + th]) || motion.intersectSegment([tx, ty + th, tx + tw, ty]);
       }
       if (intersects) {
-        update.x = target.center.x - tokenWidth;
-        update.y = target.center.y - tokenHeight;
+        if (target.center) {
+          update.x = target.center.x - tokenWidth;
+          update.y = target.center.y - tokenHeight;
+        }
         return true;
       }
     }
@@ -1231,8 +1423,12 @@ export class TriggerHappy {
 
   // Arguments match the new prototype of FVTT 0.8.x
   _onPreUpdateToken(tokenDocument, update, options, userId) {
-    if (!tokenDocument.object?.scene?.isView) return true;
-    if (update.x === undefined && update.y === undefined) return true;
+    if (!tokenDocument.object?.scene?.isView) {
+      return true;
+    }
+    if (update.x === undefined && update.y === undefined) {
+      return true;
+    }
     let stop;
     if (game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'edgeCollision')) {
       stop = this._doCaptureTriggersEdge(tokenDocument, tokenDocument.object.scene, update);
@@ -1336,10 +1532,33 @@ export class TriggerHappy {
     const gridSize = canvas.grid.size;
 
     for (let target of targets) {
-      const tx = target.x;
-      const ty = target.y;
-      const tw = target.w || target.data.width;
-      const th = target.h || target.data.height;
+      // TODO I REALLY NEED THIS ? THEY ARE JUST DOCUMENTS...
+      let w = target.w || target?.data?.width || target.width;
+      if (!w) {
+        w = target?.object?.w || target?.object?.data?.width || target?.object?.width;
+      }
+      let h = target?.h || target?.data?.height || target?.height;
+      if (!h) {
+        h = target?.object?.h || target?.object?.data?.height || target?.object?.height;
+      }
+      let x = target.x || target?.data?.x;
+      if (!x) {
+        x = target?.object?.x || target?.object?.data?.x;
+      }
+      let y = target?.y || target?.data?.y;
+      if (!y) {
+        y = target?.object?.y || target?.object?.data?.y || target?.object?.y;
+      }
+      const tx = x;
+      const ty = y;
+      const tw = w;
+      const th = h;
+      // const tcenterx = target?.center?.x || tx;
+      // const tcentery = target?.center?.y || ty;
+      // const tx = target.x;
+      // const ty = target.y;
+      // const tw = target.w || target.data.width;
+      // const th = target.h || target.data.height;
       const tgw = Math.ceil(target.data.width / gridSize); // target token width in grid units
       const tgh = Math.ceil(target.data.height / gridSize); // target token height in grid units
 
@@ -1360,8 +1579,10 @@ export class TriggerHappy {
       if (intersects) {
         if (tgw === 1 && tgh === 1) {
           // simple case size 1 target, return straight away.
-          update.x = target.center.x - tokenWidth;
-          update.y = target.center.y - tokenHeight;
+          if (target.center) {
+            update.x = target.center.x - tokenWidth;
+            update.y = target.center.y - tokenHeight;
+          }
           return true;
         }
         // Create a grid of the squares covered by the target token
@@ -1396,19 +1617,180 @@ export class TriggerHappy {
     return true;
   }
 
-  _getObjectsFromScene(scene) {
-    return [
-      ...Array.from(scene.tokens),
-      ...Array.from(scene.lights),
-      ...Array.from(scene.sounds),
-      ...Array.from(scene.templates),
-      ...Array.from(scene.tiles),
-      ...Array.from(scene.walls),
-      ...Array.from(scene.drawings),
-      ...Array.from(scene.stairways), // Add module stairways...
-    ]
-      .deepFlatten()
-      .filter(Boolean);
+  // _getObjectsFromScene(scene) {
+  //   return [
+  //     ...Array.from(scene.tokens),
+  //     ...Array.from(scene.lights),
+  //     ...Array.from(scene.sounds),
+  //     ...Array.from(scene.templates),
+  //     ...Array.from(scene.tiles),
+  //     ...Array.from(scene.walls),
+  //     ...Array.from(scene.drawings),
+  //     ...Array.from(scene.stairways), // Add module stairways...
+  //   ]
+  //     .deepFlatten()
+  //     .filter(Boolean);
+  // }
+
+  _retrieveFromEntityMultiple(entity, idOrName, label) {
+    if (!entity) return null;
+    entity = entity.toLowerCase();
+    if (entity == TRIGGER_ENTITY_TYPES.TRIGGER) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.CHAT_MESSAGE) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.OOC) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.EMOTE) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.WHISPER) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.SELF_WHISPER) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.COMPENDIUM) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.SOUND_LINK) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.PLAYLIST) {
+      return null; // NOT SUPPORTED
+    } else if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
+      const tokenTargetsResult = [];
+      const tokenTargets = this._retrieveFromIdOrNameMultiple(this._getTokens(), idOrName);
+      // Some strange retrocompatibility use case or just compatibility with other modules like token mold
+      if ((!tokenTargets || tokenTargets.length == 0) && this.ifNoTokenIsFoundTryToUseActor) {
+        tokenTargets = this._getTokens()?.filter((t) => {
+          // If token is referenced to a actor
+          return t && t.data.actorId && this._retrieveFromIdOrName(this._getActors(), idOrName)?.id === t.data.actorId;
+        });
+      }
+      for (let tokenTarget of tokenTargets) {
+        tokenTargetsResult.push(tokenTarget);
+      }
+      return tokenTargetsResult;
+    } else if (entity == TRIGGER_ENTITY_TYPES.ACTOR) {
+      // NOTE THIS WORK BECAUSE THE MULTIPLE FUNCTION
+      // MUST BE CALLED ONLY FROM TRIGGER
+      let actorTargetsResult = [];
+      const actorTargets = this._retrieveFromIdOrNameMultiple(this._getActors(), idOrName);
+      if (actorTargets && actorTargets.length > 0) {
+        actorTargetsResult = this._getTokens()?.filter((t) => {
+          if (actorTargets.filter((e) => e.id === t.data.actorId).length > 0) {
+            // If token is referenced to the specific actor
+            return t;
+          }
+        });
+      }
+      // for(let actorTarget of actorTargets){
+      //   actorTargetsResult.push(actorTarget);
+      // }
+      // TODO ADD AMBIENT LIGHT INTEGRATION
+      // } else if (relevantDocument instanceof AmbientLightDocument) {
+      //   const ambientLightTarget = this._retrieveFromIdOrNameMultiple(this._getAmbientLights(), idOrName);
+      //   return ambientLightTarget;
+      // TODO ADD AMBIENT SOUND INTEGRATION
+      // } else if (relevantDocument instanceof AmbientSoundDocument) {
+      //   const ambientSoundTarget = this._retrieveFromIdOrNameMultiple(this._getAmbientSounds(), idOrName);
+      //   return ambientSoundTarget;
+      // TODO ADD TILE INTEGRATION
+      // } else if (relevantDocument instanceof TileDocument) {
+      //   const tileTarget = this._retrieveFromIdOrNameMultiple(this._getTiles(), idOrName);
+      //   return tileTarget;
+      return actorTargetsResult;
+    } else if (entity == TRIGGER_ENTITY_TYPES.DOOR) {
+      const doorControlTargetsResult = [];
+      const doorControlTargets = this._retrieveFromIdOrNameMultiple(this._getDoors(), idOrName);
+      const coords = idOrName.split(',').map((c) => Number(c)) ?? [];
+      if (coords && coords.length > 0 && coords.length == 4) {
+        for (let wall of this._getDoors()) {
+          let mywall = wall;
+          if (wall instanceof DoorControl) {
+            mywall = wall.wall.document;
+          }
+          if (wall instanceof Wall) {
+            mywall = wall.document;
+          }
+          if (
+            mywall.data?.door > 0 &&
+            mywall.data?.c[0] == coords[0] &&
+            mywall.data?.c[1] == coords[1] &&
+            mywall.data?.c[2] == coords[2] &&
+            mywall.data?.c[3] == coords[3]
+          ) {
+            doorControlTargets.push(mywall);
+          }
+        }
+      }
+      for (let doorControlTarget of doorControlTargets) {
+        // Retrocompatibility check
+        // if (!doorControlTarget) {
+        //   const coords = idOrName.split(',').map((c) => Number(c)) ?? [];
+        //   if (coords && coords.length > 0 && coords.length == 4) {
+        //     doorControlTarget = this._getDoors()?.find((wall) => {
+        //       let mywall = wall;
+        //       if (wall instanceof DoorControl) {
+        //         mywall = wall.wall.document;
+        //       }
+        //       if (wall instanceof Wall) {
+        //         mywall = wall.document;
+        //       }
+        //       return (
+        //         mywall.data?.door > 0 &&
+        //         mywall.data?.c[0] == coords[0] &&
+        //         mywall.data?.c[1] == coords[1] &&
+        //         mywall.data?.c[2] == coords[2] &&
+        //         mywall.data?.c[3] == coords[3]
+        //       );
+        //     });
+        //     // doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
+        //     doorControlTargetsResult.push(doorControlTarget);
+        //   }
+        // } else {
+        //    doorControlTargetsResult.push(doorControlTarget);
+        // }
+        if (doorControlTargetsResult.filter((e) => e.id === doorControlTarget.id).length <= 0) {
+          doorControlTargetsResult.push(doorControlTarget);
+        }
+      }
+      return doorControlTargetsResult;
+    } else if (entity == TRIGGER_ENTITY_TYPES.DRAWING) {
+      const drawingTargetsResult = [];
+      const drawingTargets = this._retrieveFromIdOrNameMultiple(this._getDrawings(), idOrName);
+      for (let drawingTarget of drawingTargets) {
+        drawingTargetsResult.push(drawingTarget);
+      }
+      return drawingTargetsResult;
+    } else if (entity == TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY) {
+      const noteTargetsResult = [];
+      const noteTargets = this._retrieveFromIdOrNameMultiple(this._getNotes(), idOrName);
+      for (let noteTarget of noteTargets) {
+        if (!noteTarget) {
+          const journalTarget = this._retrieveFromIdOrNameMultiple(this._getJournals(), idOrName);
+          if (journalTarget?.sceneNote) {
+            noteTargetsResult.push(journalTarget.sceneNote);
+          } else {
+            noteTargetsResult.push(journalTarget);
+          }
+        }
+        noteTargetsResult.push(noteTarget);
+      }
+      return noteTargetsResult;
+    } else if (entity == TRIGGER_ENTITY_TYPES.STAIRWAY) {
+      const stairwayTargetsResult = [];
+      const stairwayTargets = this._retrieveFromIdOrNameMultiple(this._getStairways(), idOrName);
+      for (let stairwayTarget of stairwayTargets) {
+        stairwayTargetsResult.push(stairwayTarget);
+      }
+      return stairwayTargetsResult;
+    } else if (entity == TRIGGER_ENTITY_TYPES.SCENE) {
+      const sceneTargetsResult = [];
+      const sceneTargets = this._retrieveFromIdOrNameMultiple(this._getScenes(), idOrName);
+      for (let sceneTarget of sceneTargets) {
+        sceneTargetsResult.push(sceneTarget);
+      }
+      return sceneTargetsResult;
+    } else {
+      return null;
+    }
   }
 
   _retrieveFromEntity(entity, idOrName, label) {
@@ -1561,8 +1943,9 @@ export class TriggerHappy {
           // doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
           return doorControlTarget;
         }
+      } else {
+        return doorControlTarget;
       }
-      return doorControlTarget;
     } else if (entity == TRIGGER_ENTITY_TYPES.DRAWING) {
       const drawingTarget = this._retrieveFromIdOrName(this._getDrawings(), idOrName);
       return drawingTarget;
@@ -1572,8 +1955,9 @@ export class TriggerHappy {
         const journalTarget = this._retrieveFromIdOrName(this._getJournals(), idOrName);
         if (journalTarget?.sceneNote) {
           return journalTarget.sceneNote;
+        } else {
+          return journalTarget;
         }
-        return journalTarget;
       }
       return noteTarget;
     } else if (entity == TRIGGER_ENTITY_TYPES.STAIRWAY) {
@@ -1619,6 +2003,40 @@ export class TriggerHappy {
       });
     }
     return target;
+  }
+
+  _retrieveFromIdOrNameMultiple(placeables, IdOrName) {
+    let target = [];
+    if (!placeables || placeables.length == 0) {
+      return target;
+    }
+    if (!IdOrName) {
+      return target;
+    }
+    target = placeables?.filter((x) => {
+      return x && x.id?.toLowerCase() == IdOrName.toLowerCase();
+    });
+    if (!target || target.length == 0) {
+      target = placeables?.filter((x) => {
+        return x && x.name?.toLowerCase() == IdOrName.toLowerCase();
+      });
+    }
+    if (!target || target.length == 0) {
+      target = placeables?.filter((x) => {
+        return x && x.data?.name?.toLowerCase() == IdOrName.toLowerCase();
+      });
+    }
+    if (!target || target.length == 0) {
+      target = placeables?.filter((x) => {
+        return x && x.data?.text?.toLowerCase() == IdOrName.toLowerCase();
+      });
+    }
+    if (!target || target.length == 0) {
+      target = placeables?.filter((x) => {
+        return x && x.data?.label?.toLowerCase() == IdOrName.toLowerCase();
+      });
+    }
+    return target ?? [];
   }
 
   // getPlaceableObjectCenter(placeableObject) {
@@ -1735,12 +2153,27 @@ export class TriggerHappy {
     }
   }
 
-  _getTokens() {
-    const placeablesToken =
-      canvas.tokens?.placeables && canvas.tokens?.placeables.length > 0
-        ? canvas.tokens?.placeables
-        : game.scenes.current.tokens?.contents;
-    return placeablesToken ?? [];
+  _getTokens(sceneId) {
+    if (!sceneId) {
+      const placeablesToken = [];
+      if (canvas.tokens?.placeables && canvas.tokens?.placeables.length > 0) {
+        canvas.tokens?.placeables.forEach((token, key) => {
+          placeablesToken.push(token.document);
+        });
+      }
+      game.scenes.current.tokens?.contents.forEach((token, key) => {
+        if (placeablesToken.filter((e) => e.id === token.id).length <= 0) {
+          placeablesToken.push(token);
+        }
+      });
+      return placeablesToken ?? [];
+    } else {
+      const placeablesToken = [];
+      game.scenes.get(sceneId).tokens?.contents.forEach((token, key) => {
+        placeablesToken.push(token);
+      });
+      return placeablesToken ?? [];
+    }
   }
 
   _getActors() {
@@ -1748,30 +2181,87 @@ export class TriggerHappy {
     return placeablesActor ?? [];
   }
 
-  _getDoors() {
-    const placeablesDoors =
-      canvas.controls?.doors?.children && canvas.controls?.doors?.children.length > 0
-        ? canvas.controls?.doors?.children
-        : game.scenes.current.walls?.contents.filter((wall) => {
-            return wall.data?.door > 0;
-          });
-    return placeablesDoors ?? [];
+  _getDoors(sceneId) {
+    if (!sceneId) {
+      const placeablesDoors = [];
+      if (canvas.controls?.doors?.children && canvas.controls?.doors?.children.length > 0) {
+        canvas.controls?.doors?.children.forEach((door, key) => {
+          placeablesDoors.push(door.wall.document);
+        });
+      }
+      const doors = game.scenes.current.walls?.contents.filter((wall) => {
+        return wall.data?.door > 0;
+      });
+      if (doors && doors.length > 0) {
+        //placeablesDoors.push(...doors);
+        doors.forEach((door, key) => {
+          if (placeablesDoors.filter((e) => e.id === door.id).length <= 0) {
+            placeablesDoors.push(door);
+          }
+        });
+      }
+      return placeablesDoors ?? [];
+    } else {
+      const placeablesDoors = [];
+      const doors = game.scenes.get(sceneId).walls?.contents.filter((wall) => {
+        return wall.data?.door > 0;
+      });
+      if (doors && doors.length > 0) {
+        // placeablesDoors.push(...doors);
+        doors.forEach((door, key) => {
+          if (placeablesDoors.filter((e) => e.id === door.id).length <= 0) {
+            placeablesDoors.push(door);
+          }
+        });
+      }
+      return placeablesDoors ?? [];
+    }
   }
 
-  _getDrawings() {
-    const placeablesDrawings =
-      canvas.drawings?.placeables && canvas.drawings?.placeables.length > 0
-        ? canvas.drawings?.placeables
-        : game.scenes.current.drawings?.contents;
-    return placeablesDrawings ?? [];
+  _getDrawings(sceneId) {
+    if (!sceneId) {
+      const placeablesDrawings = [];
+      if (canvas.drawings?.placeables && canvas.drawings?.placeables.length > 0) {
+        canvas.drawings?.placeables.forEach((drawing, key) => {
+          placeablesDrawings.push(drawing.document);
+        });
+      }
+      game.scenes.current.drawings?.contents.forEach((drawing, key) => {
+        if (placeablesDrawings.filter((e) => e.id === drawing.id).length <= 0) {
+          placeablesDrawings.push(drawing);
+        }
+      });
+      return placeablesDrawings ?? [];
+    } else {
+      const placeablesDrawings = [];
+      game.scenes.get(sceneId).drawings?.contents.forEach((drawing, key) => {
+        placeablesDrawings.push(drawing);
+      });
+      return placeablesDrawings ?? [];
+    }
   }
 
-  _getNotes() {
-    const placeablesNotes =
-      canvas.notes?.placeables && canvas.notes?.placeables.length > 0
-        ? canvas.notes?.placeables
-        : game.scenes.current.notes?.contents;
-    return placeablesNotes ?? [];
+  _getNotes(sceneId) {
+    if (!sceneId) {
+      const placeablesNotes = [];
+      if (canvas.notes?.placeables && canvas.notes?.placeables.length > 0) {
+        canvas.notes?.placeables.forEach((note, key) => {
+          placeablesNotes.push(note.document);
+        });
+      }
+      game.scenes.current.notes?.contents.forEach((note, key) => {
+        if (placeablesNotes.filter((e) => e.id === note.id).length <= 0) {
+          placeablesNotes.push(note);
+        }
+      });
+      return placeablesNotes ?? [];
+    } else {
+      const placeablesNotes = [];
+      game.scenes.get(sceneId).notes?.contents.forEach((note, key) => {
+        placeablesNotes.push(note);
+      });
+      return placeablesNotes ?? [];
+    }
   }
 
   _getJournals() {
@@ -1781,10 +2271,17 @@ export class TriggerHappy {
 
   _getStairways(sceneId) {
     if (!sceneId) {
-      const placeablesStairways =
-        canvas.stairways?.placeables && canvas.stairways?.placeables.length > 0
-          ? canvas.stairways?.placeables
-          : game.scenes.current.stairways?.contents;
+      const placeablesStairways = [];
+      if (canvas.stairways?.placeables && canvas.stairways?.placeables.length > 0) {
+        canvas.stairways?.placeables.forEach((stairway, key) => {
+          placeablesStairways.push(stairway.document);
+        });
+      }
+      game.scenes.current.stairways?.contents.forEach((stairway, key) => {
+        if (placeablesStairways.filter((e) => e.id === stairway.id).length <= 0) {
+          placeablesStairways.push(stairway);
+        }
+      });
       return placeablesStairways ?? [];
     } else {
       const currentScene = game.scenes.find((x) => {
@@ -1805,28 +2302,73 @@ export class TriggerHappy {
     return placeablesCompendiums ?? [];
   }
 
-  _getAmbientLights() {
-    const placeablesLightings =
-      canvas.lighting?.placeables && canvas.lighting?.placeables.length > 0
-        ? canvas.lighting?.placeables
-        : game.scenes.current.lights.contents;
-    return placeablesLightings ?? [];
+  _getAmbientLights(sceneId) {
+    if (!sceneId) {
+      const placeablesLightings = [];
+      if (canvas.lighting?.placeables && canvas.lighting?.placeables.length > 0) {
+        canvas.lighting?.placeables.forEach((ambientLight, key) => {
+          placeablesLightings.push(ambientLight.document);
+        });
+      }
+      game.scenes.current.lights.contents.forEach((ambientLight, key) => {
+        if (placeablesLightings.filter((e) => e.id === ambientLight.id).length <= 0) {
+          placeablesLightings.push(ambientLight);
+        }
+      });
+      return placeablesLightings ?? [];
+    } else {
+      const placeablesLightings = [];
+      game.scenes.get(sceneId).lights.contents.forEach((ambientLight, key) => {
+        placeablesLightings.push(ambientLight);
+      });
+      return placeablesLightings ?? [];
+    }
   }
 
-  _getAmbientSounds() {
-    const placeablesSounds =
-      canvas.sounds?.placeables && canvas.sounds?.placeables.length > 0
-        ? canvas.sounds?.placeables
-        : game.scenes.current.sounds.contents;
-    return placeablesSounds ?? [];
+  _getAmbientSounds(sceneId) {
+    if (!sceneId) {
+      const placeablesSounds = [];
+      if (canvas.sounds?.placeables && canvas.sounds?.placeables.length > 0) {
+        canvas.sounds?.placeables.forEach((ambientSound, key) => {
+          placeablesSounds.push(ambientSound.document);
+        });
+      }
+      game.scenes.current.sounds.contents.forEach((ambientSound, key) => {
+        if (placeablesSounds.filter((e) => e.id === ambientSound.id).length <= 0) {
+          placeablesSounds.push(ambientSound);
+        }
+      });
+      return placeablesSounds ?? [];
+    } else {
+      const placeablesSounds = [];
+      game.scenes.get(sceneId).sounds.contents.forEach((ambientSound, key) => {
+        placeablesSounds.push(ambientSound);
+      });
+      return placeablesSounds ?? [];
+    }
   }
 
-  _getTiles() {
-    const placeablesTiles =
-      canvas.foreground?.placeables && canvas.foreground?.placeables.length > 0
-        ? canvas.foreground?.placeables
-        : game.scenes.current.tiles.contents;
-    return placeablesTiles ?? [];
+  _getTiles(sceneId) {
+    if (!sceneId) {
+      const placeablesTiles = [];
+      if (canvas.foreground?.placeables && canvas.foreground?.placeables.length > 0) {
+        canvas.foreground?.placeables.forEach((tile, key) => {
+          placeablesTiles.push(tile.document);
+        });
+      }
+      game.scenes.current.tiles.contents.forEach((tile, key) => {
+        if (placeablesTiles.filter((e) => e.id === tile.id).length <= 0) {
+          placeablesTiles.push(tile);
+        }
+      });
+      return placeablesTiles ?? [];
+    } else {
+      const placeablesTiles = [];
+      game.scenes.get(sceneId).tiles.contents.forEach((tile, key) => {
+        placeablesTiles.push(tile);
+      });
+      return placeablesTiles ?? [];
+    }
   }
 
   _getTables() {

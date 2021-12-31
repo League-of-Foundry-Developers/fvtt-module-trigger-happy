@@ -119,7 +119,7 @@ Here the example structure of the line of the journal:
 
 **NOTE:** From version `0.8.22` the event link `@Trigger` is no more mandatory, if no event link with syntax `@Trigger` is specified the default one is `@Trigger[click]`
 
-**NOTE:** From version `0.8.13` you can now use like id the character `*` for activate the same effect for all the trigger of that type
+**NOTE:** From version `0.8.13` you can now use like id the character `*` for activate the same effect for all the trigger of that type the `{xxx}` label is just for you is not used form the general trigger.
 
 Here a example:
 
@@ -129,7 +129,7 @@ Here a example:
 
 #### Every time you open a door on the scene the put the game on pause
 
-`@Door[*]{Missioni}@Trigger[DoorOpen]@Macro[pause_the_game]`
+`@Door[*]{Any string}@Trigger[DoorOpen]@Macro[pause_the_game]`
 
 **NOTE:** From version `0.8.18-20` you can now use the triggers: `@ooc`, `@emote`, `@whisper`, `@selfwhisper` they have a specific syntax structure : `@XXX[content message]{alias|whisper|tokenId|actorId|sceneId}` all the parameter between `{}` are optional, but now you can customize a very specific chat message:
 
@@ -140,8 +140,8 @@ Here a example:
 
 | Key (case unsensitive) | Category  | Syntax structure (id, name, label are case unsensitive) | Description |
 |:---------------:|:---------------:|:--------------:|:-----------:|
-| `@Actor`        | Trigger,Effect  | `@Actor[id]{name}`, `@Actor[name]` | If used as a trigger, this will cause the triggers to activate on any token referenced by the actor with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to select the first token matching that name. |
-| `@Token`        | Trigger,Effect  | `@Token[id]{name}`, `@Token[name]` | If used as a trigger, this will cause the triggers to activate on any token with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to select the first token matching that name. |
+| `@Actor`        | Trigger,Effect  | `@Actor[id]{name}`, `@Actor[name]` | If used as a trigger, this will cause the triggers to activate on any token referenced by the actor with the specified name (you cannot set a token id in this case).  As a trigger effect, it will cause the player to render the sheet of the actor. |
+| `@Token`        | Trigger,Effect  | `@Token[id]{name}`, `@Token[name]` | If used as a trigger, this will cause the triggers to activate on any token with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to render the sheet of the actor linked to the token. |
 | `@Scene`        | Trigger,Effect  | `@Scene[id]{name}`  | |
 | `@Drawing`      | Trigger,Effect  | `@Drawing[id]{label}`, `@Drawing[label]` | This will trigger the effects when the player clicks/moves a token within the area of a drawing which has its text set to the `label` specified. Works best with rectangles. |
 | `@Door`         | Trigger,Effect  | `@Door[coordinates]`,`@Door[*]@Tag[list pf tags]`| This will trigger the effects when a player opens or closes a door (based on options). The coordinates can be copy/pasted from the wall configuration sheet (excluding the `[` and `]`). Is best avoid coordinates and use the new tagger integration `@Door[*]@Tag[door01]` |

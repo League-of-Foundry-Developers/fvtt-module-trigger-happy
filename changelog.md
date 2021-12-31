@@ -1,8 +1,17 @@
 # Changelog
 
+## 0.8.28
+
+- Add strange check for `target.center` for [Triggers Stopped](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/80)
+
+## 0.8.27
+
+- Bug fix [Triggers Stopped](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/80)
+
 ## 0.8.26
 
 - Downgrade to version 0.8.22 for bad feedback from the community
+
 ## 0.8.25 [BREAKING CHNAGES]
 
 - Attention: So many modification possibile issues
