@@ -67,14 +67,6 @@ class EffectLink {
 /* ------------------------------------ */
 Hooks.once('init', async () => {
   log(`Initializing ${TRIGGER_HAPPY_MODULE_NAME}`);
-  HTMLEnricherTriggers.patchEnrich();
-
-  // Hooks.on('renderJournalSheet', (app, html, options) => {
-  //   HTMLEnricherTriggers.bindRichTextLinks(html)
-  // });
-
-  game.triggers = new TriggerHappy();
-
   // Register settings
 
   game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'folderJournalName', {
@@ -227,9 +219,14 @@ Hooks.once('init', async () => {
     hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableEnrichHtml.hint`),
     scope: 'world',
     config: true,
-    default: true,
+    default: false,
     type: Boolean,
   });
+
+  game.triggers = new TriggerHappy();
+  if (game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableEnrichHtml')) {
+    HTMLEnricherTriggers.patchEnrich();
+  }
 });
 
 /* ------------------------------------ */
@@ -244,7 +241,12 @@ Hooks.once('setup', function () {
 /* When ready							*/
 /* ------------------------------------ */
 Hooks.once('ready', () => {
-  // Do something
+  Hooks.on('renderJournalSheet', (app, html, options) => {
+    const htmlString = HTMLEnricherTriggers.enrichAll(html.find('.editor-content').html());
+    html.find('.editor-content').html( htmlString );
+    //HTMLEnricherTriggers.bindRichTextLinks(html)
+  });
+  
   Hooks.on('PreStairwayTeleport', (data) => {
     const { sourceSceneId, sourceData, selectedTokenIds, targetSceneId, targetData, userId } = data;
     // const event = {
@@ -335,15 +337,7 @@ export class TriggerHappy {
     Hooks.on('getSceneNavigationContext', this._parseJournals.bind(this)); // parse again the journal when change scene
 
     this.registeredEffects = [];
-  }
-
-  init() {
     this.triggers = [];
-    this.taggerModuleActive = game.modules.get('tagger')?.active;
-    this.release = game.settings.get('core', 'leftClickRelease');
-    this.enableRelease = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableAvoidDeselectOnTriggerEvent');
-    this.ifNoTokenIsFoundTryToUseActor = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'ifNoTokenIsFoundTryToUseActor');
-
     this.arrayTriggers = Object.values(TRIGGER_ENTITY_TYPES);
     this.arrayEvents = Object.values(EVENT_TRIGGER_ENTITY_TYPES);
     this.arrayPlaceableObjects = [
@@ -367,6 +361,38 @@ export class TriggerHappy {
       TRIGGER_ENTITY_TYPES.SELF_WHISPER,
     ];
     this.journals = [];
+  }
+
+  init() {
+    
+    this.taggerModuleActive = game.modules.get('tagger')?.active;
+    this.release = game.settings.get('core', 'leftClickRelease');
+    this.enableRelease = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableAvoidDeselectOnTriggerEvent');
+    this.ifNoTokenIsFoundTryToUseActor = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'ifNoTokenIsFoundTryToUseActor');
+    // this.triggers = [];
+    // this.arrayTriggers = Object.values(TRIGGER_ENTITY_TYPES);
+    // this.arrayEvents = Object.values(EVENT_TRIGGER_ENTITY_TYPES);
+    // this.arrayPlaceableObjects = [
+    //   TRIGGER_ENTITY_TYPES.TOKEN,
+    //   TRIGGER_ENTITY_TYPES.DRAWING,
+    //   TRIGGER_ENTITY_TYPES.DOOR,
+    //   TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY,
+    //   TRIGGER_ENTITY_TYPES.STAIRWAY,
+    // ];
+    // this.arrayNoPlaceableObjects = [
+    //   TRIGGER_ENTITY_TYPES.ACTOR,
+    //   TRIGGER_ENTITY_TYPES.CHAT_MESSAGE,
+    //   TRIGGER_ENTITY_TYPES.COMPENDIUM,
+    //   TRIGGER_ENTITY_TYPES.SCENE,
+    //   TRIGGER_ENTITY_TYPES.SOUND_LINK,
+    //   TRIGGER_ENTITY_TYPES.PLAYLIST,
+    //   // New support key ????
+    //   TRIGGER_ENTITY_TYPES.OOC,
+    //   TRIGGER_ENTITY_TYPES.EMOTE,
+    //   TRIGGER_ENTITY_TYPES.WHISPER,
+    //   TRIGGER_ENTITY_TYPES.SELF_WHISPER,
+    // ];
+    // this.journals = [];
   }
 
   get folderJournalName() {

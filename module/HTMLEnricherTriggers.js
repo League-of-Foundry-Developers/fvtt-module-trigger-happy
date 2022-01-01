@@ -8,12 +8,12 @@ import { TRIGGER_ENTITY_TYPES } from '../trigger.js';
  */
 export class HTMLEnricherTriggers {
   static patchEnrich() {
-    const originalEnrich = TextEditor.enrichHTML;
-    TextEditor.enrichHTML = function (html, options) {
-      html = originalEnrich.apply(this, [html, options]);
-      html = HTMLEnricherTriggers.enrichAll(html);
-      return html;
-    };
+    // const originalEnrich = TextEditor.enrichHTML;
+    // TextEditor.enrichHTML = function (html, options) {
+    //   html = originalEnrich.apply(this, [html, options]);
+    //   html = HTMLEnricherTriggers.enrichAll(html);
+    //   return html;
+    // };
     HTMLEnricherTriggers.fa = HTMLEnricherTriggers.icons();
   }
 
@@ -83,7 +83,7 @@ export class HTMLEnricherTriggers {
     } else {
       finalLabel = '[' + id + ']{' + label + '}';
     }
-    finalLabel = entity+finalLabel;
+    finalLabel = entity + finalLabel;
     if (!id && label) {
       id = label;
     }
@@ -129,6 +129,14 @@ export class HTMLEnricherTriggers {
     for (let match of matchs) {
       let [triggerJournal, entity, id, label] = match;
       if (!entity) {
+        continue;
+      }
+      if (
+        entity.toLowerCase() == TRIGGER_ENTITY_TYPES.ACTOR.toLowerCase() ||
+        entity.toLowerCase() == TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY.toLowerCase() ||
+        entity.toLowerCase() == TRIGGER_ENTITY_TYPES.SOUND_LINK.toLowerCase() ||
+        entity.toLowerCase() == TRIGGER_ENTITY_TYPES.SCENE.toLowerCase()
+      ) {
         continue;
       }
       // let trigger = game.triggers?.triggers.find((x) =>{
