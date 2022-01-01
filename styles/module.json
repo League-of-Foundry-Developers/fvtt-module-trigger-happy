@@ -1,0 +1,81 @@
+{
+    "name": "conditional-visibility",
+    "title": "Conditional Visibility",
+    "description": "Hide tokens from some players, but not others, based on the senses the players have. Uses unknown, newspaper, and foggy icons made by <a href=\"https://www.flaticon.com/authors/freepik\" title=\"Freepik\">Freepik</a>, from <a href=\"https://www.flaticon.com/\" title=\"Flaticon\"> www.flaticon.com</a>. Moon icon made by <a href=\"https://www.flaticon.com/authors/iconixar\" title=\"iconixar\">iconixar</a> from <a href=\"https://www.flaticon.com/\" title=\"Flaticon\"> www.flaticon.com</a>",
+    "version": "0.3.0",
+    "author": "Greg Ludington, p4535992, Szefo09, Teshynil",
+    "type": "module",
+    "socket": true,
+    "includes": [
+        "./assets/**",
+        "./lang/**",
+        "./scripts/**",
+        "./styles/**",
+        "./templates/**",
+        "./module.json",
+        "./README.md",
+        "./icons/**",
+        "./packs/**"
+    ],
+    "media": [
+        {
+            "type": "icon",
+            "location": ""
+        },
+        {
+            "type": "cover",
+            "location": ""
+        },
+        {
+            "type": "screenshot",
+            "location": ""
+        }
+    ],
+    "languages": [
+        {
+            "lang": "en",
+            "name": "English",
+            "path": "lang/en.json"
+        },
+        {
+            "lang": "ko",
+            "name": "Korean",
+            "path": "lang/ko.json"
+        }
+    ],
+    "scripts": [],
+    "esmodules": [
+        "conditional-visibility.js"
+    ],
+    "styles": [
+        "styles/conditional-visibility.css"
+    ],
+    "packs": [
+        {
+            "name": "Conditional Visibility",
+            "label": "Conditional Visibility",
+            "path": "./packs/visibility-scripts.db",
+            "module": "world",
+            "entity": "Macro",
+            "lang": []
+        }
+    ],
+    "minimumCoreVersion": "0.8.6",
+    "compatibleCoreVersion": "9",
+    "manifestPlusVersion": "1.2.0",
+    "url": "https://github.com/p4535992/conditional-visibility",
+    "manifest": "https://github.com/p4535992/conditional-visibility/releases/latest/download/module.json",
+    "download": "https://github.com/p4535992/conditional-visibility/releases/download/v0.3.0/module.zip",
+    "readme": "https://github.com/p4535992/conditional-visibility/blob/v0.3.0/README.md",
+    "changelog": "https://github.com/p4535992/conditional-visibility/blob/v0.3.0/changelog.md",
+    "bugs": "https://github.com/p4535992/conditional-visibility/issues",
+    "allowBugReporter": true,
+    "dependencies": [
+        {
+            "name": "lib-wrapper"
+        },
+        {
+            "name": "socketlib"
+        }
+    ]
+}

@@ -242,9 +242,13 @@ Hooks.once('setup', function () {
 /* ------------------------------------ */
 Hooks.once('ready', () => {
   Hooks.on('renderJournalSheet', (app, html, options) => {
-    const htmlString = HTMLEnricherTriggers.enrichAll(html.find('.editor-content').html());
-    html.find('.editor-content').html( htmlString );
-    //HTMLEnricherTriggers.bindRichTextLinks(html)
+    if (game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableEnrichHtml')) {
+      if(game.triggers.journals.filter((e) => e.id === options.document.id).length > 0) {
+        const htmlString = HTMLEnricherTriggers.enrichAll(html.find('.editor-content').html());
+        html.find('.editor-content').html( htmlString );
+        //HTMLEnricherTriggers.bindRichTextLinks(html);
+      }
+    }
   });
   
   Hooks.on('PreStairwayTeleport', (data) => {
@@ -1164,17 +1168,25 @@ export class TriggerHappy {
   _placeableContains(placeable, position) {
     // Tokens have getter (since width/height is in grid increments) but drawings use data.width/height directly
     let w = placeable.w || placeable.data.width || placeable.width;
-    if (!w) {
-      w = placeable?.object?.w || placeable?.object?.data.width || placeable?.object?.width;
+    if (placeable?.object) {
+      w = placeable?.object?.w || placeable?.object?.data.width || placeable?.object?.width || w;
     }
     let h = placeable.h || placeable.data.height || placeable.height;
-    if (!h) {
-      h = placeable?.object?.h || placeable?.object?.data.height || placeable?.object?.height;
+    if (placeable?.object) {
+      h = placeable?.object?.h || placeable?.object?.data.height || placeable?.object?.height || h;
+    }
+    let x = placeable.x || placeable?.data?.x;
+    if (placeable?.object) {
+      x = placeable?.object?.x || placeable?.object?.data?.x || x;
+    }
+    let y = placeable?.y || placeable?.data?.y;
+    if (placeable?.object) {
+      y = placeable?.object?.y || placeable?.object?.data?.y || placeable?.object?.y || y;
     }
 
     return (
-      Number.between(position.x, placeable.data.x, placeable.data.x + w) &&
-      Number.between(position.y, placeable.data.y, placeable.data.y + h)
+      Number.between(position.x, x, x + w) &&
+      Number.between(position.y, y, y + h)
     );
     // TODO FIND A BETTER METHOD FOR THIS IF I SCALE A PLACEABLE OBJECT IS
     // WORK ONLY ON THE ORIGINAL SCALE COORDINATES
@@ -1413,20 +1425,20 @@ export class TriggerHappy {
     for (let target of targets) {
       // TODO I REALLY NEED THIS ? THEY ARE JUST DOCUMENTS...
       let w = target.w || target?.data?.width || target.width;
-      if (!w) {
-        w = target?.object?.w || target?.object?.data?.width || target?.object?.width;
+      if (target?.object) {
+        w = target?.object?.w || target?.object?.data?.width || target?.object?.width || w;
       }
       let h = target?.h || target?.data?.height || target?.height;
-      if (!h) {
-        h = target?.object?.h || target?.object?.data?.height || target?.object?.height;
+      if (target?.object) {
+        h = target?.object?.h || target?.object?.data?.height || target?.object?.height || h;
       }
       let x = target.x || target?.data?.x;
-      if (!x) {
-        x = target?.object?.x || target?.object?.data?.x;
+      if (target?.object) {
+        x = target?.object?.x || target?.object?.data?.x || x;
       }
       let y = target?.y || target?.data?.y;
-      if (!y) {
-        y = target?.object?.y || target?.object?.data?.y || target?.object?.y;
+      if (target?.object) {
+        y = target?.object?.y || target?.object?.data?.y || target?.object?.y || y;
       }
       const tx = x;
       const ty = y;
@@ -1577,20 +1589,20 @@ export class TriggerHappy {
     for (let target of targets) {
       // TODO I REALLY NEED THIS ? THEY ARE JUST DOCUMENTS...
       let w = target.w || target?.data?.width || target.width;
-      if (!w) {
-        w = target?.object?.w || target?.object?.data?.width || target?.object?.width;
+      if (target?.object) {
+        w = target?.object?.w || target?.object?.data?.width || target?.object?.width || w;
       }
       let h = target?.h || target?.data?.height || target?.height;
-      if (!h) {
-        h = target?.object?.h || target?.object?.data?.height || target?.object?.height;
+      if (target?.object) {
+        h = target?.object?.h || target?.object?.data?.height || target?.object?.height || h;
       }
       let x = target.x || target?.data?.x;
-      if (!x) {
-        x = target?.object?.x || target?.object?.data?.x;
+      if (target?.object) {
+        x = target?.object?.x || target?.object?.data?.x || x;
       }
       let y = target?.y || target?.data?.y;
-      if (!y) {
-        y = target?.object?.y || target?.object?.data?.y || target?.object?.y;
+      if (target?.object) {
+        y = target?.object?.y || target?.object?.data?.y || target?.object?.y || y;
       }
       const tx = x;
       const ty = y;

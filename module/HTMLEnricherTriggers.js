@@ -83,7 +83,7 @@ export class HTMLEnricherTriggers {
     } else {
       finalLabel = '[' + id + ']{' + label + '}';
     }
-    finalLabel = entity + finalLabel;
+    finalLabel = ' ' + entity + finalLabel;
     if (!id && label) {
       id = label;
     }
@@ -202,7 +202,7 @@ export class HTMLEnricherTriggers {
     let stringUniqueHash = [...stringInput].reduce((acc, char) => {
       return char.charCodeAt(0) + ((acc << 5) - acc);
     }, 0);
-    return `hsl(${stringUniqueHash % 360}, 95%, 35%)`;
+    return `hsl(${stringUniqueHash % 360}, 95%, 35%, 0.5)`;
   }
 
   static icons() {
