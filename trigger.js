@@ -1,3 +1,5 @@
+import { HTMLEnricherTriggers } from './module/HTMLEnricherTriggers.js';
+
 export const TRIGGER_HAPPY_MODULE_NAME = 'trigger-happy';
 
 export const log = (...args) => console.log(`${TRIGGER_HAPPY_MODULE_NAME} | `, ...args);
@@ -65,8 +67,6 @@ class EffectLink {
 /* ------------------------------------ */
 Hooks.once('init', async () => {
   log(`Initializing ${TRIGGER_HAPPY_MODULE_NAME}`);
-  game.triggers = new TriggerHappy();
-
   // Register settings
 
   game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'folderJournalName', {
@@ -213,6 +213,20 @@ Hooks.once('init', async () => {
     default: true,
     type: Boolean,
   });
+
+  game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'enableEnrichHtml', {
+    name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableEnrichHtml.name`),
+    hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableEnrichHtml.hint`),
+    scope: 'world',
+    config: true,
+    default: false,
+    type: Boolean,
+  });
+
+  game.triggers = new TriggerHappy();
+  if (game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableEnrichHtml')) {
+    HTMLEnricherTriggers.patchEnrich();
+  }
 });
 
 /* ------------------------------------ */
@@ -227,7 +241,16 @@ Hooks.once('setup', function () {
 /* When ready							*/
 /* ------------------------------------ */
 Hooks.once('ready', () => {
-  // Do something
+  Hooks.on('renderJournalSheet', (app, html, options) => {
+    if (game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableEnrichHtml')) {
+      if(game.triggers.journals.filter((e) => e.id === options.document.id).length > 0) {
+        const htmlString = HTMLEnricherTriggers.enrichAll(html.find('.editor-content').html());
+        html.find('.editor-content').html( htmlString );
+        //HTMLEnricherTriggers.bindRichTextLinks(html);
+      }
+    }
+  });
+  
   Hooks.on('PreStairwayTeleport', (data) => {
     const { sourceSceneId, sourceData, selectedTokenIds, targetSceneId, targetData, userId } = data;
     // const event = {
@@ -318,15 +341,7 @@ export class TriggerHappy {
     Hooks.on('getSceneNavigationContext', this._parseJournals.bind(this)); // parse again the journal when change scene
 
     this.registeredEffects = [];
-  }
-
-  init() {
     this.triggers = [];
-    this.taggerModuleActive = game.modules.get('tagger')?.active;
-    this.release = game.settings.get('core', 'leftClickRelease');
-    this.enableRelease = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableAvoidDeselectOnTriggerEvent');
-    this.ifNoTokenIsFoundTryToUseActor = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'ifNoTokenIsFoundTryToUseActor');
-
     this.arrayTriggers = Object.values(TRIGGER_ENTITY_TYPES);
     this.arrayEvents = Object.values(EVENT_TRIGGER_ENTITY_TYPES);
     this.arrayPlaceableObjects = [
@@ -350,6 +365,38 @@ export class TriggerHappy {
       TRIGGER_ENTITY_TYPES.SELF_WHISPER,
     ];
     this.journals = [];
+  }
+
+  init() {
+    
+    this.taggerModuleActive = game.modules.get('tagger')?.active;
+    this.release = game.settings.get('core', 'leftClickRelease');
+    this.enableRelease = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableAvoidDeselectOnTriggerEvent');
+    this.ifNoTokenIsFoundTryToUseActor = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'ifNoTokenIsFoundTryToUseActor');
+    // this.triggers = [];
+    // this.arrayTriggers = Object.values(TRIGGER_ENTITY_TYPES);
+    // this.arrayEvents = Object.values(EVENT_TRIGGER_ENTITY_TYPES);
+    // this.arrayPlaceableObjects = [
+    //   TRIGGER_ENTITY_TYPES.TOKEN,
+    //   TRIGGER_ENTITY_TYPES.DRAWING,
+    //   TRIGGER_ENTITY_TYPES.DOOR,
+    //   TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY,
+    //   TRIGGER_ENTITY_TYPES.STAIRWAY,
+    // ];
+    // this.arrayNoPlaceableObjects = [
+    //   TRIGGER_ENTITY_TYPES.ACTOR,
+    //   TRIGGER_ENTITY_TYPES.CHAT_MESSAGE,
+    //   TRIGGER_ENTITY_TYPES.COMPENDIUM,
+    //   TRIGGER_ENTITY_TYPES.SCENE,
+    //   TRIGGER_ENTITY_TYPES.SOUND_LINK,
+    //   TRIGGER_ENTITY_TYPES.PLAYLIST,
+    //   // New support key ????
+    //   TRIGGER_ENTITY_TYPES.OOC,
+    //   TRIGGER_ENTITY_TYPES.EMOTE,
+    //   TRIGGER_ENTITY_TYPES.WHISPER,
+    //   TRIGGER_ENTITY_TYPES.SELF_WHISPER,
+    // ];
+    // this.journals = [];
   }
 
   get folderJournalName() {
@@ -1121,17 +1168,25 @@ export class TriggerHappy {
   _placeableContains(placeable, position) {
     // Tokens have getter (since width/height is in grid increments) but drawings use data.width/height directly
     let w = placeable.w || placeable.data.width || placeable.width;
-    if (!w) {
-      w = placeable?.object?.w || placeable?.object?.data.width || placeable?.object?.width;
+    if (placeable?.object) {
+      w = placeable?.object?.w || placeable?.object?.data.width || placeable?.object?.width || w;
     }
     let h = placeable.h || placeable.data.height || placeable.height;
-    if (!h) {
-      h = placeable?.object?.h || placeable?.object?.data.height || placeable?.object?.height;
+    if (placeable?.object) {
+      h = placeable?.object?.h || placeable?.object?.data.height || placeable?.object?.height || h;
+    }
+    let x = placeable.x || placeable?.data?.x;
+    if (placeable?.object) {
+      x = placeable?.object?.x || placeable?.object?.data?.x || x;
+    }
+    let y = placeable?.y || placeable?.data?.y;
+    if (placeable?.object) {
+      y = placeable?.object?.y || placeable?.object?.data?.y || placeable?.object?.y || y;
     }
 
     return (
-      Number.between(position.x, placeable.data.x, placeable.data.x + w) &&
-      Number.between(position.y, placeable.data.y, placeable.data.y + h)
+      Number.between(position.x, x, x + w) &&
+      Number.between(position.y, y, y + h)
     );
     // TODO FIND A BETTER METHOD FOR THIS IF I SCALE A PLACEABLE OBJECT IS
     // WORK ONLY ON THE ORIGINAL SCALE COORDINATES
@@ -1370,20 +1425,20 @@ export class TriggerHappy {
     for (let target of targets) {
       // TODO I REALLY NEED THIS ? THEY ARE JUST DOCUMENTS...
       let w = target.w || target?.data?.width || target.width;
-      if (!w) {
-        w = target?.object?.w || target?.object?.data?.width || target?.object?.width;
+      if (target?.object) {
+        w = target?.object?.w || target?.object?.data?.width || target?.object?.width || w;
       }
       let h = target?.h || target?.data?.height || target?.height;
-      if (!h) {
-        h = target?.object?.h || target?.object?.data?.height || target?.object?.height;
+      if (target?.object) {
+        h = target?.object?.h || target?.object?.data?.height || target?.object?.height || h;
       }
       let x = target.x || target?.data?.x;
-      if (!x) {
-        x = target?.object?.x || target?.object?.data?.x;
+      if (target?.object) {
+        x = target?.object?.x || target?.object?.data?.x || x;
       }
       let y = target?.y || target?.data?.y;
-      if (!y) {
-        y = target?.object?.y || target?.object?.data?.y || target?.object?.y;
+      if (target?.object) {
+        y = target?.object?.y || target?.object?.data?.y || target?.object?.y || y;
       }
       const tx = x;
       const ty = y;
@@ -1534,20 +1589,20 @@ export class TriggerHappy {
     for (let target of targets) {
       // TODO I REALLY NEED THIS ? THEY ARE JUST DOCUMENTS...
       let w = target.w || target?.data?.width || target.width;
-      if (!w) {
-        w = target?.object?.w || target?.object?.data?.width || target?.object?.width;
+      if (target?.object) {
+        w = target?.object?.w || target?.object?.data?.width || target?.object?.width || w;
       }
       let h = target?.h || target?.data?.height || target?.height;
-      if (!h) {
-        h = target?.object?.h || target?.object?.data?.height || target?.object?.height;
+      if (target?.object) {
+        h = target?.object?.h || target?.object?.data?.height || target?.object?.height || h;
       }
       let x = target.x || target?.data?.x;
-      if (!x) {
-        x = target?.object?.x || target?.object?.data?.x;
+      if (target?.object) {
+        x = target?.object?.x || target?.object?.data?.x || x;
       }
       let y = target?.y || target?.data?.y;
-      if (!y) {
-        y = target?.object?.y || target?.object?.data?.y || target?.object?.y;
+      if (target?.object) {
+        y = target?.object?.y || target?.object?.data?.y || target?.object?.y || y;
       }
       const tx = x;
       const ty = y;

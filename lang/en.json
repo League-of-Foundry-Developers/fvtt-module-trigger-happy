@@ -23,5 +23,7 @@
   "trigger-happy.settings.disableWarningMessages.name": "Disable warning messages",
   "trigger-happy.settings.disableWarningMessages.hint": "If checked this setting will disable all the warnings generate from the loading of the triggers. Is useful to let this disabled when you are developing your trigger.",
   "trigger-happy.settings.enableMultipleTriggerSearch.name": "Enable multiple trigger search",
-  "trigger-happy.settings.enableMultipleTriggerSearch.hint": "If enabled this setting will registered not just the first, but all the trigger with the same name and id if they pass the filter, is enabled by default for retrocompatibility"
+  "trigger-happy.settings.enableMultipleTriggerSearch.hint": "If enabled this setting will registered not just the first, but all the trigger with the same name and id if they pass the filter, is enabled by default for retrocompatibility",
+  "trigger-happy.settings.enableEnrichHtml.name": "Enable rendering of trigger with html on journal",
+  "trigger-happy.settings.enableEnrichHtml.hint": "If enable will parse the syntax structure of the trigger and show a empty href html on the rendered sheet of the journal"
 }

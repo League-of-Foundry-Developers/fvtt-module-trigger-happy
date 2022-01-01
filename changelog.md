@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.29
+
+- Some bug fix
+- Add enrich html render
+
 ## 0.8.28
 
 - Add strange check for `target.center` for [Triggers Stopped](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/80)
