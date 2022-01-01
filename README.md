@@ -18,6 +18,8 @@
 
 This was created as a way of creating the interactive FVTT Tutorial on [The Forge](https://forgevtt.com/game/demo)
 
+Open a journal entry under the folder named for 'Trigger Happy' edit the journal and insert in its content as text the trigger lines as described below.
+
 # Installation
 
 It's always easiest to install modules from the in game add-on browser.
@@ -60,6 +62,8 @@ To install this module manually:
 - **Enable avoid to deselect elements on the trigger event :** To remedy an incompatibility with other modules at the time of the 'mouse down' or other events together with the core setting 'Left-Click to Release Object' active, it is necessary that if a placeable object is selected on that event it remains at the event of 'mouse up' still selected. Unfortunately I have not found any other solution than to temporarily set the 'Left-Click to Release Object' setting to false (only if active) and then reset it to the original state at the 'mouse up' event. YOU NEED A REFRESH OF THE PAGE FOR APPLY THIS"
 - **If no token is found with that name try to found a token on the canvas linked to a actor with that id or name :** If no token is found with that name try to found a token on the canvas linked to a actor with that id or name, can be useful with some module like token mold where N tokens are linked to the same actor WORK ONLY `@Token` TRIGGERS.
 - **Disable warning messages:** If checked this setting will disable all the warnings generate from the loading of the triggers. Is useful to let this disabled when you are developing your trigger.
+- **Enable multiple trigger search:** If enabled this setting will registered not just the first, but all the trigger with the same name and id if they pass the filter, is enabled by default for retrocompatibility
+- **Enable rendering of trigger with html on journal:** If enable will parse the syntax structure of the trigger and show a empty href html on the rendered sheet of the journal
 
 # Details
 
@@ -142,7 +146,7 @@ Here a example:
 |:---------------:|:---------------:|:--------------:|:-----------:|
 | `@Actor`        | Trigger,Effect  | `@Actor[id]{name}`, `@Actor[name]` | If used as a trigger, this will cause the triggers to activate on any token referenced by the actor with the specified name (you cannot set a token id in this case).  As a trigger effect, it will cause the player to render the sheet of the actor. |
 | `@Token`        | Trigger,Effect  | `@Token[id]{name}`, `@Token[name]` | If used as a trigger, this will cause the triggers to activate on any token with the specified name (you cannot set a token id in this case). As a trigger effect, it will cause the player to render the sheet of the actor linked to the token. |
-| `@Scene`        | Trigger,Effect  | `@Scene[id]{name}`  | |
+| `@Scene`        | Effect  | `@Scene[id]{name}`  | As an effect it will load the scene |
 | `@Drawing`      | Trigger,Effect  | `@Drawing[id]{label}`, `@Drawing[label]` | This will trigger the effects when the player clicks/moves a token within the area of a drawing which has its text set to the `label` specified. Works best with rectangles. |
 | `@Door`         | Trigger,Effect  | `@Door[coordinates]`,`@Door[*]@Tag[list pf tags]`| This will trigger the effects when a player opens or closes a door (based on options). The coordinates can be copy/pasted from the wall configuration sheet (excluding the `[` and `]`). Is best avoid coordinates and use the new tagger integration `@Door[*]@Tag[door01]` |
 | `@JournalEntry` | Trigger,Effect  | `@JournalEntry[id]{name}`, `@JournalEntry[name]`  | If used as a trigger, this will cause the triggers to activate on any journal with the specified name (you cannot set a token id in this case). As a trigger effect |
