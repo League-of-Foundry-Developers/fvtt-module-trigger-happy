@@ -41,8 +41,8 @@
   ],
   "scripts": [],
   "system": [],
-  "esmodules": ["trigger.js"],
-  "styles": [],
+  "esmodules": ["trigger.js", "module/HTMLEnricherTriggers.js"],
+  "styles": ["styles/trigger-happy.css", "styles/fontawesome.css"],
   "packs": [
     {
       "name": "trigger-happy-actors",

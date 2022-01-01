@@ -1,3 +1,5 @@
+import { HTMLEnricherTriggers } from './module/HTMLEnricherTriggers.js';
+
 export const TRIGGER_HAPPY_MODULE_NAME = 'trigger-happy';
 
 export const log = (...args) => console.log(`${TRIGGER_HAPPY_MODULE_NAME} | `, ...args);
@@ -65,6 +67,12 @@ class EffectLink {
 /* ------------------------------------ */
 Hooks.once('init', async () => {
   log(`Initializing ${TRIGGER_HAPPY_MODULE_NAME}`);
+  HTMLEnricherTriggers.patchEnrich();
+
+  // Hooks.on('renderJournalSheet', (app, html, options) => {
+  //   HTMLEnricherTriggers.bindRichTextLinks(html)
+  // });
+
   game.triggers = new TriggerHappy();
 
   // Register settings
@@ -208,6 +216,15 @@ Hooks.once('init', async () => {
   game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'enableMultipleTriggerSearch', {
     name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableMultipleTriggerSearch.name`),
     hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableMultipleTriggerSearch.hint`),
+    scope: 'world',
+    config: true,
+    default: true,
+    type: Boolean,
+  });
+
+  game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'enableEnrichHtml', {
+    name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableEnrichHtml.name`),
+    hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.enableEnrichHtml.hint`),
     scope: 'world',
     config: true,
     default: true,

@@ -419,4 +419,4 @@ Any issues, bugs, or feature requests are always welcome to be reported directly
 
 This Foundry VTT module, writen by KaKaRoTo, is licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/) and the [Foundry Virtual Tabletop Limited License Agreement for module development](https://foundryvtt.com/article/license/).
 
-This work is licensed under Foundry Virtual Tabletop [EULA - Limited License Agreement for module development v 0.1.6](http://foundryvtt.com/pages/license.html).
+- [Font Awesome Free 5.15.4 by @fontawesome](https://fontawesome.com) with [License (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)](https://fontawesome.com/license/free)
