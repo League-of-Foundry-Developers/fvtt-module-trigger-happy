@@ -52,12 +52,16 @@ export class HTMLEnricherTriggers {
       noId = true;
     }
     if (lBracket === -1 || rBracket === -1) {
-      throw new Error(game.i18n.localize('InvalidFormat for trigger'));
+      // new Error(game.i18n.localize('InvalidFormat for trigger'));
+      const result = `<a class="entity-link broken" draggable="true" data-entity="trigger" data-id="null"><i class="fas fa-unlink"></i> ${text}</a>`;
+      return result;
     }
     // Order is not correct
     if (lCurly != -1 && rCurly != -1) {
       if (rCurly < lCurly || lCurly < rBracket || rBracket < lBracket) {
-        throw new Error(game.i18n.localize('InvalidFormat for trigger'));
+        // throw new Error(game.i18n.localize('InvalidFormat for trigger'));
+        const result = `<a class="entity-link broken" draggable="true" data-entity="trigger" data-id="null"><i class="fas fa-unlink"></i> ${text}</a>`;
+        return result;
       }
     }
     // const options = enrichMe.slice(lBracket + 1, rBracket);
@@ -71,19 +75,21 @@ export class HTMLEnricherTriggers {
     // const id = options;
     // Empty names are not supported
     if (!label && !id) {
-      throw new Error(game.i18n.localize('Empty Link Text'));
+      //throw new Error(game.i18n.localize('Empty Link Text'));
+      const result = `<a class="entity-link broken" draggable="true" data-entity="trigger" data-id="null"><i class="fas fa-unlink"></i> ${text}</a>`;
+      return result;
     }
-    let finalLabel = '';
-    if (noId) {
-      if (label) {
-        finalLabel = '[' + label + ']';
-      } else {
-        finalLabel = '[' + id + ']';
-      }
-    } else {
-      finalLabel = '[' + id + ']{' + label + '}';
-    }
-    finalLabel = ' ' + entity + finalLabel;
+    let finalLabel = ' ' + text;
+    // if (noId) {
+    //   if (label) {
+    //     finalLabel = '[' + label + ']';
+    //   } else {
+    //     finalLabel = '[' + id + ']';
+    //   }
+    // } else {
+    //   finalLabel = '[' + id + ']{' + label + '}';
+    // }
+    // finalLabel = ' ' + entity + finalLabel;
     if (!id && label) {
       id = label;
     }
@@ -106,7 +112,7 @@ export class HTMLEnricherTriggers {
     }
     clazz = clazz + '_link';
     const result = `
-        <a class="${clazz}" data-entity="${id}" 
+        <a class="${clazz}" draggable="true" data-entity="${clazz}" data-id="${id}"
         style="background: ${color};
             padding: 1px 4px;
             border: 1px solid #4b4a44;
@@ -145,26 +151,17 @@ export class HTMLEnricherTriggers {
       // if(trigger){
       // while (text.includes('@Door')) {
       let newText;
+      const myEntity = '@' + entity.toLowerCase();
       if (entity.toLowerCase() == TRIGGER_ENTITY_TYPES.DOOR.toLowerCase()) {
-        newText = HTMLEnricherTriggers.enrich(
-          triggerJournal,
-          id,
-          label,
-          '@' + TRIGGER_ENTITY_TYPES.DOOR.toLowerCase(),
-          'fas fa-door-open',
-        );
+        newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, 'fas fa-door-open');
       } else if (entity.toLowerCase() == TRIGGER_ENTITY_TYPES.TRIGGER.toLowerCase()) {
-        newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, '@' + entity.toLowerCase(), 'fas fa-fire');
+        newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, 'fas fa-fire');
+      } else if (entity.toLowerCase() == TRIGGER_ENTITY_TYPES.TOKEN.toLowerCase()) {
+        newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, 'fas fa-meh-rolling-eyes');
       } else if (entity.toLowerCase().includes('whisper'.toLowerCase())) {
-        newText = HTMLEnricherTriggers.enrich(
-          triggerJournal,
-          id,
-          label,
-          '@' + entity.toLowerCase(),
-          'fas fa-user-secret',
-        );
+        newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, 'fas fa-user-secret');
       } else {
-        newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, '@' + entity.toLowerCase(), undefined);
+        newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, undefined);
       }
       // triggerJournal = HTMLEnricherTriggers.enrich(triggerJournal,'@Tag');
       text = text.replace(triggerJournal, newText);
@@ -209,14 +206,15 @@ export class HTMLEnricherTriggers {
     // https://stackoverflow.com/questions/27992992/i-need-list-of-all-class-name-of-font-awesome
     const icons = $.map(
       $.map(document.styleSheets, function (s) {
-        if (s.href && s.href.endsWith('fontawesome.css')) return s;
+        if (s.href && s.href.endsWith('th-fontawesome.css')) return s;
         return null;
       })[0].rules,
       function (r) {
         var result = [];
         if (r.cssText.indexOf('::before { content: ') > 0) {
           $.each(r.cssText.split(','), function (i, item) {
-            result.push(item.split(':')[0].trim().substring(4));
+            let res = item.split(':')[0].trim().substring(4);
+            result.push(res);
           });
         }
         return result;

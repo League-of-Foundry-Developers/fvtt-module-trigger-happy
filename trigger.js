@@ -243,14 +243,14 @@ Hooks.once('setup', function () {
 Hooks.once('ready', () => {
   Hooks.on('renderJournalSheet', (app, html, options) => {
     if (game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableEnrichHtml')) {
-      if(game.triggers.journals.filter((e) => e.id === options.document.id).length > 0) {
+      if (game.triggers.journals.filter((e) => e.id === options.document.id).length > 0) {
         const htmlString = HTMLEnricherTriggers.enrichAll(html.find('.editor-content').html());
-        html.find('.editor-content').html( htmlString );
+        html.find('.editor-content').html(htmlString);
         //HTMLEnricherTriggers.bindRichTextLinks(html);
       }
     }
   });
-  
+
   Hooks.on('PreStairwayTeleport', (data) => {
     const { sourceSceneId, sourceData, selectedTokenIds, targetSceneId, targetData, userId } = data;
     // const event = {
@@ -368,7 +368,6 @@ export class TriggerHappy {
   }
 
   init() {
-    
     this.taggerModuleActive = game.modules.get('tagger')?.active;
     this.release = game.settings.get('core', 'leftClickRelease');
     this.enableRelease = game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableAvoidDeselectOnTriggerEvent');
@@ -1184,10 +1183,7 @@ export class TriggerHappy {
       y = placeable?.object?.y || placeable?.object?.data?.y || placeable?.object?.y || y;
     }
 
-    return (
-      Number.between(position.x, x, x + w) &&
-      Number.between(position.y, y, y + h)
-    );
+    return Number.between(position.x, x, x + w) && Number.between(position.y, y, y + h);
     // TODO FIND A BETTER METHOD FOR THIS IF I SCALE A PLACEABLE OBJECT IS
     // WORK ONLY ON THE ORIGINAL SCALE COORDINATES
     // const coords = this.getPlaceableObjectCenter(placeable);

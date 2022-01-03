@@ -105,6 +105,17 @@ Here is a "Introduction to Trigger Happy" video tutorial by ['D&D Population Me'
 
 Trigger Happy also comes with journal entries in its compendiums that gives useful examples of trigger scenarios you can use.
 
+## Rendering html of the trigger, event-link, effect
+
+From version 0.8.29 there is a new module setting disable by defualt  'Enable rendering of trigger with html on journal'.
+If enabled now all the journals (and only these) under the Trigger Journal folder are render with a html code.
+
+![img1](./wiki/th_html_right.png)
+
+If there is some error on the syntax of the trigger the html is no redndered checkout the image below:
+
+![img2](./wiki/th_html_wrong.png)
+
 ## How to use
 
 To create triggers for a scene, it's very easy, create a journal entry with the title "Trigger Happy" (configurable in module settings) in which you will drag & drop actors, journals, macros, and anything else you want to trigger.
