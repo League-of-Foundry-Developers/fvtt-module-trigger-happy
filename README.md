@@ -112,7 +112,7 @@ If enabled now all the journals (and only these) under the Trigger Journal folde
 
 ![img1](./wiki/th_html_right.png)
 
-If there is some error on the syntax of the trigger the html is no redndered checkout the image below:
+If there is some error on the syntax of the trigger the html is no rendered checkout the image below:
 
 ![img2](./wiki/th_html_wrong.png)
 
