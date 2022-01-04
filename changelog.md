@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.31 
+
+- Bug fix multilne journal enrich html render
+
 ## 0.8.30
 
 - Bug fix [When Trigger Happy is activated, the Convenient Effect icon disappears (but the button is still there)](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/83)
