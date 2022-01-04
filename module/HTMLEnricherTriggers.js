@@ -131,44 +131,65 @@ export class HTMLEnricherTriggers {
     // entityLinks.push('Tag');
     const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
     const rgx = new RegExp(entityMatchRgx, 'ig');
-    let matchs = text.matchAll(rgx);
-    for (let match of matchs) {
-      let [triggerJournal, entity, id, label] = match;
-      if (!entity) {
-        continue;
+
+    const triggerLines = text
+      .replace(/(<p>|<div>|<br *\/?>)/gm, '\n')
+      .replace(/&nbsp;/gm, ' ')
+      .split('\n');
+
+    // Remove empty/undefined/non valid lines before loop more easy to debug
+    const filteredTriggerLines = triggerLines.filter(function (el) {
+      return el != null && el != undefined && el != '' && el.includes('@');
+    });
+
+    for (const line of filteredTriggerLines) {
+      let lineTmp = line;
+      let matchs = lineTmp.matchAll(rgx);
+      let newStr = '';
+      let oldStr = '';
+      for (let match of matchs) {
+        if(!match){
+          continue;
+        }
+        let [triggerJournal, entity, id, label] = match;
+        oldStr = oldStr + triggerJournal;
+        if (!entity) {
+          continue;
+        }
+        if (
+          entity.toLowerCase() == TRIGGER_ENTITY_TYPES.ACTOR.toLowerCase() ||
+          entity.toLowerCase() == TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY.toLowerCase() ||
+          entity.toLowerCase() == TRIGGER_ENTITY_TYPES.SOUND_LINK.toLowerCase() ||
+          entity.toLowerCase() == TRIGGER_ENTITY_TYPES.SCENE.toLowerCase()
+        ) {
+          newStr = newStr + triggerJournal;
+          continue;
+        }
+        let newText;
+        const myEntity = '@' + entity.toLowerCase();
+        if (entity.toLowerCase() == TRIGGER_ENTITY_TYPES.DOOR.toLowerCase()) {
+          newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, 'fas fa-door-open');
+        } else if (entity.toLowerCase() == TRIGGER_ENTITY_TYPES.TRIGGER.toLowerCase()) {
+          newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, 'fas fa-fire');
+        } else if (entity.toLowerCase() == TRIGGER_ENTITY_TYPES.TOKEN.toLowerCase()) {
+          newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, 'fas fa-meh-rolling-eyes');
+        } else if (entity.toLowerCase().includes('whisper'.toLowerCase())) {
+          newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, 'fas fa-user-secret');
+        } else {
+          newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, undefined);
+        }
+        // text = text.replace(triggerJournal, newText);
+        newStr = newStr + newText;
       }
-      if (
-        entity.toLowerCase() == TRIGGER_ENTITY_TYPES.ACTOR.toLowerCase() ||
-        entity.toLowerCase() == TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY.toLowerCase() ||
-        entity.toLowerCase() == TRIGGER_ENTITY_TYPES.SOUND_LINK.toLowerCase() ||
-        entity.toLowerCase() == TRIGGER_ENTITY_TYPES.SCENE.toLowerCase()
-      ) {
-        continue;
-      }
-      // let trigger = game.triggers?.triggers.find((x) =>{
-      //   return this._findByIdorName(x,id) || this._findByIdorName(x,label);
-      // })
-      // if(trigger){
-      // while (text.includes('@Door')) {
-      let newText;
-      const myEntity = '@' + entity.toLowerCase();
-      if (entity.toLowerCase() == TRIGGER_ENTITY_TYPES.DOOR.toLowerCase()) {
-        newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, 'fas fa-door-open');
-      } else if (entity.toLowerCase() == TRIGGER_ENTITY_TYPES.TRIGGER.toLowerCase()) {
-        newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, 'fas fa-fire');
-      } else if (entity.toLowerCase() == TRIGGER_ENTITY_TYPES.TOKEN.toLowerCase()) {
-        newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, 'fas fa-meh-rolling-eyes');
-      } else if (entity.toLowerCase().includes('whisper'.toLowerCase())) {
-        newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, 'fas fa-user-secret');
-      } else {
-        newText = HTMLEnricherTriggers.enrich(triggerJournal, id, label, myEntity, undefined);
-      }
-      // triggerJournal = HTMLEnricherTriggers.enrich(triggerJournal,'@Tag');
-      text = text.replace(triggerJournal, newText);
-      // }
-      // }
+
+      let ind = text.toLowerCase().indexOf(oldStr.toLowerCase());
+      text = HTMLEnricherTriggers.replaceBetween(text, ind, ind + oldStr.length, newStr);
     }
     return text;
+  }
+
+  static replaceBetween(origin, startIndex, endIndex, insertion) {
+    return origin.substring(0, startIndex) + insertion + origin.substring(endIndex);
   }
 
   // _findByIdorName(x, IdOrName){

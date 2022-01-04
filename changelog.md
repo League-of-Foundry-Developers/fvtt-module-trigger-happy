@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.31 
+
+- Bug fix multilne journal enrich html render
+- Add two new adavanced options for event link `onlyIfHidden`,`onlyIfUnHidden` for execute the effects only if the lement stat hidden is tru or false (for now tested only with token and drawing)
+- Add new module setting 'Disable all trigger for hidden element'
+
 ## 0.8.30
 
 - Bug fix [When Trigger Happy is activated, the Convenient Effect icon disappears (but the button is still there)](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/83)
