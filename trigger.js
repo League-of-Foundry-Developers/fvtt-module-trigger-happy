@@ -223,6 +223,15 @@ Hooks.once('init', async () => {
     type: Boolean,
   });
 
+  game.settings.register(TRIGGER_HAPPY_MODULE_NAME, 'disableAllHidden', {
+    name: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.disableAllHidden.name`),
+    hint: i18n(`${TRIGGER_HAPPY_MODULE_NAME}.settings.disableAllHidden.hint`),
+    scope: 'world',
+    config: true,
+    default: false,
+    type: Boolean,
+  });
+
   game.triggers = new TriggerHappy();
   if (game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableEnrichHtml')) {
     HTMLEnricherTriggers.patchEnrich();
@@ -324,6 +333,8 @@ export const EVENT_TRIGGER_ENTITY_TYPES = {
   CAPTURE: `capture`,
   DOOR_CLOSE: `doorclose`,
   DOOR_OPEN: `dooropen`,
+  ONLY_IF_HIDDEN: `onlyifhidden`,
+  ONLY_IF_UNHIDDEN: `onlyifunhidden`
 };
 
 export class TriggerHappy {
@@ -819,8 +830,32 @@ export class TriggerHappy {
   }
 
   async _executeTriggers(triggers) {
-    if (!triggers.length) return;
+    if (!triggers.length){
+      return;
+    }
     for (const trigger of triggers) {
+      // CHECK FOR TH HIDE/UNHIDE MECHANISM
+      if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.ONLY_IF_HIDDEN)) {
+        if(trigger.trigger.data?.hidden == false){
+          return;
+        }
+      }
+      if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.ONLY_IF_UNHIDDEN)) {
+        if(trigger.trigger.data?.hidden == true){
+          return;
+        }
+      }
+      if(game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'disableAllHidden')) {
+        if(trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.ONLY_IF_UNHIDDEN) 
+          || trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.ONLY_IF_HIDDEN)){
+          // Do nothing
+        }else{
+          if(trigger.trigger.data?.hidden == true){
+            return;
+          }
+        }
+      }
+
       for (let effect of trigger.effects) {
         if (effect.documentName === 'Scene') {
           if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.PRELOAD)) {

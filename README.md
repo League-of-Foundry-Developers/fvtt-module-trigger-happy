@@ -227,7 +227,11 @@ Hooks.once('setup', function () {
 ## Advanced options for Event Link
 
 You can customize the behavior a little using the `@Trigger` pseudo link which allows you to set options.
-The following options are available : 
+
+**NOTE : all the option are case unsensitive for the module**
+
+The following options are available :
+
 - `ooc`: Will send any chat messages in that trigger as an out of character message
 - `emote`: Will send any chat messages in that trigger as an emote
 - `whisper`: Will send any chat messages in that trigger as a whisper to the GM
@@ -240,6 +244,8 @@ The following options are available :
 - `doorClose`: Will cause a `@Door` trigger to trigger when the door is closed instead of the default when it opens.
 - `doorOpen`: Will cause a `@Door` trigger to trigger when the door is open. This is the default, but it can be used along with 
 - `doorClose` option to have it trigger on both open and close
+- `onlyIfHidden` by default the trigger is activate for all placeable objects 'hidden' and 'unhidden' with this argument you are telling to the trigger to activate only if the placeable object is hidden (support for now only the element with the 'Toogle Visibility state' option like 'Token','Drawing',ecc. for other case you can use the @Tag for manage your special case)
+- `onlyIfUnHidden` by default the trigger is activate for all placeable objects 'hidden' and 'unhidden' with this argument you are telling to the trigger to activate only if the placeable object is unhidden (support for now only the element with the 'Toogle Visibility state' option like 'Token','Drawing',ecc. for other case you can use the @Tag for manage your special case)
 
 If a token is hidden (GM layer), then it is automatically considered a 'move' trigger, otherwise it's a 'click' trigger. You can override it with the `@Trigger[click]` or `@Trigger[move]` options, or you can specify both options to make a token trigger on both clicks and moves.
 
