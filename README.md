@@ -64,7 +64,7 @@ To install this module manually:
 - **Disable warning messages:** If checked this setting will disable all the warnings generate from the loading of the triggers. Is useful to let this disabled when you are developing your trigger.
 - **Enable multiple trigger search:** If enabled this setting will registered not just the first, but all the trigger with the same name and id if they pass the filter, is enabled by default for retrocompatibility
 - **Enable rendering of trigger with html on journal:** If enable will parse the syntax structure of the trigger and show a empty href html on the rendered sheet of the journal
-- **Disable all trigger for hidden element:** If enabled this setting will disable by default all trigger for all placeable objects with the 'Toogle Visibility state' set to true like 'Token','Drawing',ecc. NOTE if on teh event link you have set explicity a `onlyIfHidden`, `onlyIfUnHidden` they have priority to this.
+- **Disable all trigger for hidden element:** If enabled this setting will disable by default all trigger for all placeable objects with the 'Toogle Visibility state' set to hidden/invisible like 'Token','Drawing',ecc. NOTE if on teh event link you have set explicity a `onlyIfHidden`, `onlyIfUnHidden` they have priority to this.
 
 # Details
 
@@ -216,7 +216,7 @@ Hooks.once('setup', function () {
 });
 ```
 
-**NOTE: You can override if you want  adefault effect if you want (is not advisable but you can), here a example :**
+**NOTE: You can override if you want a default effect (is not advisable but you can), here a example :**
 
 ```
 Hooks.once('setup', function () {
