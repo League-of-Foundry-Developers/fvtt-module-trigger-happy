@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.32
+
+- Update module.json for 9
+
 ## 0.8.31 
 
 - Bug fix multiline journal enrich html render
