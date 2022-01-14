@@ -1283,7 +1283,7 @@ export class TriggerHappy {
 
     else {
       // Other types of placeables don't have an area that could contain the position
-      let  width = placeable.w || placeable.data?.width || placeable.width;
+      let width = placeable.w || placeable.data?.width || placeable.width;
       if (placeable?.object) {
         width = placeable?.object?.w || placeable?.object?.data?.width || placeable?.object?.width || w;
       }
@@ -1299,7 +1299,7 @@ export class TriggerHappy {
       if (placeable?.object) {
         y = placeable?.object?.y || placeable?.object?.data?.y || placeable?.object?.y || y;
       }
-      return Number.between(position.x, x, x + w) && Number.between(position.y, y, y + h);
+      return Number.between(position.x, x, x + width) && Number.between(position.y, y, y + height);
     }
 
   }
@@ -1365,10 +1365,16 @@ export class TriggerHappy {
   }
 
   _getMousePosition(event) {
-    let transform = canvas.tokens.worldTransform;
+    // let transform = canvas.tokens.worldTransform;
+    // return {
+    //   x: (event.data.global.x - transform.tx) / canvas.stage.scale.x,
+    //   y: (event.data.global.y - transform.ty) / canvas.stage.scale.y,
+    // };
+    // NEW METHOD SEEM MORE PRECISE
+    const position = canvas.app.renderer.plugins.interaction.mouse.getLocalPosition(canvas.app.stage);
     return {
-      x: (event.data.global.x - transform.tx) / canvas.stage.scale.x,
-      y: (event.data.global.y - transform.ty) / canvas.stage.scale.y,
+      x: position.x,
+      y: position.y,
     };
   }
 
@@ -1378,7 +1384,6 @@ export class TriggerHappy {
     const clickDrawings = this._getPlaceablesAt(this._getDrawings(), position);
     const clickNotes = this._getPlaceablesAt(this._getNotes(), position);
     const clickJournals = this._getPlaceablesAt(this._getJournals(), position);
-    // TODO this not work find a better solution this work only because when click on canavs there can be only one stairways at the time
     const clickStairways = this._getPlaceablesAt(this._getStairways(event.sceneId), position);
 
     if (
@@ -1416,7 +1421,6 @@ export class TriggerHappy {
       const upDrawings = this._getPlaceablesAt(drawings, position);
       const upNotes = this._getPlaceablesAt(notes, position);
       const upJournals = this._getPlaceablesAt(journals, position);
-      // TODO this not work find a better solution this work only because when click on canavs there can be only one stairways at the time
       const upStairways = this._getPlaceablesAt(stairways, position);
       if (
         upTokens.length === 0 &&
