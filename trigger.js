@@ -2160,12 +2160,22 @@ export class TriggerHappy {
     }
     if (!target) {
       target = placeables?.find((x) => {
+        return x && x.data?.label?.toLowerCase() == IdOrName.toLowerCase();
+      });
+    }
+    if (!target) {
+      target = placeables?.find((x) => {
         return x && x.data?.text?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
     if (!target) {
       target = placeables?.find((x) => {
         return x && x.data?.label?.toLowerCase() == IdOrName.toLowerCase();
+      });
+    }
+    if (!target) {
+      target = placeables?.find((x) => {
+        return x && x.entryId?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
     return target;
@@ -2189,6 +2199,11 @@ export class TriggerHappy {
     }
     if (!target || target.length == 0) {
       target = placeables?.filter((x) => {
+        return x && x.label?.toLowerCase() == IdOrName.toLowerCase();
+      });
+    }
+    if (!target || target.length == 0) {
+      target = placeables?.filter((x) => {
         return x && x.data?.name?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
@@ -2200,6 +2215,11 @@ export class TriggerHappy {
     if (!target || target.length == 0) {
       target = placeables?.filter((x) => {
         return x && x.data?.label?.toLowerCase() == IdOrName.toLowerCase();
+      });
+    }
+    if (!target || target.length == 0) {
+      target = placeables?.filter((x) => {
+        return x && x.entryId?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
     return target ?? [];
