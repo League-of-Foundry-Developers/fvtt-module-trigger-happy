@@ -2160,7 +2160,7 @@ export class TriggerHappy {
     }
     if (!target) {
       target = placeables?.find((x) => {
-        return x && x.data?.label?.toLowerCase() == IdOrName.toLowerCase();
+        return x && x.label?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
     if (!target) {
