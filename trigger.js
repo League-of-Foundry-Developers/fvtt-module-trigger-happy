@@ -334,7 +334,7 @@ export const EVENT_TRIGGER_ENTITY_TYPES = {
   DOOR_CLOSE: `doorclose`,
   DOOR_OPEN: `dooropen`,
   ONLY_IF_HIDDEN: `onlyifhidden`,
-  ONLY_IF_UNHIDDEN: `onlyifunhidden`
+  ONLY_IF_UNHIDDEN: `onlyifunhidden`,
 };
 
 export class TriggerHappy {
@@ -830,27 +830,29 @@ export class TriggerHappy {
   }
 
   async _executeTriggers(triggers) {
-    if (!triggers.length){
+    if (!triggers.length) {
       return;
     }
     for (const trigger of triggers) {
       // CHECK FOR TH HIDE/UNHIDE MECHANISM
       if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.ONLY_IF_HIDDEN)) {
-        if(trigger.trigger.data?.hidden == false){
+        if (trigger.trigger.data?.hidden == false) {
           return;
         }
       }
       if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.ONLY_IF_UNHIDDEN)) {
-        if(trigger.trigger.data?.hidden == true){
+        if (trigger.trigger.data?.hidden == true) {
           return;
         }
       }
-      if(game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'disableAllHidden')) {
-        if(trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.ONLY_IF_UNHIDDEN)
-          || trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.ONLY_IF_HIDDEN)){
+      if (game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'disableAllHidden')) {
+        if (
+          trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.ONLY_IF_UNHIDDEN) ||
+          trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.ONLY_IF_HIDDEN)
+        ) {
           // Do nothing
-        }else{
-          if(trigger.trigger.data?.hidden == true){
+        } else {
+          if (trigger.trigger.data?.hidden == true) {
             return;
           }
         }
