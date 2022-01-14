@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.33
+
+- Integration of a better mouse down `canvas.app.renderer.plugins.interaction`
+- Integration of the new math logic [Click Trigger Uses the Datapoints of a Drawing Instead of Its Bounding Box](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/86) ty to
+- Little bug fix on the method 'retrieve' adde entryId and label with no data
+
 ## 0.8.32
 
 - Update module.json for 9

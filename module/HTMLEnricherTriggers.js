@@ -148,7 +148,7 @@ export class HTMLEnricherTriggers {
       let newStr = '';
       let oldStr = '';
       for (let match of matchs) {
-        if(!match){
+        if (!match) {
           continue;
         }
         let [triggerJournal, entity, id, label] = match;
