@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.34
+
+- Little bug fix from [this discussion](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/commit/baeb6c385eb142b61da38f667314c3ca7edfcd8a#commitcomment-64167717)
+
 ## 0.8.33
 
 - Integration of a better mouse down `canvas.app.renderer.plugins.interaction`

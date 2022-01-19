@@ -1287,11 +1287,11 @@ export class TriggerHappy {
       // Other types of placeables don't have an area that could contain the position
       let width = placeable.w || placeable.data?.width || placeable.width;
       if (placeable?.object) {
-        width = placeable?.object?.w || placeable?.object?.data?.width || placeable?.object?.width || w;
+        width = placeable?.object?.w || placeable?.object?.data?.width || placeable?.object?.width || width;
       }
       let height = placeable.h || placeable.data?.height || placeable.height;
       if (placeable?.object) {
-        height = placeable?.object?.h || placeable?.object?.data?.height || placeable?.object?.height || h;
+        height = placeable?.object?.h || placeable?.object?.data?.height || placeable?.object?.height || height;
       }
       let x = placeable.x || placeable?.data?.x;
       if (placeable?.object) {
