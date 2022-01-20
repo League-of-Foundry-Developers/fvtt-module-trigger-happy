@@ -252,7 +252,7 @@ Hooks.once('setup', function () {
 Hooks.once('ready', () => {
   Hooks.on('renderJournalSheet', (app, html, options) => {
     if (game.settings.get(TRIGGER_HAPPY_MODULE_NAME, 'enableEnrichHtml')) {
-      if (game.triggers.journals.filter((e) => e.id === options.document.id).length > 0) {
+      if (game.triggers?.journals?.filter((e) => e.id === options.document.id).length > 0) {
         const htmlString = HTMLEnricherTriggers.enrichAll(html.find('.editor-content').html());
         html.find('.editor-content').html(htmlString);
         //HTMLEnricherTriggers.bindRichTextLinks(html);
@@ -343,8 +343,16 @@ export class TriggerHappy {
     Hooks.on('canvasReady', this._onCanvasReady.bind(this));
     Hooks.on('controlToken', this._onControlToken.bind(this));
     Hooks.on('createJournalEntry', this._parseJournals.bind(this));
-    Hooks.on('updateJournalEntry', this._parseJournals.bind(this));
-    Hooks.on('deleteJournalEntry', this._parseJournals.bind(this));
+    Hooks.on('updateJournalEntry', (entityData, data) => {
+      if (game.triggers?.journals?.filter((e) => e.id === entityData.id).length > 0) {
+        this._parseJournals.bind(this);
+      }
+    });
+    Hooks.on('deleteJournalEntry', (entityData, data) => {
+      if (game.triggers?.journals?.filter((e) => e.id === entityData.id).length > 0) {
+        this._parseJournals.bind(this);
+      }
+    });
     Hooks.on('preUpdateToken', this._onPreUpdateToken.bind(this));
     Hooks.on('preUpdateWall', this._onPreUpdateWall.bind(this));
     Hooks.on('renderSettingsConfig', this._parseJournals.bind(this)); // TODO maybe we don't need this anymore ???
