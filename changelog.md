@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.35
+
+- Add checker for avoid the reload of trigger when update/delete/create journal if they aren't under the trigger happy folder [himmelweiss comment](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/88)
+- Managed the use case [[Feature Request] NAVBAR TWEAKS breaking TRIGGER HAPPY's triggers](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/89)
+
 ## 0.8.34
 
 - Little bug fix from [this discussion](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/commit/baeb6c385eb142b61da38f667314c3ca7edfcd8a#commitcomment-64167717)

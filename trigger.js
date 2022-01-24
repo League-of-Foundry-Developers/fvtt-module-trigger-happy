@@ -339,25 +339,44 @@ export const EVENT_TRIGGER_ENTITY_TYPES = {
 
 export class TriggerHappy {
   constructor() {
-    Hooks.on('ready', this._parseJournals.bind(this));
-    Hooks.on('canvasReady', this._onCanvasReady.bind(this));
+    Hooks.on('ready', (...args) => {
+      this._parseJournals();
+    });
+    Hooks.on('canvasReady', (...args) => {
+      this._onCanvasReady(canvas);
+    });
     Hooks.on('controlToken', this._onControlToken.bind(this));
-    Hooks.on('createJournalEntry', this._parseJournals.bind(this));
+    Hooks.on('createJournalEntry', (entityData, data) => {
+      const folders = game.folders.contents.filter((f) => {
+        return f.type === 'JournalEntry' && f.name === this.folderJournalName;
+      });
+      if (
+        folders.some((folder) => {
+          return folder.name == entityData.folder?.name;
+        })
+      ) {
+        this._parseJournals();
+      }
+    });
     Hooks.on('updateJournalEntry', (entityData, data) => {
       if (game.triggers?.journals?.filter((e) => e.id === entityData.id).length > 0) {
-        this._parseJournals.bind(this);
+        this._parseJournals();
       }
     });
     Hooks.on('deleteJournalEntry', (entityData, data) => {
       if (game.triggers?.journals?.filter((e) => e.id === entityData.id).length > 0) {
-        this._parseJournals.bind(this);
+        this._parseJournals();
       }
     });
     Hooks.on('preUpdateToken', this._onPreUpdateToken.bind(this));
     Hooks.on('preUpdateWall', this._onPreUpdateWall.bind(this));
-    Hooks.on('renderSettingsConfig', this._parseJournals.bind(this)); // TODO maybe we don't need this anymore ???
+    Hooks.on('renderSettingsConfig', (...args) => {
+      this._parseJournals();
+    }); // TODO maybe we don't need this anymore ???
     Hooks.on('preUpdateNote', this._onPreUpdateNote.bind(this));
-    Hooks.on('getSceneNavigationContext', this._parseJournals.bind(this)); // parse again the journal when change scene
+    Hooks.on('getSceneNavigationContext', (...args) => {
+      this._parseJournals();
+    }); // parse again the journal when change scene
 
     this.registeredEffects = [];
     this.triggers = [];
@@ -1224,73 +1243,83 @@ export class TriggerHappy {
       // TokenDocument.object.w and .h report the size of the token object according to its boundaries on the grid (orange rectangle on hover)
       // while .width and .height refer to the token image, which takes into account the image scale as well. For the purpose of clicks and token
       // collisions, we will consider scaling and rotation of the token image to be purely aesthetic, and work off of the token's grid dimensions
-      let x = placeable.object.x
-	    let y = placeable.object.y
-	    let width = placeable.object.w
-	    let height = placeable.object.h
+      let x = placeable.object.x;
+      let y = placeable.object.y;
+      let width = placeable.object.w;
+      let height = placeable.object.h;
 
-	    // For both Tokens and Drawings, we will start by determining if 'position' is inside the placeable's bounding box
+      // For both Tokens and Drawings, we will start by determining if 'position' is inside the placeable's bounding box
       // Since tokens have rectangular boundaries, we don't need to perform any other calculations
-      return (Number.between(position.x, x, x + width) && Number.between(position.y, y, y + height))
-    }
-
-    else if (placeable instanceof DrawingDocument) {
+      return Number.between(position.x, x, x + width) && Number.between(position.y, y, y + height);
+    } else if (placeable instanceof DrawingDocument) {
       // For a DrawingDocument, the width and height of the contents are stored in DrawingDocument.data
       // the .data member also includes .points, which contains the coordinates of the drawing's vertices relative to the drawing's origin
-      let x = placeable.data.x
-	    let y = placeable.data.y
- 	    let width = placeable.data.width
-	    let height = placeable.data.height
-	    // Possible drawing types: (r)ectangle, circl(e), (p)olygon, (f)reehand
-	    let type = placeable.data.type
+      let x = placeable.data.x;
+      let y = placeable.data.y;
+      let width = placeable.data.width;
+      let height = placeable.data.height;
+      // Possible drawing types: (r)ectangle, circl(e), (p)olygon, (f)reehand
+      let type = placeable.data.type;
 
-	    if (placeable.data.rotation != 0) {
-	      // It looks like Foundry applies the rotation to the image drawn on the canvas, but not to the position or size of the DrawingData
+      if (placeable.data.rotation != 0) {
+        // It looks like Foundry applies the rotation to the image drawn on the canvas, but not to the position or size of the DrawingData
         // Instead of rotating the entire DrawingData to match what is rendered on the canvas, we can just inverse-rotate position
-        let drawing_center = [x + 0.5*width, y + 0.5*height]
+        let drawing_center = [x + 0.5 * width, y + 0.5 * height];
         position = {
-          x: Math.cos(-placeable.data.rotation*Math.PI/180) * (position.x - drawing_center[0]) - Math.sin(-placeable.data.rotation*Math.PI/180) * (position.y - drawing_center[1]) + drawing_center[0],
-          y: Math.sin(-placeable.data.rotation*Math.PI/180) * (position.x - drawing_center[0]) + Math.cos(-placeable.data.rotation*Math.PI/180) * (position.y - drawing_center[1]) + drawing_center[1]
-        }
+          x:
+            Math.cos((-placeable.data.rotation * Math.PI) / 180) * (position.x - drawing_center[0]) -
+            Math.sin((-placeable.data.rotation * Math.PI) / 180) * (position.y - drawing_center[1]) +
+            drawing_center[0],
+          y:
+            Math.sin((-placeable.data.rotation * Math.PI) / 180) * (position.x - drawing_center[0]) +
+            Math.cos((-placeable.data.rotation * Math.PI) / 180) * (position.y - drawing_center[1]) +
+            drawing_center[1],
+        };
       }
 
-	    // For both Tokens and Drawings, we will start by determining if 'position' is inside the placeable's bounding box
+      // For both Tokens and Drawings, we will start by determining if 'position' is inside the placeable's bounding box
       if (Number.between(position.x, x, x + width) && Number.between(position.y, y, y + height)) {
         // If the position is within the bounding box, then we can perform additional tests to see if it is within the drawing's geometry
-        if (type == "r") {
+        if (type == 'r') {
           // A rectangle is its own bounding box, so we've already determined that it contains the position
-          return true
-        }
-        else if (type == "e") {
+          return true;
+        } else if (type == 'e') {
           // All points inside an ellipse satisfy the following inequality
-          return ((position.x - x - 0.5*width)**2 * (0.5*height)**2 + (position.y - y - 0.5*height)**2 * (0.5*width)**2) <= ((0.5*width)**2 * (0.5*height)**2)
-        }
-        else if (type == "p" || type == "f") {
+          return (
+            (position.x - x - 0.5 * width) ** 2 * (0.5 * height) ** 2 +
+              (position.y - y - 0.5 * height) ** 2 * (0.5 * width) ** 2 <=
+            (0.5 * width) ** 2 * (0.5 * height) ** 2
+          );
+        } else if (type == 'p' || type == 'f') {
           // Point and freehand drawings have point data that we can use to perform a point inclusion in polygon test as described in https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html
           // To get the pixel coordinates of the vertices, we have to add the drawing origin
-	        let vertices = placeable.data.points.map(point => [point[0]+x, point[1]+y])
-          let isInside = false
-          let i = 0, j = vertices.length - 1;
+          let vertices = placeable.data.points.map((point) => [point[0] + x, point[1] + y]);
+          let isInside = false;
+          let i = 0,
+            j = vertices.length - 1;
           for (i, j; i < vertices.length; j = i++) {
-              if ( (vertices[i][1] > position.y) != (vertices[j][1] > position.y) && (position.x < (vertices[j][0] - vertices[i][0]) * (position.y - vertices[i][1]) / (vertices[j][1] - vertices[i][1]) + vertices[i][0])) {
-                isInside = !isInside;
-              }
+            if (
+              vertices[i][1] > position.y != vertices[j][1] > position.y &&
+              position.x <
+                ((vertices[j][0] - vertices[i][0]) * (position.y - vertices[i][1])) /
+                  (vertices[j][1] - vertices[i][1]) +
+                  vertices[i][0]
+            ) {
+              isInside = !isInside;
+            }
           }
-          return isInside
-        }
-        else {
+          return isInside;
+        } else {
           // If this runs, then foundry added a new drawing type. Guess we'll default to just using the bounding box
-          return true
+          return true;
         }
-      }
-      else {
+      } else {
         // If the position is outside the bounding box, then we know immediately that the drawing does not contain it
-        return false
+        return false;
       }
     }
 
     // TODO other specific placeable case NoteDocument, WallDocument
-
     else {
       // Other types of placeables don't have an area that could contain the position
       let width = placeable.w || placeable.data?.width || placeable.width;
@@ -1311,7 +1340,6 @@ export class TriggerHappy {
       }
       return Number.between(position.x, x, x + width) && Number.between(position.y, y, y + height);
     }
-
   }
 
   _getPlaceablesAt(placeables, position) {
@@ -1368,10 +1396,11 @@ export class TriggerHappy {
     return triggers.filter((trigger) => drawings.some((drawing) => this._isDrawingTrigger(drawing, trigger, type)));
   }
 
-  _onCanvasReady(canvas) {
+  async _onCanvasReady(canvas) {
     const triggers = this.triggers.filter((trigger) => this._isSceneTrigger(canvas.scene, trigger));
-    this._executeTriggers(triggers);
+    await this._executeTriggers(triggers);
     canvas.stage.on('mousedown', (ev) => this._onMouseDown(ev));
+    this._parseJournals();
   }
 
   _getMousePosition(event) {
