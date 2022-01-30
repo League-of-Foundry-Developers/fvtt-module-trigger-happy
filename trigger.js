@@ -374,9 +374,9 @@ export class TriggerHappy {
       this._parseJournals();
     }); // TODO maybe we don't need this anymore ???
     Hooks.on('preUpdateNote', this._onPreUpdateNote.bind(this));
-    Hooks.on('getSceneNavigationContext', (...args) => {
-      this._parseJournals();
-    }); // parse again the journal when change scene
+    // Hooks.on('getSceneNavigationContext', (...args) => {
+    //   this._parseJournals();
+    // }); // parse again the journal when change scene
 
     this.registeredEffects = [];
     this.triggers = [];
@@ -1397,10 +1397,13 @@ export class TriggerHappy {
   }
 
   async _onCanvasReady(canvas) {
-    const triggers = this.triggers.filter((trigger) => this._isSceneTrigger(canvas.scene, trigger));
-    await this._executeTriggers(triggers);
-    canvas.stage.on('mousedown', (ev) => this._onMouseDown(ev));
-    this._parseJournals();
+    try {
+      const triggers = this.triggers.filter((trigger) => this._isSceneTrigger(canvas.scene, trigger));
+      await this._executeTriggers(triggers);
+      canvas.stage.on('mousedown', (ev) => this._onMouseDown(ev));
+    } finally {
+      this._parseJournals();
+    }
   }
 
   _getMousePosition(event) {

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.36
+
+- Rimosso hook `getSceneNavigationContext` becuase is redondant with `canvasReady`
+
 ## 0.8.35
 
 - Add checker for avoid the reload of trigger when update/delete/create journal if they aren't under the trigger happy folder [himmelweiss comment](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/88)
