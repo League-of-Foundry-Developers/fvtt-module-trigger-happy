@@ -1,8 +1,12 @@
 # Changelog
 
+## 0.8.37
+
+- Add again hook `getSceneNavigationContext` for strange use case [[BUG] Doesn't load @scene triggers on game load](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues/94)
+
 ## 0.8.36
 
-- Rimosso hook `getSceneNavigationContext` becuase is redondant with `canvasReady`
+- Removed hook `getSceneNavigationContext` becuase is redondant with `canvasReady`
 
 ## 0.8.35
 

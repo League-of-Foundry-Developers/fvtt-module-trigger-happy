@@ -374,9 +374,9 @@ export class TriggerHappy {
       this._parseJournals();
     }); // TODO maybe we don't need this anymore ???
     Hooks.on('preUpdateNote', this._onPreUpdateNote.bind(this));
-    // Hooks.on('getSceneNavigationContext', (...args) => {
-    //   this._parseJournals();
-    // }); // parse again the journal when change scene
+    Hooks.on('getSceneNavigationContext', (...args) => {
+      this._parseJournals();
+    }); // parse again the journal when change scene
 
     this.registeredEffects = [];
     this.triggers = [];
