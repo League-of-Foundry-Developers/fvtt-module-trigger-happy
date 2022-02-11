@@ -510,7 +510,10 @@ export class TriggerHappy {
     const entityLinks = Object.keys(CONFIG).concat(this.arrayTriggers);
     entityLinks.push(...this.registeredEffects);
 
-    const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
+    //const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
+    const entityMatchRgx = `@(${entityLinks.join('|')})\\[((?:[^\[\\]]+|\\[(?:[^\\[\\]]+|\\[[^\\[\\]]*\\])*\\])*)\\](?:{([^}]+)})?`;
+    
+    
     const rgx = new RegExp(entityMatchRgx, 'ig');
 
     const entityMatchRgxTagger = `@(Tag)\\[([^\\]]+)\\]`;
