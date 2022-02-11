@@ -129,7 +129,8 @@ export class HTMLEnricherTriggers {
   static enrichAll(text) {
     const entityLinks = Object.keys(CONFIG).concat(game.triggers.arrayTriggers);
     // entityLinks.push('Tag');
-    const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
+    // const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
+    const entityMatchRgx = `@(${entityLinks.join('|')})\\[((?:[^\[\\]]+|\\[(?:[^\\[\\]]+|\\[[^\\[\\]]*\\])*\\])*)\\](?:{([^}]+)})?`;
     const rgx = new RegExp(entityMatchRgx, 'ig');
 
     const triggerLines = text
