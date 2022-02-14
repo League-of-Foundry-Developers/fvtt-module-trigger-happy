@@ -43,7 +43,8 @@ To install this module manually:
 # Module compatibility
 
 - [Sound Link](https://github.com/superseva/sound-link) check out the examples
-- [Forien Quest Log version 0.7.7 and later](https://github.com/League-of-Foundry-Developers/foundryvtt-forien-quest-log) check out the examples
+- [Forien Quest Log version 0.7.7 and later](https://github.com/League-of-Foundry-Developers/foundryvtt-forien-quest-log) check out the examples.
+  - **NOTE:** _Just a note that on v9 document links are disabled. One of the last breaking changes to Foundry core for v9 required disabling the solution in place for day one compatibility. With the continuation / new quest log module on the horizon I'll be working out a full replacement / fix with the new module. `@Quest[<Quest ID>]{<name>}` will not work, but change that to `@JournalEntry[<Quest ID>{<name>}` should work._
 - [Tagger](https://github.com/Haxxer/FoundryVTT-Tagger) check out the examples
 - [Stairway](https://gitlab.com/SWW13/foundryvtt-stairways) (limited only to click event :( ) check out the examples
 - [Shared Vision](https://github.com/CDeenen/SharedVision) added a integration feature check out the examples
@@ -408,6 +409,8 @@ here the video on the exact minute: https://youtu.be/lfSYJXVQAcE?t=586
 ```
 @JournalEntry[TEST] @Trigger[click] @Quest[xXj5KZlMvGn3pTX8]{New Quest}
 ```
+
+**NOTE:** _Just a note that on v9 document links are disabled. One of the last breaking changes to Foundry core for v9 required disabling the solution in place for day one compatibility. With the continuation / new quest log module on the horizon I'll be working out a full replacement / fix with the new module. `@Quest[<Quest ID>]{<name>}` will not work, but change that to `@JournalEntry[<Quest ID>{<name>}` should work._
 
 ### Example with [NPC Chatter](https://github.com/cswendrowski/FoundryVtt-Npc-Chatter) module base on this [video](https://www.youtube.com/watch?v=W6z0pMUBAz8)
 

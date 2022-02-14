@@ -3,7 +3,7 @@
   "name": "trigger-happy",
   "title": "Trigger Happy",
   "description": "Automate everything in your world by creating triggers for your players to spring traps or anything you can think of!",
-  "version": "0.8.38",
+  "version": "0.8.39",
   "scripts": {
     "package": "gulp package",
     "build": "gulp clean && gulp build && gulp link",

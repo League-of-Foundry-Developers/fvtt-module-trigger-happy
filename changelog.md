@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.39
+
+- Add japanese language
+
 ## 0.8.38
 
 - Add PR  [Update entity matching to allow up to 2 levels of nested brackets []](https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/pull/95) ty to @crnormand
