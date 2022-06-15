@@ -1,5 +1,7 @@
 # Trigger Happy
 
+# Tigger is happy is not followed anymore it's advisable to use [MATT (Monk Actvie Tile Trigger)](https://foundryvtt.com/packages/monks-active-tiles) instead
+
 ![Trigger Happy](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FLeague-of-Foundry-Developers%2Fleague-repo-status%2Fshields-endpoint%2Ffvtt-module-trigger-happy.json&style=for-the-badge)
 
 ![Latest Release Download Count](https://img.shields.io/github/downloads/League-of-Foundry-Developers/fvtt-module-trigger-happy/latest/module.zip?color=2b82fc&label=DOWNLOADS&style=for-the-badge) 
