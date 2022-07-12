@@ -23,6 +23,7 @@
         "eslint-plugin-tsdoc"
     ],
     "rules": {
+        "eqeqeq": ["error", "always"],
         "tsdoc/syntax": "off",
         "@typescript-eslint/ban-types": "off",
         "@typescript-eslint/no-explicit-any": "off",
