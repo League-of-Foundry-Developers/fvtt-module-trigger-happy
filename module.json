@@ -1,9 +1,9 @@
 {
-  "name": "trigger-happy",
+  "id": "trigger-happy",
   "title": "Trigger Happy",
   "description": "Automate everything in your world by creating triggers for your players to spring traps or anything you can think of!",
-  "version": "0.8.39",
-  "author": "KaKaRoTo, tposney, p4535992",
+  "version": "0.10.01",
+  "authors": [{"name": "KaKaRoTo"},{"name": "tposney"}, {"name": "p4535992"}],
   "type": "module",
   "socket": true,
   "includes": [
@@ -59,7 +59,8 @@
       "label": "Trigger Actors",
       "path": "packs/trigger-happy-actors.db",
       "entity": "Actor",
-      "package": "trigger-happy"
+      "package": "trigger-happy",
+      "system": "dnd5e"
     },
     {
       "name": "trigger-happy-journals",
@@ -75,9 +76,11 @@
   "readme": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/blob/v0.8.39/README.md",
   "changelog": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/blob/v0.8.39/changelog.md",
   "bugs": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues",
-  "minimumCoreVersion": "0.8.9",
-  "compatibleCoreVersion": "9",
+  "compatibility": {
+    "minimumCoreVersion": 10,
+    "compatibleCoreVersion": 10
+  },
   "allowBugReporter": true,
   "manifestPlusVersion": "1.2.0",
-  "dependencies": []
+  "relationships": {}
 }

@@ -358,12 +358,12 @@ export class TriggerHappy {
         this._parseJournals();
       }
     });
-    Hooks.on('updateJournalEntry', (entityData, data) => {
-      if (game.triggers?.journals?.filter((e) => e.id === entityData.id).length > 0) {
+    Hooks.on('updateJournalEntryPage', (journalEntryPage, data) => {
+      if (game.triggers?.journals?.filter((e) => e.uuid === journalEntryPage.parent.uuid).length > 0) {
         this._parseJournals();
       }
     });
-    Hooks.on('deleteJournalEntry', (entityData, data) => {
+    Hooks.on('deleteJournalEntryPage', (entityData, data) => {
       if (game.triggers?.journals?.filter((e) => e.id === entityData.id).length > 0) {
         this._parseJournals();
       }
@@ -464,13 +464,13 @@ export class TriggerHappy {
 
     return folders.reduce((contents, folder) => {
       // Cannot use folder.content and folder.children because they are set on populate and only show what the user can see
-      let content = game.journal.contents.filter((j) => j.data.folder === folder.id) || []; // This is the array of journalEntry under the current folder
+      let content = game.journal.contents.filter((j) => j.folder === folder.id) || []; // This is the array of journalEntry under the current folder
       if (enableJournalForScene) {
         const contentTmp = [];
         content.forEach((journalEntry) => {
           if (
             currentScene &&
-            (journalEntry.data.name.startsWith(currentScene.name) || journalEntry.id.startsWith(currentScene.id))
+            (journalEntry.name.startsWith(currentScene.name) || journalEntry.id.startsWith(currentScene.id))
           ) {
             contentTmp.push(journalEntry);
           } else {
@@ -482,7 +482,7 @@ export class TriggerHappy {
         content = contentTmp;
       }
       if (content && content.length > 0) contents.push(...content);
-      const children = game.folders.contents.filter((f) => f.type === 'JournalEntry' && f.data.parent === folder.id);
+      const children = game.folders.contents.filter((f) => f.type === 'JournalEntry' && f.parent === folder.id);
       return this._getFoldersContentsRecursive(children, contents);
     }, contents);
   }
@@ -497,7 +497,10 @@ export class TriggerHappy {
   }
 
   async _parseJournal(journal) {
-    const triggerLines = journal.data.content
+    let journalLines = "".concat(journal.pages.filter(page => page.type === "text").map(page => page.text.content));
+    journalLines = journalLines.replace(/<p>(.*?)<\/p>/g, "$1\n")
+    console.error(journalLines);
+    const triggerLines = journalLines
       .replace(/(<p>|<div>|<br *\/?>)/gm, '\n')
       .replace(/&nbsp;/gm, ' ')
       .split('\n');
@@ -866,12 +869,12 @@ export class TriggerHappy {
     for (const trigger of triggers) {
       // CHECK FOR TH HIDE/UNHIDE MECHANISM
       if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.ONLY_IF_HIDDEN)) {
-        if (trigger.trigger.data?.hidden == false) {
+        if (trigger.trigger.document?.hidden == false) {
           return;
         }
       }
       if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.ONLY_IF_UNHIDDEN)) {
-        if (trigger.trigger.data?.hidden == true) {
+        if (trigger.trigger.docuemnt?.hidden == true) {
           return;
         }
       }
@@ -882,7 +885,7 @@ export class TriggerHappy {
         ) {
           // Do nothing
         } else {
-          if (trigger.trigger.data?.hidden == true) {
+          if (trigger.trigger.document?.hidden == true) {
             return;
           }
         }
@@ -901,7 +904,7 @@ export class TriggerHappy {
         } else if (effect instanceof RollTable) {
           await effect.draw();
         } else if (effect instanceof ChatMessage) {
-          const chatData = duplicate(effect.data);
+          const chatData = effect.toObject(false);
           if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.OOC)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.OOC;
           } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.EMOTE)) {
@@ -949,7 +952,7 @@ export class TriggerHappy {
           // }
           await ChatMessage.create(chatData);
         } else if (effect instanceof ChatLink) {
-          const chatData = duplicate(effect.chatMessage.data);
+          const chatData = effect.chatMessage.toObject(false);
           if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.OOC)) {
             chatData.type = CONST.CHAT_MESSAGE_TYPES.OOC;
           } else if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.EMOTE)) {
@@ -998,8 +1001,8 @@ export class TriggerHappy {
           // }
           await ChatMessage.create(chatData);
         } else if (effect instanceof Token || effect instanceof TokenDocument) {
-          const placeablesToken = this._getTokens();
-          const token = placeablesToken.find((t) => t.name === effect.name || t.id === effect.id);
+          const placeablesTokenDocuments = this._getTokenDocuments();
+          const token = placeablesTokenDocuments.find((t) => t.name === effect.name || t.id === effect.id);
           if (token) {
             await token.control();
           }
@@ -1045,7 +1048,7 @@ export class TriggerHappy {
             await journal.sheet.render(true);
           }
         } else if (effect instanceof WallDocument) {
-          const state = effect.data.ds;
+          const state = effect.ds;
           const states = CONST.WALL_DOOR_STATES;
           // Determine whether the player can control the door at this time
           if (!game.user.can('WALL_DOORS')) {
@@ -1075,7 +1078,7 @@ export class TriggerHappy {
 
   _isTokenTrigger(token, trigger, type) {
     const isTrigger =
-      (trigger.trigger instanceof Actor && trigger.trigger.id === token.data.actorId) ||
+      (trigger.trigger instanceof Actor && trigger.trigger.id === token.document.actorId) ||
       (trigger.trigger instanceof TokenDocument && trigger.trigger.id === token.id) ||
       (trigger.trigger instanceof Token && trigger.trigger.id === token.id);
     if (!isTrigger) {
@@ -1084,13 +1087,13 @@ export class TriggerHappy {
     if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) ||
-        (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) && !token.data.hidden)
+        (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) && !token.document.hidden)
       );
     }
     if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) ||
-        (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) && token.data.hidden)
+        (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) && token.document.hidden)
       );
     }
     if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) {
@@ -1186,13 +1189,13 @@ export class TriggerHappy {
     if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) ||
-        (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) && !drawing.data.hidden)
+        (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) && !drawing.document.hidden)
       );
     }
     if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) ||
-        (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) && drawing.data.hidden)
+        (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) && drawing.document.hidden)
       );
     }
     if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) {
@@ -1240,7 +1243,7 @@ export class TriggerHappy {
 
     // return Number.between(position.x, x, x + w) && Number.between(position.y, y, y + h);
     if (placeable instanceof TokenDocument) {
-      // TokenDocument.data reports width and height in terms of grid units. We could calculate the size in pixels manually, but
+      // TokenDocument reports width and height in terms of grid units. We could calculate the size in pixels manually, but
       // TokenDocument.object already reports the size and position of the token in pixels, so we will use it instead.
       //
       // TokenDocument.object.w and .h report the size of the token object according to its boundaries on the grid (orange rectangle on hover)
@@ -1255,27 +1258,27 @@ export class TriggerHappy {
       // Since tokens have rectangular boundaries, we don't need to perform any other calculations
       return Number.between(position.x, x, x + width) && Number.between(position.y, y, y + height);
     } else if (placeable instanceof DrawingDocument) {
-      // For a DrawingDocument, the width and height of the contents are stored in DrawingDocument.data
-      // the .data member also includes .points, which contains the coordinates of the drawing's vertices relative to the drawing's origin
-      let x = placeable.data.x;
-      let y = placeable.data.y;
-      let width = placeable.data.width;
-      let height = placeable.data.height;
+      // For a DrawingDocument, the width and height of the contents are stored in DrawingDocument.
+      // the .document member also includes .points, which contains the coordinates of the drawing's vertices relative to the drawing's origin
+      let x = placeable.x;
+      let y = placeable.y;
+      let width = placeable.shape.width;
+      let height = placeable.shape.height;
       // Possible drawing types: (r)ectangle, circl(e), (p)olygon, (f)reehand
-      let type = placeable.data.type;
+      let type = placeable.shape.type;
 
-      if (placeable.data.rotation != 0) {
+      if (placeable.rotation != 0) {
         // It looks like Foundry applies the rotation to the image drawn on the canvas, but not to the position or size of the DrawingData
         // Instead of rotating the entire DrawingData to match what is rendered on the canvas, we can just inverse-rotate position
         let drawing_center = [x + 0.5 * width, y + 0.5 * height];
         position = {
           x:
-            Math.cos((-placeable.data.rotation * Math.PI) / 180) * (position.x - drawing_center[0]) -
-            Math.sin((-placeable.data.rotation * Math.PI) / 180) * (position.y - drawing_center[1]) +
+            Math.cos((-placeable.rotation * Math.PI) / 180) * (position.x - drawing_center[0]) -
+            Math.sin((-placeable.rotation * Math.PI) / 180) * (position.y - drawing_center[1]) +
             drawing_center[0],
           y:
-            Math.sin((-placeable.data.rotation * Math.PI) / 180) * (position.x - drawing_center[0]) +
-            Math.cos((-placeable.data.rotation * Math.PI) / 180) * (position.y - drawing_center[1]) +
+            Math.sin((-placeable.rotation * Math.PI) / 180) * (position.x - drawing_center[0]) +
+            Math.cos((-placeable.rotation * Math.PI) / 180) * (position.y - drawing_center[1]) +
             drawing_center[1],
         };
       }
@@ -1296,7 +1299,10 @@ export class TriggerHappy {
         } else if (type == 'p' || type == 'f') {
           // Point and freehand drawings have point data that we can use to perform a point inclusion in polygon test as described in https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html
           // To get the pixel coordinates of the vertices, we have to add the drawing origin
-          let vertices = placeable.data.points.map((point) => [point[0] + x, point[1] + y]);
+          let vertices = [];
+          for (let i = 0; i < placeable.shape.points.length; i++) {
+            if (i % 2) vertices.push([placeable.shape.points[i-1] + x, placeable.shape.points[i] + y])
+          }
           let isInside = false;
           let i = 0,
             j = vertices.length - 1;
@@ -1325,21 +1331,21 @@ export class TriggerHappy {
     // TODO other specific placeable case NoteDocument, WallDocument
     else {
       // Other types of placeables don't have an area that could contain the position
-      let width = placeable.w || placeable.data?.width || placeable.width;
+      let width = placeable.w ?? placeable.document?.width ?? placeable.width;
       if (placeable?.object) {
-        width = placeable?.object?.w || placeable?.object?.data?.width || placeable?.object?.width || width;
+        width = placeable?.object?.w ?? placeable?.object?.document?.width ?? placeable?.object?.width ?? width;
       }
-      let height = placeable.h || placeable.data?.height || placeable.height;
+      let height = placeable.h ?? placeable.document?.height ?? placeable.height;
       if (placeable?.object) {
-        height = placeable?.object?.h || placeable?.object?.data?.height || placeable?.object?.height || height;
+        height = placeable?.object?.h ?? placeable?.object?.document?.height ?? placeable?.object?.height ?? height;
       }
-      let x = placeable.x || placeable?.data?.x;
+      let x = placeable.x ?? placeable?.document?.x;
       if (placeable?.object) {
-        x = placeable?.object?.x || placeable?.object?.data?.x || x;
+        x = placeable?.object?.x ?? placeable?.object?.document?.x ?? x;
       }
-      let y = placeable?.y || placeable?.data?.y;
+      let y = placeable?.y ?? placeable?.document?.y;
       if (placeable?.object) {
-        y = placeable?.object?.y || placeable?.object?.data?.y || placeable?.object?.y || y;
+        y = placeable?.object?.y ?? placeable?.object?.document?.y ?? y;
       }
       return Number.between(position.x, x, x + width) && Number.between(position.y, y, y + height);
     }
@@ -1425,7 +1431,7 @@ export class TriggerHappy {
 
   _onMouseDown(event) {
     const position = this._getMousePosition(event);
-    const clickTokens = this._getPlaceablesAt(this._getTokens(), position);
+    const clickTokens = this._getPlaceablesAt(this._getTokenDocuments(), position);
     const clickDrawings = this._getPlaceablesAt(this._getDrawings(), position);
     const clickNotes = this._getPlaceablesAt(this._getNotes(), position);
     const clickJournals = this._getPlaceablesAt(this._getJournals(), position);
@@ -1505,11 +1511,11 @@ export class TriggerHappy {
   _doMoveTriggers(tokenDocument, scene, update) {
     const token = tokenDocument.object;
     const position = {
-      x: (update.x || token.x) + (token.data.width * scene.data.grid) / 2,
-      y: (update.y || token.y) + (token.data.height * scene.data.grid) / 2,
+      x: (update.x ?? token.x) + (tokenDocument.width * scene.grid.size) / 2,
+      y: (update.y ?? token.y) + (tokenDocument.height * scene.grid.size) / 2,
     };
-    const movementTokens = this._getTokens().filter((tok) => tok.data._id !== token.id);
-    const tokens = this._getPlaceablesAt(movementTokens, position);
+    const movementTokenDocuments = this._getTokenDocuments().filter((tokDocument) => tokDocument._id !== token.id);
+    const tokens = this._getPlaceablesAt(movementTokenDocuments, position);
     const drawings = this._getPlaceablesAt(this._getDrawings(), position);
     const notes = this._getPlaceablesAt(this._getNotes(), position);
     const journals = this._getPlaceablesAt(this._getJournals(), position);
@@ -1541,7 +1547,7 @@ export class TriggerHappy {
   _doCaptureTriggers(tokenDocument, scene, update) {
     // Get all trigger tokens in scene
     const token = tokenDocument.object;
-    let targets = this._getTokensFromTriggers(this._getTokens(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    let targets = this._getTokensFromTriggers(this._getTokenDocuments(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
     targets.push(
       ...this._getDrawingsFromTriggers(this._getDrawings(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE),
     );
@@ -1560,8 +1566,8 @@ export class TriggerHappy {
     const finalX = update.x || token.x;
     const finalY = update.y || token.y;
     // need to calculate this by hand since token is just token data
-    const tokenWidth = (token.data.width * canvas.scene.data.grid) / 2;
-    const tokenHeight = (token.data.height * canvas.scene.data.grid) / 2;
+    const tokenWidth = (tokenDocument.width * canvas.scene.grid.size) / 2;
+    const tokenHeight = (tokenDocument.height * canvas.scene.grid.size) / 2;
 
     const motion = new Ray(
       { x: token.x + tokenWidth, y: token.y + tokenHeight },
@@ -1579,37 +1585,14 @@ export class TriggerHappy {
     );
 
     for (let target of targets) {
-      // TODO I REALLY NEED THIS ? THEY ARE JUST DOCUMENTS...
-      let w = target.w || target?.data?.width || target.width;
-      if (target?.object) {
-        w = target?.object?.w || target?.object?.data?.width || target?.object?.width || w;
-      }
-      let h = target?.h || target?.data?.height || target?.height;
-      if (target?.object) {
-        h = target?.object?.h || target?.object?.data?.height || target?.object?.height || h;
-      }
-      let x = target.x || target?.data?.x;
-      if (target?.object) {
-        x = target?.object?.x || target?.object?.data?.x || x;
-      }
-      let y = target?.y || target?.data?.y;
-      if (target?.object) {
-        y = target?.object?.y || target?.object?.data?.y || target?.object?.y || y;
-      }
-      const tx = x;
-      const ty = y;
-      const tw = w;
-      const th = h;
-      // const tcenterx = target?.center?.x || tx;
-      // const tcentery = target?.center?.y || ty;
-      // const tx = target.data.x;
-      // const ty = target.data.y;
-      // const tw = target.w || target.data.width;
-      // const th = target.h || target.data.height;
+      const tx = target.x;
+      const ty = target.y;
+      const tw = target.object.w;
+      const th = target.object.h;
 
       let intersects;
       // test motion vs token diagonals
-      if (tw > canvas.grid.w && th > canvas.grid.w && tw * th > 4 * canvas.grid.w * canvas.grid.w) {
+      if (target.width > 1 && target.height > 1 && target.width * target.height > 4) {
         // big token so do boundary lines
         intersects =
           motion.intersectSegment([tx, ty, tx + tw, ty]) ||
@@ -1622,9 +1605,9 @@ export class TriggerHappy {
           motion.intersectSegment([tx, ty, tx + tw, ty + th]) || motion.intersectSegment([tx, ty + th, tx + tw, ty]);
       }
       if (intersects) {
-        if (target.center) {
-          update.x = target.center.x - tokenWidth;
-          update.y = target.center.y - tokenHeight;
+        if (target.object.center) {
+          update.x = target.object.center.x - tokenWidth;
+          update.y = target.object.center.y - tokenHeight;
         }
         return true;
       }
@@ -1652,7 +1635,7 @@ export class TriggerHappy {
 
   _onPreUpdateWall(wallDocument, update, options, userId) {
     // Only trigger on door state changes
-    if (wallDocument.data.door === 0 || update.ds === undefined) return;
+    if (wallDocument.door === 0 || update.ds === undefined) return;
     const triggers = this.triggers.filter((trigger) => {
       //if (!(trigger.trigger instanceof WallDocument)) return false;
       if (
@@ -1664,14 +1647,14 @@ export class TriggerHappy {
       ) {
         return false;
       }
-      if (wallDocument.data.c.toString() !== trigger.trigger.data.c.toString()) {
+      if (wallDocument.c.toString() !== trigger.trigger.c.toString()) {
         return false;
       }
       const onClose = trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_CLOSE);
       const onOpen =
         !trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_CLOSE) ||
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.DOOR_OPEN);
-      return (update.ds === 1 && onOpen) || (update.ds === 0 && onClose && wallDocument.data.ds === 1);
+      return (update.ds === 1 && onOpen) || (update.ds === 0 && onClose && wallDocument.ds === 1);
     });
     this._executeTriggers(triggers);
   }
@@ -1705,7 +1688,7 @@ export class TriggerHappy {
   _doCaptureTriggersEdge(tokenDocument, scene, update) {
     const token = tokenDocument.object;
     // Get all trigger tokens in scene
-    let targets = this._getTokensFromTriggers(this._getTokens(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
+    let targets = this._getTokensFromTriggers(this._getTokenDocuments(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE);
     targets.push(
       ...this._getDrawingsFromTriggers(this._getDrawings(), this.triggers, EVENT_TRIGGER_ENTITY_TYPES.CAPTURE),
     );
@@ -1720,11 +1703,11 @@ export class TriggerHappy {
     if (!targets) {
       return;
     }
-    const finalX = update.x || token.x;
-    const finalY = update.y || token.y;
+    const finalX = update.x ?? token.x;
+    const finalY = update.y ?? token.y;
     // need to calculate this by hand since token is just token data
-    const tokenWidth = (token.data.width * canvas.scene.data.grid) / 2;
-    const tokenHeight = (token.data.height * canvas.scene.data.grid) / 2;
+    const tokenWidth = (token.document.width * canvas.scene.grid.size) / 2;
+    const tokenHeight = (token.document.height * canvas.scene.grid.size) / 2;
 
     const motion = new Ray(
       { x: token.x + tokenWidth, y: token.y + tokenHeight },
@@ -1743,39 +1726,15 @@ export class TriggerHappy {
     const gridSize = canvas.grid.size;
 
     for (let target of targets) {
-      // TODO I REALLY NEED THIS ? THEY ARE JUST DOCUMENTS...
-      let w = target.w || target?.data?.width || target.width;
-      if (target?.object) {
-        w = target?.object?.w || target?.object?.data?.width || target?.object?.width || w;
-      }
-      let h = target?.h || target?.data?.height || target?.height;
-      if (target?.object) {
-        h = target?.object?.h || target?.object?.data?.height || target?.object?.height || h;
-      }
-      let x = target.x || target?.data?.x;
-      if (target?.object) {
-        x = target?.object?.x || target?.object?.data?.x || x;
-      }
-      let y = target?.y || target?.data?.y;
-      if (target?.object) {
-        y = target?.object?.y || target?.object?.data?.y || target?.object?.y || y;
-      }
-      const tx = x;
-      const ty = y;
-      const tw = w;
-      const th = h;
-      // const tcenterx = target?.center?.x || tx;
-      // const tcentery = target?.center?.y || ty;
-      // const tx = target.x;
-      // const ty = target.y;
-      // const tw = target.w || target.data.width;
-      // const th = target.h || target.data.height;
-      const tgw = Math.ceil(target.data.width / gridSize); // target token width in grid units
-      const tgh = Math.ceil(target.data.height / gridSize); // target token height in grid units
 
+      const tx = target.x;
+      const ty = target.y;
+      const tw = target.object.w;
+      const th = target.object.h;
+    
       let intersects;
       // test motion vs token diagonals
-      if (tgw > 1 && tgh > 1 && tgw * tgh > 4) {
+      if (target.width > 1 && target.height > 1 && target.width * target.height > 4) {
         // big token so do boundary lines
         intersects =
           motion.intersectSegment([tx, ty, tx + tw, ty]) ||
@@ -1788,7 +1747,7 @@ export class TriggerHappy {
           motion.intersectSegment([tx, ty, tx + tw, ty + th]) || motion.intersectSegment([tx, ty + th, tx + tw, ty]);
       }
       if (intersects) {
-        if (tgw === 1 && tgh === 1) {
+        if (target.width === 1 && target.height === 1) {
           // simple case size 1 target, return straight away.
           if (target.center) {
             update.x = target.center.x - tokenWidth;
@@ -1801,7 +1760,7 @@ export class TriggerHappy {
           .fill(Array(tgh).fill(0))
           .map((v, i) =>
             v.map((_, j) => {
-              return { x: target.data.x + i * gridSize, y: target.data.y + j * gridSize };
+              return { x: target.x + i * gridSize, y: target.y + j * gridSize };
             }),
           )
           .flat();
@@ -1866,12 +1825,12 @@ export class TriggerHappy {
       return null; // NOT SUPPORTED
     } else if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
       const tokenTargetsResult = [];
-      const tokenTargets = this._retrieveFromIdOrNameMultiple(this._getTokens(), idOrName);
+      const tokenTargets = this._retrieveFromIdOrNameMultiple(this._getTokenDocuments(), idOrName);
       // Some strange retrocompatibility use case or just compatibility with other modules like token mold
       if ((!tokenTargets || tokenTargets.length == 0) && this.ifNoTokenIsFoundTryToUseActor) {
-        tokenTargets = this._getTokens()?.filter((t) => {
+        tokenTargets = this._getTokenDocuments()?.filter((t) => {
           // If token is referenced to a actor
-          return t && t.data.actorId && this._retrieveFromIdOrName(this._getActors(), idOrName)?.id === t.data.actorId;
+          return t && t.actorId && this._retrieveFromIdOrName(this._getActors(), idOrName)?.id === t.actorId;
         });
       }
       for (let tokenTarget of tokenTargets) {
@@ -1884,8 +1843,8 @@ export class TriggerHappy {
       let actorTargetsResult = [];
       const actorTargets = this._retrieveFromIdOrNameMultiple(this._getActors(), idOrName);
       if (actorTargets && actorTargets.length > 0) {
-        actorTargetsResult = this._getTokens()?.filter((t) => {
-          if (actorTargets.filter((e) => e.id === t.data.actorId).length > 0) {
+        actorTargetsResult = this._getTokenDocuments()?.filter((t) => {
+          if (actorTargets.filter((e) => e.id === t.actorId).length > 0) {
             // If token is referenced to the specific actor
             return t;
           }
@@ -1921,11 +1880,11 @@ export class TriggerHappy {
             mywall = wall.document;
           }
           if (
-            mywall.data?.door > 0 &&
-            mywall.data?.c[0] == coords[0] &&
-            mywall.data?.c[1] == coords[1] &&
-            mywall.data?.c[2] == coords[2] &&
-            mywall.data?.c[3] == coords[3]
+            mywall?.door > 0 &&
+            mywall?.c[0] == coords[0] &&
+            mywall?.c[1] == coords[1] &&
+            mywall?.c[2] == coords[2] &&
+            mywall?.c[3] == coords[3]
           ) {
             doorControlTargets.push(mywall);
           }
@@ -1945,11 +1904,11 @@ export class TriggerHappy {
         //         mywall = wall.document;
         //       }
         //       return (
-        //         mywall.data?.door > 0 &&
-        //         mywall.data?.c[0] == coords[0] &&
-        //         mywall.data?.c[1] == coords[1] &&
-        //         mywall.data?.c[2] == coords[2] &&
-        //         mywall.data?.c[3] == coords[3]
+        //         mywall?.door > 0 &&
+        //         mywall?.c[0] == coords[0] &&
+        //         mywall?.c[1] == coords[1] &&
+        //         mywall?.c[2] == coords[2] &&
+        //         mywall?.c[3] == coords[3]
         //       );
         //     });
         //     // doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
@@ -2105,12 +2064,12 @@ export class TriggerHappy {
       const playlistTarget = this._retrieveFromIdOrName(this._getPlaylists(), idOrName);
       return playlistTarget;
     } else if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
-      let tokenTarget = this._retrieveFromIdOrName(this._getTokens(), idOrName);
+      let tokenTarget = this._retrieveFromIdOrName(this._getTokenDocuments(), idOrName);
       // Some strange retrocompatibility use case or just compatibility with other modules like token mold
       if (!tokenTarget && this.ifNoTokenIsFoundTryToUseActor) {
-        tokenTarget = this._getTokens()?.find((t) => {
+        tokenTarget = this._getTokenDocuments()?.find((t) => {
           // If token is referenced to a actor
-          return t && t.data.actorId && this._retrieveFromIdOrName(this._getActors(), idOrName)?.id === t.data.actorId;
+          return t && t.actorId && this._retrieveFromIdOrName(this._getActors(), idOrName)?.id === t.actorId;
         });
       }
       return tokenTarget;
@@ -2144,11 +2103,11 @@ export class TriggerHappy {
               mywall = wall.document;
             }
             return (
-              mywall.data?.door > 0 &&
-              mywall.data?.c[0] == coords[0] &&
-              mywall.data?.c[1] == coords[1] &&
-              mywall.data?.c[2] == coords[2] &&
-              mywall.data?.c[3] == coords[3]
+              mywall?.door > 0 &&
+              mywall?.c[0] == coords[0] &&
+              mywall?.c[1] == coords[1] &&
+              mywall?.c[2] == coords[2] &&
+              mywall?.c[3] == coords[3]
             );
           });
           // doorControlTarget = new WallDocument({ door: 1, c: coords }, {});
@@ -2200,7 +2159,7 @@ export class TriggerHappy {
     }
     if (!target) {
       target = placeables?.find((x) => {
-        return x && x.data?.name?.toLowerCase() == IdOrName.toLowerCase();
+        return x && x?.name?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
     if (!target) {
@@ -2210,12 +2169,12 @@ export class TriggerHappy {
     }
     if (!target) {
       target = placeables?.find((x) => {
-        return x && x.data?.text?.toLowerCase() == IdOrName.toLowerCase();
+        return x && x?.text?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
     if (!target) {
       target = placeables?.find((x) => {
-        return x && x.data?.label?.toLowerCase() == IdOrName.toLowerCase();
+        return x && x?.label?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
     if (!target) {
@@ -2237,32 +2196,32 @@ export class TriggerHappy {
     target = placeables?.filter((x) => {
       return x && x.id?.toLowerCase() == IdOrName.toLowerCase();
     });
-    if (!target || target.length == 0) {
+    if (target.length == 0) {
       target = placeables?.filter((x) => {
         return x && x.name?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
-    if (!target || target.length == 0) {
+    if (target.length == 0) {
       target = placeables?.filter((x) => {
         return x && x.label?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
-    if (!target || target.length == 0) {
+    if (target.length == 0) {
       target = placeables?.filter((x) => {
-        return x && x.data?.name?.toLowerCase() == IdOrName.toLowerCase();
+        return x && x?.name?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
-    if (!target || target.length == 0) {
+    if (target.length == 0) {
       target = placeables?.filter((x) => {
-        return x && x.data?.text?.toLowerCase() == IdOrName.toLowerCase();
+        return x && x?.text?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
-    if (!target || target.length == 0) {
+    if (target.length == 0) {
       target = placeables?.filter((x) => {
-        return x && x.data?.label?.toLowerCase() == IdOrName.toLowerCase();
+        return x && x?.label?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
-    if (!target || target.length == 0) {
+    if (target.length == 0) {
       target = placeables?.filter((x) => {
         return x && x.entryId?.toLowerCase() == IdOrName.toLowerCase();
       });
@@ -2271,8 +2230,8 @@ export class TriggerHappy {
   }
 
   // getPlaceableObjectCenter(placeableObject) {
-  //   const width = placeableObject.w || placeableObject.data.width || placeableObject.width;
-  //   const height = placeableObject.h || placeableObject.data.height || placeableObject.height;
+  //   const width = placeableObject.w || placeableObject.width || placeableObject.width;
+  //   const height = placeableObject.h || placeableObject.height || placeableObject.height;
   //   const shapes = this.getPlaceableObjectShape(placeableObject, width, height);
   //   if (shapes && shapes.length > 0) {
   //     const shape0 = shapes[0];
@@ -2283,9 +2242,9 @@ export class TriggerHappy {
   // }
 
   // getPlaceableObjectShape(placeableObject, width, height) {
-  //   if (game.scenes.current.data.gridType === CONST.GRID_TYPES.GRIDLESS) {
+  //   if (game.scenes.current.ta.gridType === CONST.GRID_TYPES.GRIDLESS) {
   //     return [{ x: 0, y: 0 }];
-  //   } else if (game.scenes.current.data.gridType === CONST.GRID_TYPES.SQUARE) {
+  //   } else if (game.scenes.current.gridType === CONST.GRID_TYPES.SQUARE) {
   //     const topOffset = -Math.floor(height / 2);
   //     const leftOffset = -Math.floor(width / 2);
   //     const shape = [];
@@ -2298,7 +2257,7 @@ export class TriggerHappy {
   //   } else {
   //     // Hex grids
   //     if (game.modules.get('hex-size-support')?.active && CONFIG.hexSizeSupport.getAltSnappingFlag(placeableObject)) {
-  //       const borderSize = placeableObject.data.flags['hex-size-support'].borderSize;
+  //       const borderSize = placeableObject.flags['hex-size-support'].borderSize;
   //       let shape = [{ x: 0, y: 0 }];
   //       if (borderSize >= 2)
   //         shape = shape.concat([
@@ -2356,7 +2315,7 @@ export class TriggerHappy {
     } else if (entity == TRIGGER_ENTITY_TYPES.PLAYLIST) {
       return null; // NOT SUPPORTED
     } else if (entity == TRIGGER_ENTITY_TYPES.TOKEN) {
-      return this._getTokens();
+      return this._getTokenDocumentss();
     } else if (entity == TRIGGER_ENTITY_TYPES.ACTOR) {
       return this._getActors();
       // TODO ADD AMBIENT LIGHT INTEGRATION
@@ -2384,7 +2343,7 @@ export class TriggerHappy {
     }
   }
 
-  _getTokens(sceneId) {
+  _getTokenDocuments(sceneId) {
     if (!sceneId) {
       const placeablesToken = [];
       if (canvas.tokens?.placeables && canvas.tokens?.placeables.length > 0) {
@@ -2421,7 +2380,7 @@ export class TriggerHappy {
         });
       }
       const doors = game.scenes.current.walls?.contents.filter((wall) => {
-        return wall.data?.door > 0;
+        return wall?.door > 0;
       });
       if (doors && doors.length > 0) {
         //placeablesDoors.push(...doors);
@@ -2435,7 +2394,7 @@ export class TriggerHappy {
     } else {
       const placeablesDoors = [];
       const doors = game.scenes.get(sceneId).walls?.contents.filter((wall) => {
-        return wall.data?.door > 0;
+        return wall.door > 0;
       });
       if (doors && doors.length > 0) {
         // placeablesDoors.push(...doors);
@@ -2608,7 +2567,7 @@ export class TriggerHappy {
   }
 
   _getPlaylistSounds() {
-    // game.playlists.contents[0].data.sounds
+    // game.playlists.contents[0].sounds
     const placeablesSounds = [];
     game.playlists.contents.forEach((playlist, key) => {
       placeablesSounds.push(...Object.values(playlist.sounds));
