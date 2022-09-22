@@ -499,7 +499,6 @@ export class TriggerHappy {
   async _parseJournal(journal) {
     let journalLines = "".concat(journal.pages.filter(page => page.type === "text").map(page => page.text.content));
     journalLines = journalLines.replace(/<p>(.*?)<\/p>/g, "$1\n")
-    console.error(journalLines);
     const triggerLines = journalLines
       .replace(/(<p>|<div>|<br *\/?>)/gm, '\n')
       .replace(/&nbsp;/gm, ' ')
