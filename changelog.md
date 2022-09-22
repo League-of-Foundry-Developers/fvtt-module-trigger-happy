@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.10.01
-- v10 compatibility
+- v10 compatibility first pass. There are sure to be bugs in this version.
 
 ## 0.8.39
 
