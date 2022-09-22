@@ -1,4 +1,5 @@
 # Trigger Happy
+# I have created a v10 compatible version of trigger happy. I will not be doing any further development on the module, other than bug fixes for v10.
 
 # Tigger is happy is not followed anymore it's advisable to use [MATT (Monk Actvie Tile Trigger)](https://foundryvtt.com/packages/monks-active-tiles) instead
 
