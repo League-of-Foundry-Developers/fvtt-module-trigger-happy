@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.10.01
+- v10 compatibility
+
 ## 0.8.39
 
 - Add japanese language
