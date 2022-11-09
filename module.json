@@ -1,37 +1,55 @@
 {
-  "id": "trigger-happy",
-  "title": "Trigger Happy",
-  "description": "Automate everything in your world by creating triggers for your players to spring traps or anything you can think of!",
-  "version": "0.10.01",
-  "authors": [{"name": "KaKaRoTo"},{"name": "tposney"}, {"name": "p4535992"}],
-  "type": "module",
-  "socket": true,
-  "includes": [
-    "./assets/**",
-    "./lang/**",
-    "./scripts/**",
-    "./styles/**",
-    "./templates/**",
-    "./module.json",
-    "./README.md",
-    "./icons/**",
-    "./images/**",
-    "./packs/**"
-  ],
-  "media": [
-    {
-      "type": "icon",
-      "location": ""
+	"id": "scene-transitions",
+	"title": "Scene Transitions",
+	"description": "Create transition between scenes. Or show a Slide from a Journal or Macro for Narration",
+	"version": "0.10.2",
+	"authors": [
+		{
+      "name": "KaKaRoTo"
     },
     {
-      "type": "cover",
-      "location": ""
+      "name": "tposney"
     },
-    {
-      "type": "screenshot",
-      "location": ""
-    }
-  ],
+		{
+			"name": "p4535992",
+			"url": "https://github.com/p4535992",
+			"discord": "",
+			"twitter": "",
+			"patreon": "",
+			"github": "p4535992",
+			"ko-fi": "",
+			"reddit": "",
+			"email": ""
+		}
+	],
+	"type": "module",
+	"socket": true,
+	"includes": [
+		"./assets/**",
+		"./lang/**",
+		"./languages/**",
+		"./scripts/**",
+		"./styles/**",
+		"./templates/**",
+		"./module.json",
+		"./README.md",
+		"./icons/**",
+		"./packs/**"
+	],
+	"media": [
+		{
+			"type": "icon",
+			"location": ""
+		},
+		{
+			"type": "cover",
+			"location": ""
+		},
+		{
+			"type": "screenshot",
+			"location": ""
+		}
+	],
   "languages": [
     {
       "lang": "en",
@@ -49,10 +67,6 @@
       "path": "lang/zh-tw.json"
     }
   ],
-  "scripts": [],
-  "system": [],
-  "esmodules": ["trigger.js", "module/HTMLEnricherTriggers.js"],
-  "styles": ["styles/th-fontawesome.css"],
   "packs": [
     {
       "name": "trigger-happy-actors",
@@ -70,17 +84,25 @@
       "package": "trigger-happy"
     }
   ],
-  "url": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy",
-  "manifest": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/raw/v10/module.json",
-  "download": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/raw/v10/module.zip",
-  "readme": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/blob/v10/README.md",
-  "changelog": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/blob/v0.8.39/changelog.md",
-  "bugs": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues",
-  "compatibility": {
-    "minimumCoreVersion": 10,
-    "compatibleCoreVersion": 10
-  },
-  "allowBugReporter": true,
-  "manifestPlusVersion": "1.2.0",
-  "relationships": {}
+	"scripts": [],
+	"esmodules": ["trigger.js", "module/HTMLEnricherTriggers.js"],
+	"styles": [],
+	"compatibility": {
+		"minimum": 10,
+		"verified": 10,
+		"maximum": 10
+	},
+	"manifestPlusVersion": "1.2.1",
+	"url": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy",
+	"manifest": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/releases/latest/download/module.json",
+	"download": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/releases/latest/download/module.zip",
+	"readme": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/blob/v0.10.2/README.md",
+	"changelog": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/blob/v0.10.2/changelog.md",
+	"bugs": "https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/issues",
+	"allowBugReporter": true,
+	"relationships": {
+		"systems": [],
+		"requires": [],
+		"conflicts": []
+	}
 }

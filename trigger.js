@@ -514,8 +514,8 @@ export class TriggerHappy {
 
     //const entityMatchRgx = `@(${entityLinks.join('|')})\\[([^\\]]+)\\](?:{([^}]+)})?`;
     const entityMatchRgx = `@(${entityLinks.join('|')})\\[((?:[^\[\\]]+|\\[(?:[^\\[\\]]+|\\[[^\\[\\]]*\\])*\\])*)\\](?:{([^}]+)})?`;
-    
-    
+
+
     const rgx = new RegExp(entityMatchRgx, 'ig');
 
     const entityMatchRgxTagger = `@(Tag)\\[([^\\]]+)\\]`;
@@ -873,7 +873,7 @@ export class TriggerHappy {
         }
       }
       if (trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.ONLY_IF_UNHIDDEN)) {
-        if (trigger.trigger.docuemnt?.hidden == true) {
+        if (trigger.trigger.document?.hidden == true) {
           return;
         }
       }
@@ -1730,7 +1730,7 @@ export class TriggerHappy {
       const ty = target.y;
       const tw = target.object.w;
       const th = target.object.h;
-    
+
       let intersects;
       // test motion vs token diagonals
       if (target.width > 1 && target.height > 1 && target.width * target.height > 4) {
