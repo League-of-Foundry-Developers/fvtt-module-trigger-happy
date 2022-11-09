@@ -2,7 +2,7 @@
 
 # I have created a v10 compatible version of trigger happy. I will not be doing any further development on the module, other than bug fixes for v10.
 
-# Tigger is happy is not followed anymore it's advisable to use [MATT (Monk Actvie Tile Trigger)](https://foundryvtt.com/packages/monks-active-tiles) instead
+# Tigger is happy is not followed anymore it's advisable to use [MATT (Monk Active Tile Trigger)](https://foundryvtt.com/packages/monks-active-tiles) instead
 
 ![Trigger Happy](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FLeague-of-Foundry-Developers%2Fleague-repo-status%2Fshields-endpoint%2Ffvtt-module-trigger-happy.json&style=for-the-badge)
 
