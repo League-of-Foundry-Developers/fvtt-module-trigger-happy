@@ -464,7 +464,7 @@ export class TriggerHappy {
 
     return folders.reduce((contents, folder) => {
       // Cannot use folder.content and folder.children because they are set on populate and only show what the user can see
-      let content = game.journal.contents.filter((j) => j.folder === folder.id) || []; // This is the array of journalEntry under the current folder
+      let content = game.journal.contents.filter((j) => j.folder?.id === folder.id) || []; // This is the array of journalEntry under the current folder
       if (enableJournalForScene) {
         const contentTmp = [];
         content.forEach((journalEntry) => {
@@ -482,7 +482,7 @@ export class TriggerHappy {
         content = contentTmp;
       }
       if (content && content.length > 0) contents.push(...content);
-      const children = game.folders.contents.filter((f) => f.type === 'JournalEntry' && f.parent === folder.id);
+      const children = game.folders.contents.filter((f) => f.type === 'JournalEntry' && f.folder?.id === folder.id);
       return this._getFoldersContentsRecursive(children, contents);
     }, contents);
   }
