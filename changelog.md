@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.4
+
+- FIx by @kakaroto https://github.com/League-of-Foundry-Developers/fvtt-module-trigger-happy/pull/120
+
 ## 0.10.01
 - v10 compatibility first pass. There are sure to be bugs in this version.
 
