@@ -1,5 +1,5 @@
 {
-  "dataPath": "/absolute/path/to/your/FoundryVTT/Data",
+  "dataPath": "~timp/foundry-data/foundryv10/data/moudles/trigger-happy",
   "repository": "",
   "rawURL": ""
 }

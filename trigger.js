@@ -1188,13 +1188,13 @@ export class TriggerHappy {
     if (type === EVENT_TRIGGER_ENTITY_TYPES.CLICK) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) ||
-        (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) && !drawing.document.hidden)
+        (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) && !drawing.hidden)
       );
     }
     if (type === EVENT_TRIGGER_ENTITY_TYPES.MOVE) {
       return (
         trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.MOVE) ||
-        (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) && drawing.document.hidden)
+        (!trigger.options.includes(EVENT_TRIGGER_ENTITY_TYPES.CLICK) && drawing.hidden)
       );
     }
     if (type === EVENT_TRIGGER_ENTITY_TYPES.CAPTURE) {
@@ -1252,17 +1252,17 @@ export class TriggerHappy {
       let y = placeable.object.y;
       let width = placeable.object.w;
       let height = placeable.object.h;
-
       // For both Tokens and Drawings, we will start by determining if 'position' is inside the placeable's bounding box
       // Since tokens have rectangular boundaries, we don't need to perform any other calculations
       return Number.between(position.x, x, x + width) && Number.between(position.y, y, y + height);
-    } else if (placeable instanceof DrawingDocument) {
+    } else if (placeable instanceof Drawing) {
       // For a DrawingDocument, the width and height of the contents are stored in DrawingDocument.
       // the .document member also includes .points, which contains the coordinates of the drawing's vertices relative to the drawing's origin
       let x = placeable.x;
       let y = placeable.y;
       let width = placeable.shape.width;
       let height = placeable.shape.height;
+
       // Possible drawing types: (r)ectangle, circl(e), (p)olygon, (f)reehand
       let type = placeable.shape.type;
 
@@ -1281,7 +1281,6 @@ export class TriggerHappy {
             drawing_center[1],
         };
       }
-
       // For both Tokens and Drawings, we will start by determining if 'position' is inside the placeable's bounding box
       if (Number.between(position.x, x, x + width) && Number.between(position.y, y, y + height)) {
         // If the position is within the bounding box, then we can perform additional tests to see if it is within the drawing's geometry
@@ -1351,7 +1350,8 @@ export class TriggerHappy {
   }
 
   _getPlaceablesAt(placeables, position) {
-    return placeables.filter((placeable) => this._placeableContains(placeable, position));
+    const filtered =  placeables.filter((placeable) => this._placeableContains(placeable, position));
+    return filtered;
   }
 
   // return all tokens which have a token trigger
@@ -1421,7 +1421,7 @@ export class TriggerHappy {
     //   y: (event.data.global.y - transform.ty) / canvas.stage.scale.y,
     // };
     // NEW METHOD SEEM MORE PRECISE
-    const position = canvas.app.renderer.plugins.interaction.mouse.getLocalPosition(canvas.app.stage);
+    const position = event.getLocalPosition(canvas.app.stage);
     return {
       x: position.x,
       y: position.y,
@@ -2117,6 +2117,7 @@ export class TriggerHappy {
       }
     } else if (entity == TRIGGER_ENTITY_TYPES.DRAWING) {
       const drawingTarget = this._retrieveFromIdOrName(this._getDrawings(), idOrName);
+      console.log("Drawing target is ", drawingTarget)
       return drawingTarget;
     } else if (entity == TRIGGER_ENTITY_TYPES.JOURNAL_ENTRY) {
       const noteTarget = this._retrieveFromIdOrName(this._getNotes(), idOrName);
@@ -2168,7 +2169,16 @@ export class TriggerHappy {
     }
     if (!target) {
       target = placeables?.find((x) => {
-        return x && x?.text?.toLowerCase() == IdOrName.toLowerCase();
+        switch (typeof x?.text) {
+          case 'string':
+            console.warn("retrieving", IdOrName, x, x?.text)
+            return x && x?.text?.toLowerCase() == IdOrName.toLowerCase();
+          case 'object':
+            console.warn("retrieving", IdOrName, x, x?.text, x?.text?.text)
+            return x && x?.text?.text?.toLowerCase() == IdOrName.toLowerCase();
+          default:
+            return false;
+        }
       });
     }
     if (!target) {
@@ -2202,7 +2212,14 @@ export class TriggerHappy {
     }
     if (target.length == 0) {
       target = placeables?.filter((x) => {
-        return x && x.label?.toLowerCase() == IdOrName.toLowerCase();
+        switch (typeof x?.text) {
+          case 'string':
+            return x && x?.text?.toLowerCase() == IdOrName.toLowerCase();
+          case 'object':
+            return x && x?.text?.text?.toLowerCase() == IdOrName.toLowerCase();
+          default:
+            return false;
+        }
       });
     }
     if (target.length == 0) {
@@ -2212,7 +2229,10 @@ export class TriggerHappy {
     }
     if (target.length == 0) {
       target = placeables?.filter((x) => {
-        return x && x?.text?.toLowerCase() == IdOrName.toLowerCase();
+        if (typeof x.text == "string")
+          return x && x?.text?.toLowerCase() == IdOrName.toLowerCase();
+        else 
+        return x && x?.text?.text?.toLowerCase() == IdOrName.toLowerCase();
       });
     }
     if (target.length == 0) {
@@ -2412,7 +2432,7 @@ export class TriggerHappy {
       const placeablesDrawings = [];
       if (canvas.drawings?.placeables && canvas.drawings?.placeables.length > 0) {
         canvas.drawings?.placeables.forEach((drawing, key) => {
-          placeablesDrawings.push(drawing.document);
+          placeablesDrawings.push(drawing);
         });
       }
       game.scenes.current.drawings?.contents.forEach((drawing, key) => {
